@@ -1,17 +1,21 @@
 # STATUS
 
-- **Phase:** 1–2 (harness scripts done; app in progress). Phase 0 live checks are blocked on keys.
-- **Plan A or B:** B (hybrid), provisional. See DECISIONS.md.
-- **Blockers:** HarnessRouter API key + Harness ID, TTS key (HUMAN_TODO.md). Everything runs in `HARNESS_MODE=mock` with the local planner meanwhile.
+- **Phase:** 2 done in mock mode; Phase 3 baseline eval done; Phase 0 live checks and Phase 4 deploy are blocked on human items.
+- **Plan A or B:** B (hybrid), provisional until the sandbox probe runs.
 - **Deadline:** Nov 19, 2026, 11:59 AM PST · Feature freeze: Nov 18, 11:59 PM PST · Agent hard stop: Nov 19, 10:30 AM PST
 
-## Done
-- Phase 0 docs: `docs/hr-api.md` (UHP 2026-10-19 field names from the protocol repo).
-- C0 scaffold (Next 16, Tailwind 4, vitest, zod schemas + tests).
-- C1 `record_flow.ts`, C2 `tts.ts` (+providers), C3 `assemble.ts`, C4 `slideshow.ts`: all with passing tests.
-- `src/lib/explore.ts` (site digest) and `src/lib/planner/local.ts` (LLM-free planner).
+## Works now (verified)
+- Full app runs locally, including the production standalone server: form → SSE progress → video → downloads → revise → feedback → /stats → /admin.
+- 53 tests pass (`npm test`), plus lint, typecheck and build.
+- Baseline eval (offline planner, no TTS) on 6 public sites: 2/6 pass all automated checks; the other 4 are app-style sites whose videos come out 24–35s (below 45s). See `eval/results.md`.
 
-## Next
-1. Pipeline (`src/lib/pipeline.ts`) + local end-to-end run on real sites.
-2. Harness client (mock = local planner, real = UHP `/v1/responses` streaming).
-3. DB, validation/SSRF/rate limits, job runner + SSE, UI pages, Dockerfile.
+## Blockers (see HUMAN_TODO.md)
+1. HarnessRouter API key + Harness ID → run `scripts/hr-smoke.ts` (+ `--probe`), then switch `HARNESS_MODE=real`.
+2. TTS key.
+3. Railway account + GitHub repo for deploy.
+
+## Next for the agent once unblocked
+1. Run the smoke + probe and record Plan A/B in DECISIONS.md.
+2. Run `scripts/eval.ts` with `HARNESS_MODE=real` on ≥10 real Big Hack Game projects; fix the top 3 failure causes.
+3. Verify revise ("make it shorter" → shorter) in real mode.
+4. Deploy check: `/api/health`, one end-to-end job on the public URL, budget cap message.

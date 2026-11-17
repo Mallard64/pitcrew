@@ -48,3 +48,4 @@ eval/samples/*.mp4
 /test-results/
 /playwright-report/
 /tmp/
+eval/runs/

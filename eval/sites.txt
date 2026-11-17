@@ -1,0 +1,8 @@
+# Public sites used to sanity-check the offline planner. Replace with real Big Hack Game projects for the Phase 3 eval.
+# <url> | <project name> | <optional public GitHub repo>
+https://tailwindcss.com | Tailwind CSS
+https://excalidraw.com | Excalidraw | https://github.com/excalidraw/excalidraw
+https://news.ycombinator.com | Hacker News
+https://www.tldraw.com | tldraw
+https://squoosh.app | Squoosh
+https://bun.sh | Bun

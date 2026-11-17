@@ -62,3 +62,24 @@ describe("ScriptSchema / ContractSchema", () => {
     expect(ContractSchema.safeParse({ ...ok, status: "great" }).success).toBe(false);
   });
 });
+
+import { clampWords, isProse, readmeProse } from "../src/lib/planner/local";
+
+describe("local planner text helpers", () => {
+  it("isProse rejects class-name soup and nav labels", () => {
+    expect(isProse("Tailwind is a utility-first CSS framework for building websites.")).toBe(true);
+    expect(isProse("text-base text-gray-950text-white flex pt-4")).toBe(false);
+    expect(isProse("TreehousesMansionsLakefront cottages Designer homes now")).toBe(false);
+    expect(isProse("Docs Blog")).toBe(false);
+  });
+  it("clampWords keeps ≤25 words and prefers sentence ends", () => {
+    const long = "First sentence has exactly seven words here. " + "word ".repeat(40);
+    const out = clampWords(long);
+    expect(out.split(" ").length).toBeLessThanOrEqual(25);
+    expect(out).toBe("First sentence has exactly seven words here.");
+  });
+  it("readmeProse strips markdown and keeps prose", () => {
+    const md = "# Title\n\n[![badge](x)](y)\n\nExcalidraw is a virtual whiteboard for sketching hand-drawn like diagrams.\n\n```js\nconst x = 1\n```\n\n- list item one two three four";
+    expect(readmeProse(md)).toEqual(["Excalidraw is a virtual whiteboard for sketching hand-drawn like diagrams."]);
+  });
+});

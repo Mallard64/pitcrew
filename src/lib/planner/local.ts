@@ -7,7 +7,7 @@ import type { Flow, Step } from "../../../harness/schemas/flow";
 import { estimateSeconds } from "../../../harness/scripts/tts/providers";
 import type { PageDigest, SiteDigest } from "../explore";
 
-export type PlanInput = { projectName: string; liveUrl: string; blurb?: string };
+export type PlanInput = { projectName: string; liveUrl: string; blurb?: string; readme?: string };
 export type Revision = { shorter?: boolean; longer?: boolean; focus?: string };
 
 const MAX_SAY_WORDS = 25;
@@ -32,6 +32,19 @@ export function isProse(t: string) {
 
 const firstSentence = (t: string) => (t.match(/^.{20,200}?[.!?](\s|$)/)?.[0] ?? t).trim();
 const sentence = (t: string) => (/[.!?]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
+
+/** Plain-prose paragraphs from a README (markdown, code, badges and lists stripped). */
+export function readmeProse(md?: string): string[] {
+  if (!md) return [];
+  return md
+    .replace(/```[\s\S]*?```/g, "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => !/^(#|[-*+] |\d+\. |\||<|!\[|\[!\[|>)/.test(p))
+    .map((p) => p.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_`]/g, "").replace(/\s+/g, " ").trim())
+    .filter(isProse)
+    .slice(0, 4);
+}
 
 export function holdFor(say: string) {
   return Math.round(Math.min(8000, Math.max(2500, estimateSeconds(say) * 1000 + 900)));
@@ -101,7 +114,7 @@ export function planLocally(input: PlanInput, digest: SiteDigest, rev: Revision 
   }
 
   // App-like sites (canvas, dashboards) have little copy; still give the viewer a few beats.
-  const extras = [home.description, home.h1, ...digest.pages.map((p) => p.description)]
+  const extras = [home.description, home.h1, ...digest.pages.map((p) => p.description), ...readmeProse(input.readme)]
     .filter((t): t is string => !!t && isProse(t))
     .filter((t, i, a) => a.indexOf(t) === i && !steps.some((st) => st.say.includes(firstSentence(t).slice(0, 40))));
   const minSteps = rev.shorter ? 3 : 4;
