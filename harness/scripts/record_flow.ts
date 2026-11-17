@@ -96,7 +96,7 @@ async function runStep(page: Page, step: Step, timeout: number) {
       break;
     }
     case "scroll":
-      await page.evaluate((y) => window.scrollBy({ top: y, behavior: "smooth" }), step.y ?? 600);
+      await page.evaluate(`window.scrollBy({ top: ${Number(step.y ?? 600)}, behavior: "smooth" })`);
       break;
     case "wait":
       break;

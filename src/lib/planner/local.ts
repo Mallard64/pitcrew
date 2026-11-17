@@ -21,6 +21,15 @@ export function clampWords(text: string, max = MAX_SAY_WORDS) {
   return end > 30 ? cut.slice(0, end + 1) : cut.replace(/[,;:\-–—]+$/, "") + ".";
 }
 
+/** True for human prose; false for nav soup, class names, smashed-together labels. */
+export function isProse(t: string) {
+  const words = t.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 5) return false;
+  if (words.some((w) => w.length > 20)) return false;
+  const wordy = words.filter((w) => /^[("'“]?[A-Za-z][a-z'’]*[-a-z]*[)"'”.,;:!?]*$/.test(w)).length;
+  return wordy / words.length >= 0.75;
+}
+
 const firstSentence = (t: string) => (t.match(/^.{20,200}?[.!?](\s|$)/)?.[0] ?? t).trim();
 const sentence = (t: string) => (/[.!?]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
 
@@ -39,7 +48,10 @@ export function parseRevision(request: string): Revision {
 }
 
 function scrollSteps(page: PageDigest, max: number, focus?: string) {
-  const below = page.sections.filter((s) => s.y > 500 && s.y < page.height - 200);
+  const below = page.sections
+    .filter((s) => s.y > 500 && s.y < page.height - 200)
+    .map((s) => ({ ...s, text: isProse(s.text) ? s.text : "" }))
+    .filter((s) => s.text || s.heading.split(/\s+/).length >= 4);
   const ranked = focus
     ? [...below].sort((a, b) => Number(b.heading.toLowerCase().includes(focus)) - Number(a.heading.toLowerCase().includes(focus)))
     : below;
@@ -59,7 +71,7 @@ export function planLocally(input: PlanInput, digest: SiteDigest, rev: Revision 
     steps.push({ ...s, say, id: `s${steps.length + 1}`, hold_ms: holdFor(say) } as Step);
   };
 
-  const pitch = input.blurb?.trim() || home.description || home.h1 || home.title;
+  const pitch = input.blurb?.trim() || [home.description, home.h1, home.title].find((t) => t && isProse(t)) || home.h1 || home.title;
   add({ action: "goto", url: digest.finalUrl, say: `Meet ${name}. ${sentence(firstSentence(pitch))}` });
 
   const budget = rev.shorter ? 2 : rev.longer ? 5 : 4;
@@ -82,7 +94,7 @@ export function planLocally(input: PlanInput, digest: SiteDigest, rev: Revision 
   if (rev.focus) pages.sort((a, b) => Number((b.h1 + b.title).toLowerCase().includes(rev.focus!)) - Number((a.h1 + a.title).toLowerCase().includes(rev.focus!)));
   for (const p of pages.slice(0, rev.shorter ? 1 : 2)) {
     const what = p.h1 || p.title;
-    const detail = p.description || p.sections.find((s) => s.text)?.text || "";
+    const detail = [p.description, ...p.sections.map((s) => s.text)].find((t) => t && isProse(t)) ?? "";
     add({ action: "goto", url: p.url, say: `${sentence(what)} ${detail ? firstSentence(detail) : ""}` });
     const sub = scrollSteps(p, 1)[0];
     if (sub && !rev.shorter) add({ action: "scroll", y: Math.max(0, sub.y - 120), say: `${sentence(sub.heading)} ${sub.text ? firstSentence(sub.text) : ""}` });

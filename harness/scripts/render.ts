@@ -10,7 +10,7 @@ export type PngJob = { html: string; out: string; transparent?: boolean };
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const FONT = `font-family: Inter, "Helvetica Neue", Helvetica, Arial, "DejaVu Sans", sans-serif;`;
+const FONT = `font-family: Inter, 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif;`;
 
 export function cardHtml(kind: "title" | "end", title: string, sub: string) {
   const big = kind === "title" ? title : "Try it";

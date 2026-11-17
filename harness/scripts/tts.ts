@@ -14,7 +14,7 @@ export type SegmentAudio = { step_id: string; duration_s: number; fallback?: boo
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function ttsConfigFromEnv(env = process.env): TtsConfig {
+export function ttsConfigFromEnv(env: Record<string, string | undefined> = process.env): TtsConfig {
   const p = (env.TTS_PROVIDER ?? "none").toLowerCase();
   const provider: ProviderName = ["openai", "elevenlabs", "piper"].includes(p)
     ? (p as ProviderName)
