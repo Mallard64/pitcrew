@@ -1,69 +1,58 @@
-import Image from "next/image";
+import { connection } from "next/server";
+import JobForm from "@/components/JobForm";
+import { getStats } from "@/lib/db";
 
-export default function Home() {
+const STEPS = [
+  { t: "Paste your link", d: "Your live URL, plus your repo if you want a Build Log draft." },
+  { t: "We tour your app", d: "An agent plans a 45–90s walkthrough, records it in Chromium and writes the narration." },
+  { t: "Download and revise", d: "Get demo.mp4, captions and a Build Log draft. Ask for changes in plain words." },
+];
+
+export default async function Home() {
+  await connection();
+  const s = getStats();
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="space-y-14">
+      <section className="space-y-5 text-center">
+        <p className="mx-auto w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+          For Big Hack Game teams · submissions due Nov 19, 11:59 AM PST
+        </p>
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">Your demo video, done before the deadline.</h1>
+        <p className="mx-auto max-w-2xl text-lg text-slate-600">
+          Paste your project&apos;s link. Pit Crew tours your app, records it, narrates it and hands you a{" "}
+          <span className="font-semibold text-slate-900">demo.mp4</span>, captions and a <span className="font-semibold text-slate-900">Build Log</span> draft.
+        </p>
+        {s.videos_made > 0 && (
+          <p className="text-sm text-slate-500">
+            <span className="font-semibold text-slate-900">{s.videos_made}</span> demo video{s.videos_made === 1 ? "" : "s"} made for{" "}
+            <span className="font-semibold text-slate-900">{s.unique_projects}</span> project{s.unique_projects === 1 ? "" : "s"} so far
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        )}
+      </section>
+
+      <section id="make" className="mx-auto max-w-2xl scroll-mt-20">
+        <JobForm />
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        {STEPS.map((x, i) => (
+          <div key={x.t} className="card">
+            <div className="mb-2 grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white">{i + 1}</div>
+            <h3 className="font-semibold">{x.t}</h3>
+            <p className="mt-1 text-sm text-slate-600">{x.d}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="card space-y-2 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-900">What to expect</h2>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Most videos take 2–5 minutes. You can leave the page open and watch progress live.</li>
+          <li>Login-walled apps: we record your public pages only and tell you so.</li>
+          <li>If a click fails, we drop that step rather than show a broken screen. Revise to steer it.</li>
+          <li>Narration only describes what is on your site or in your description. Check it before you submit.</li>
+        </ul>
+      </section>
     </div>
   );
 }

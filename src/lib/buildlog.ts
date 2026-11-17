@@ -33,31 +33,33 @@ export async function fetchRepoFacts(
   return { commits, readme };
 }
 
-/** A factual build log made only from commit messages, grouped by day (no LLM, nothing invented). */
+/**
+ * A factual build log made only from commit messages, grouped by day (no LLM, nothing invented).
+ * Keeps the most recent commits that fit in the word budget, then prints them oldest-first.
+ */
 export function localBuildLog(projectName: string, commits: Commit[], maxWords = 600): string {
-  if (!commits.length) return `# ${projectName}: Build Log\n\nNo commits found.\n`;
+  const useful = commits.filter((c) => !/^merge (pull request|branch)/i.test(c.message));
+  if (!useful.length) return `# ${projectName}: Build Log\n\nNo commits found.\n`;
+  const kept: Commit[] = [];
+  let words = 25;
+  for (const c of [...useful].sort((a, b) => b.date.localeCompare(a.date))) {
+    const w = c.message.split("\n")[0].split(/\s+/).length + 2;
+    if (words + w > maxWords) break;
+    words += w;
+    kept.push(c);
+  }
   const byDay = new Map<string, Commit[]>();
-  for (const c of [...commits].reverse()) {
+  for (const c of kept.reverse()) {
     const day = c.date.slice(0, 10);
     if (!byDay.has(day)) byDay.set(day, []);
     byDay.get(day)!.push(c);
   }
-  const lines = [`# ${projectName}: Build Log`, "", `_Drafted by Pit Crew from ${commits.length} commits. Edit before posting._`, ""];
-  let words = 0;
+  const trimmed = kept.length < useful.length ? ` (latest ${kept.length} of ${useful.length} shown)` : "";
+  const lines = [`# ${projectName}: Build Log`, "", `_Drafted by Pit Crew from commit messages${trimmed}. Edit before posting._`, ""];
   for (const [day, cs] of byDay) {
-    const fmt = new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    lines.push(`## ${fmt}`);
-    for (const c of cs) {
-      const subject = c.message.split("\n")[0].slice(0, 140);
-      if (/^merge (pull request|branch)/i.test(subject)) continue;
-      words += subject.split(/\s+/).length + 1;
-      if (words > maxWords - 20) {
-        lines.push("- …(older/newer commits trimmed to stay under 600 words)");
-        return lines.join("\n") + "\n";
-      }
-      lines.push(`- ${subject} (\`${c.sha}\`)`);
-    }
+    lines.push(`## ${new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`);
+    for (const c of cs) lines.push(`- ${c.message.split("\n")[0].slice(0, 140)} (\`${c.sha}\`)`);
     lines.push("");
   }
-  return lines.join("\n") + "\n";
+  return lines.join("\n");
 }

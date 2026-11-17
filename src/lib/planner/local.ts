@@ -72,13 +72,13 @@ export function planLocally(input: PlanInput, digest: SiteDigest, rev: Revision 
   };
 
   const pitch = input.blurb?.trim() || [home.description, home.h1, home.title].find((t) => t && isProse(t)) || home.h1 || home.title;
-  add({ action: "goto", url: digest.finalUrl, say: `Meet ${name}. ${sentence(firstSentence(pitch))}` });
+  add({ action: "goto", url: digest.finalUrl, say: pitch && pitch.trim().toLowerCase() !== name.trim().toLowerCase() ? `Meet ${name}. ${sentence(pitch)}` : `Meet ${name}. Here is a quick tour of the live site.` });
 
   const budget = rev.shorter ? 2 : rev.longer ? 5 : 4;
   let scrolledTo = 0;
   for (const s of scrollSteps(home, budget, rev.focus)) {
     const target = Math.max(0, s.y - 120);
-    const body = s.text ? firstSentence(s.text) : "";
+    const body = s.text ?? "";
     add({ action: "scroll", y: target - scrolledTo, say: `${sentence(s.heading)} ${body}` });
     scrolledTo = target;
   }
@@ -95,10 +95,22 @@ export function planLocally(input: PlanInput, digest: SiteDigest, rev: Revision 
   for (const p of pages.slice(0, rev.shorter ? 1 : 2)) {
     const what = p.h1 || p.title;
     const detail = [p.description, ...p.sections.map((s) => s.text)].find((t) => t && isProse(t)) ?? "";
-    add({ action: "goto", url: p.url, say: `${sentence(what)} ${detail ? firstSentence(detail) : ""}` });
+    add({ action: "goto", url: p.url, say: `${sentence(what)} ${detail}` });
     const sub = scrollSteps(p, 1)[0];
-    if (sub && !rev.shorter) add({ action: "scroll", y: Math.max(0, sub.y - 120), say: `${sentence(sub.heading)} ${sub.text ? firstSentence(sub.text) : ""}` });
+    if (sub && !rev.shorter) add({ action: "scroll", y: Math.max(0, sub.y - 120), say: `${sentence(sub.heading)} ${sub.text ?? ""}` });
   }
+
+  // App-like sites (canvas, dashboards) have little copy; still give the viewer a few beats.
+  const extras = [home.description, home.h1, ...digest.pages.map((p) => p.description)]
+    .filter((t): t is string => !!t && isProse(t))
+    .filter((t, i, a) => a.indexOf(t) === i && !steps.some((st) => st.say.includes(firstSentence(t).slice(0, 40))));
+  const minSteps = rev.shorter ? 3 : 4;
+  if (steps.length < minSteps && home.height > 1000) add({ action: "scroll", y: Math.min(700, home.height - 720), say: `Here's more of ${name}.` });
+  for (const t of extras) {
+    if (steps.length >= minSteps) break;
+    add({ action: "wait", say: t });
+  }
+  if (steps.length < minSteps) add({ action: "wait", say: `Here is the ${name} interface, live at its public link.` });
 
   const host = new URL(digest.finalUrl).host.replace(/^www\./, "");
   add({ action: "goto", url: digest.finalUrl, say: `That's ${name}. Try it yourself at ${host}.` });

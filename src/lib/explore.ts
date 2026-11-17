@@ -112,7 +112,7 @@ export async function exploreSite(
         await page.goto(l.href, { waitUntil: "domcontentloaded", timeout: 12_000 });
         await page.waitForLoadState("networkidle", { timeout: 3000 }).catch(() => {});
         const d = await digestPage(page);
-        if (d.h1 || d.sections.length) pages.push(d);
+        if (d.h1 || d.sections.length || d.title) pages.push(d);
       } catch (e) {
         opts.log?.(`could not open ${l.href}: ${(e as Error).message.split("\n")[0]}`);
       }

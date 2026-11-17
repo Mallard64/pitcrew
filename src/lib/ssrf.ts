@@ -38,7 +38,11 @@ export function isPrivateIp(ip: string): boolean {
 
 export type UrlCheck = { ok: true; url: URL } | { ok: false; reason: string };
 
+// Integration tests serve a fixture site on 127.0.0.1; only honoured under vitest (NODE_ENV=test).
+const allowLocalForTests = () => process.env.NODE_ENV === "test" && process.env.PITCREW_TEST_ALLOW_LOCAL === "1";
+
 export async function checkPublicUrl(raw: string, resolve: Resolver = defaultResolver): Promise<UrlCheck> {
+  if (allowLocalForTests()) return { ok: true, url: new URL(raw) };
   let url: URL;
   try {
     url = new URL(raw);
