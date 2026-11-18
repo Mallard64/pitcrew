@@ -13,6 +13,8 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
+# Bundle the Remotion project once here, not at the start of every job.
+RUN npx tsx scripts/bundle-remotion.ts /app/remotion-bundle
 
 FROM base AS run
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg tini && rm -rf /var/lib/apt/lists/*
@@ -27,6 +29,8 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+COPY --from=build /app/remotion-bundle ./remotion-bundle
+ENV REMOTION_BUNDLE=/app/remotion-bundle
 RUN mkdir -p /data
 # Persistent storage: attach a Railway volume at /data (Railway rejects the Dockerfile VOLUME keyword).
 EXPOSE 3000

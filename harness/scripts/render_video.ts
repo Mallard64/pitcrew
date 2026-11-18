@@ -23,8 +23,9 @@ import type { PitchVideoProps } from "../../remotion/types";
 const ENTRY = path.resolve(/* turbopackIgnore: true */ process.env.REMOTION_ENTRY || path.join(process.cwd(), "remotion/index.ts"));
 let bundlePromise: Promise<string> | null = null;
 
-/** Webpack bundle of the Remotion project, built once per process. */
+/** Webpack bundle of the Remotion project, built once per process (or prebuilt into the image: REMOTION_BUNDLE). */
 export function getBundle(): Promise<string> {
+  if (process.env.REMOTION_BUNDLE) return Promise.resolve(path.resolve(/* turbopackIgnore: true */ process.env.REMOTION_BUNDLE));
   if (!bundlePromise) {
     bundlePromise = bundle({
       entryPoint: ENTRY,

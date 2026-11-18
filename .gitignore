@@ -49,3 +49,4 @@ eval/samples/*.mp4
 /playwright-report/
 /tmp/
 eval/runs/
+remotion-bundle/
