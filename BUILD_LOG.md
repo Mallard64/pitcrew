@@ -50,3 +50,12 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - tldraw, **through the web app's own API in real mode**: 10 scenes (problem → solution → 6 demo → what's next → end), 71s, status `ok`, 172s end to end.
 - Bug found by looking at frames: tldraw's toolbar is at the bottom, so captions covered the zoom target. Zoom now pans the target toward the centre, and captions move to the top for low targets.
 - Bug: `next build` failed with "Unknown module type" because Turbopack tried to bundle esbuild's native binary from Remotion's bundler. Marked Remotion as server-external.
+
+## 2026-11-18 (evening): pitch upgrade + human in the loop
+- **Video**: fonts bundled into the renderer (the Railway container had none, so text fell back to DejaVu); two new looks (studio, blueprint) for eight in total; new CSS transitions (zoom-through, whip, push, iris, flip) with spring easing; a caption-free poster frame. Remotion's shader transitions were skipped because they need WebGL.
+- **Narrative**: an 8-rule pitch check (hook, specific problem, product named, ≥3 demo steps, payoff line, 60–90s, no hype, short sentences), plus a judge pass in which the agent rewrites only the words. The server keeps that rewrite only if the check doesn't score lower. Stats are still re-verified after it.
+- **Human in the loop**: pick the narrator (10 ElevenLabs voices checked against our account, with previews) and the look; an opt-in script review that pauses the job after recording (10-minute auto-continue, job timeout paused); revision chips and switching the narrator on revise.
+- **UI**: the public log reads "Agent opened …" instead of response and memory ids; the video is the primary download; a "While you wait" panel; the hero breaks one sentence per line.
+- Bug caught in a screenshot: the first poster still had captions, because Remotion renders the props from `selectComposition`, not the ones passed to `renderStill`. Fixed with a separate selection.
+- Live on Railway: JSON Crack with Sarah's voice and the script review: paused for review at 4:42, approved right away, `ok` in 8:06 end to end, 73.7s at 1080p60, 7/7 steps. The agent picked blueprint and used zoom/push/whip/iris itself. Pitch check 8/8 and the judge pass was applied. The public log has no ids. 79 tests passing.
+- Raised MAX_JOBS_PER_USER_PER_DAY to 10 on Railway: our own testing hit the limit of 5, and teams also revise.

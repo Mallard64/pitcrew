@@ -188,7 +188,7 @@ export async function runPipeline(
     progress("narrating", "Waiting for your script review");
     const edits = await hooks.awaitReview({
       scenes: videoPlan.scenes.filter((sc) => sc.section !== "end").map((sc) => ({ id: sc.id, section: sc.section, narration: sc.narration })),
-      report: checkPitch(videoPlan, input.projectName),
+      report: { ...checkPitch(videoPlan, input.projectName), judge: report.judge },
       voice: voiceKey,
       look: kitId,
     });
