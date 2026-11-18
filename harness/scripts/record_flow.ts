@@ -104,7 +104,8 @@ class ScreenRecorder {
   }
 }
 
-export const RECORD_SCALE = Number(process.env.RECORD_SCALE) || 1.5;
+/** Device-pixel ratio for recording; 2 keeps 1.8x zooms sharp in a 1080p render. */
+export const RECORD_SCALE = Number(process.env.RECORD_SCALE) || 2;
 const SETTLE_MS = 700;
 const TYPE_DELAY_MS: [number, number] = [60, 90];
 
@@ -277,7 +278,7 @@ export async function recordFlow(
   try {
     const context = await browser.newContext({
       viewport: flow.viewport,
-      // Render at 1.5x pixel density (1920x1080 for a 1280x720 viewport) so zoomed scenes stay sharp.
+      // Render at RECORD_SCALE pixel density (2560x1440 for a 1280x720 viewport) so zoomed scenes stay sharp.
       // Layout, boxes and cursor stay in CSS px.
       deviceScaleFactor: RECORD_SCALE,
       userAgent:

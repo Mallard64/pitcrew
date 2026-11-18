@@ -39,3 +39,10 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Recording: Playwright's `recordVideo` captures at CSS size whatever `deviceScaleFactor` is set to, so zoomed scenes were upscaled 720p. `record_flow.ts` now drives Chrome's `Page.startScreencast` directly at 1.5× density (1920×1080 from a 1280×720 viewport) and encodes `recording.mp4` (H.264, crf 14). The layout, boxes and cursor stay in CSS px.
 - Clips are 1920×1080. Remotion composes at 1280×720 and renders with `scale: 1.5` at crf 18, so text and shapes are drawn crisp at full size.
 - TTS: with `TTS_PROVIDER=openai`, the key falls back to `OPENAI_API_KEY` when `TTS_API_KEY` is empty.
+
+## 2026-11-17: Striking visual pass
+- Every scene sits on an animated brand backdrop: two drifting glows (the brand hue and a shifted hue), a dot grid and a vignette.
+- Demo clips play inside a floating browser window (traffic lights, URL bar) that tilts in. Zoom happens inside the window, and a pulsing brand ring marks the zoom target. Captions have their own band below the window, so they can no longer cover the site's UI (tldraw's toolbar was covered before).
+- Title scenes: a section chip, a gradient headline whose words blur in, and a growing accent bar. The end card is a glowing URL pill. A thin progress line runs along the top.
+- Recording density is now 2× (2560×1440 clips), so 1.8× zooms stay sharp in the 1080p output. Cost: about 58s to record and about 200s to render for a 66s video on an M-series laptop.
+- No bundled font yet: installing `@fontsource-variable/inter` was blocked by a permission rule, so a Linux render falls back to DejaVu Sans. Needs a human decision.

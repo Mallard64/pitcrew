@@ -1,11 +1,11 @@
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { TransitionSeries, linearTiming, type TransitionPresentation } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import { Scene } from "./Scene";
-import { DEFAULT_KIT } from "./kits/default";
+import { DEFAULT_KIT, brandTint } from "./kits/default";
 import { TRANSITION_FRAMES, framesFor, type PitchVideoProps } from "./types";
 
 // Transitions not built yet (zoom-through, match-cut, whip: C13) fall back to fade.
@@ -31,7 +31,7 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
     const frames = framesFor(scene.duration_s, plan.fps) + (hasNext ? TRANSITION_FRAMES : 0);
     children.push(
       <TransitionSeries.Sequence key={scene.id} durationInFrames={frames}>
-        <Scene scene={scene} ctx={ctx} />
+        <Scene scene={scene} ctx={ctx} index={i} />
       </TransitionSeries.Sequence>,
     );
     if (hasNext) {
@@ -47,6 +47,26 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
   return (
     <AbsoluteFill style={{ background: kit.bg }}>
       <TransitionSeries>{children}</TransitionSeries>
+      <Progress color={kit.accent} />
     </AbsoluteFill>
+  );
+}
+
+/** Thin brand-coloured progress line along the top edge. */
+function Progress({ color }: { color: string }) {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        height: 3,
+        width: `${(100 * frame) / Math.max(1, durationInFrames - 1)}%`,
+        background: `linear-gradient(90deg, ${brandTint(color, 55)}, ${brandTint(color, 78)})`,
+        boxShadow: `0 0 10px ${brandTint(color, 60)}`,
+      }}
+    />
   );
 }

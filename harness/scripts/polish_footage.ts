@@ -3,7 +3,7 @@
  *
  * CLI: tsx harness/scripts/polish_footage.ts <out_dir>
  * Inputs: <out_dir>/recording.mp4, <out_dir>/timings.json (from record_flow.ts)
- * Outputs: <out_dir>/clips/<step_id>.mp4 (1920x1080, 30fps, H.264, no audio), <out_dir>/clips/manifest.json
+ * Outputs: <out_dir>/clips/<step_id>.mp4 (2560x1440 by default, 30fps, H.264, no audio), <out_dir>/clips/manifest.json
  *
  * Dead time = a loading window the recorder saw in the DOM (spinner, progress bar, aria-busy,
  * skeleton) lasting over 1s. We don't use pixel stillness alone: the hold after each action is an
@@ -12,7 +12,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ffmpeg, probeDuration } from "./ff";
-import type { Box, CursorPoint, StepTiming } from "./record_flow";
+import { RECORD_SCALE, type Box, type CursorPoint, type StepTiming } from "./record_flow";
 
 export const DEAD_MIN_S = 1;
 export const SPEEDUP = 4; // max allowed by the spec
@@ -29,8 +29,9 @@ export type ClipInfo = {
   speedups: Speedup[];
 };
 
-const W = 1920;
-const H = 1080;
+// Clips keep the recording's device-pixel resolution (2560x1440 at the default scale).
+const W = Math.round((1280 * RECORD_SCALE) / 2) * 2;
+const H = Math.round((720 * RECORD_SCALE) / 2) * 2;
 const FPS = 30;
 
 /** Splits a step window into normal and sped-up segments (seconds, relative to the window start). */

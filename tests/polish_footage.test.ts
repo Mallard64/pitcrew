@@ -60,7 +60,7 @@ describe("polishFootage", () => {
     for (const c of clips) {
       expect(fs.existsSync(path.join(out, c.file))).toBe(true);
       const v = (await probeStreams(path.join(out, c.file))).find((s) => s.codec_type === "video")!;
-      expect([v.codec_name, v.width, v.height]).toEqual(["h264", 1920, 1080]);
+      expect([v.codec_name, v.width, v.height]).toEqual(["h264", 2560, 1440]);
     }
     const c1 = clips[0];
     expect(c1.speedups).toHaveLength(1);
