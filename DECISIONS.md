@@ -64,3 +64,9 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 ## 2026-11-17: Calmer openings, stricter stat relevance
 - Title scenes enter one element at a time (chip, then headline, then accent bar, then stat count-up, then label, then citation). Before, they animated together, which read as glitchy. Headline words fade up 0.32em with no blur; a clipping-mask reveal was tried and dropped because glyph tops peeked below the line.
 - Research follow-up: a stat must measure the exact pain the product removes. General workplace, productivity, tool or market statistics are rejected, and "when in doubt, use none". The problem headline must name the product's specific situation. On tldraw this replaced "65% of workers have an issue with their tools" with no stat and a product-specific problem line.
+
+## 2026-11-17: Pacing (long pauses)
+- The agent planned scene lengths at 2.5 words/s while ElevenLabs spoke at about 3.8, which left up to 5s of dead air per scene (silencedetect found 7 silences over 1.5s on tldraw).
+- Scenes are now cut to their narration: lead 0.3s + voice + a 0.6s beat (demo) or 0.9s (titles). Floors are 2.6s for demo scenes (cursor move + click) and 3s for title scenes; the end card is 2.5s.
+- ElevenLabs `speed: 0.85` gives about 3.0 words/s (measured). The agent is told about 3 words/s and that its words, not its durations, set the length.
+- Result on tldraw: 62.4s, with only two gaps over 1.5s (about 1.7s each) plus the end card.

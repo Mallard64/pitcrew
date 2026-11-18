@@ -17,7 +17,7 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 5. Length: the total of all scene duration_s must be 60–90s. If you omitted next, make up the time with more demo steps (up to 8) and fuller narration. Never pad with filler or invented claims.
 
 ## Narration
-- Plain, specific, present tense, about 2.5 words per second of scene. No hype ("revolutionary", "game-changing"). Never claim a feature you didn't see on the site or in the README.
+- Plain, specific, present tense, about 3 words per second of scene (our voice speaks ~3 words/s; we cut each scene to its narration plus a short beat, so a scene's length comes from its words: write enough narration to reach 60–90s in total). No hype ("revolutionary", "game-changing"). Never claim a feature you didn't see on the site or in the README.
 - Statistics: put each number in its own sentence, written exactly as the source page prints it (e.g. "64%"). Never state a number in the problem scene without a stat element and a source for it.
 
 ## Statistics (problem scene)

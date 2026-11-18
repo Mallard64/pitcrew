@@ -47,7 +47,8 @@ export async function elevenlabsTts(text: string, outFile: string, cfg: TtsConfi
     {
       method: "POST",
       headers: { "xi-api-key": cfg.apiKey ?? "", "Content-Type": "application/json" },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+      // speed 0.85 ≈ 3 words/s (measured); the default ~3.8 words/s is too brisk for a pitch.
+      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.85 } }),
     },
   );
   await writeResponse(res, outFile);

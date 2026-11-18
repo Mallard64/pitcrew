@@ -149,10 +149,9 @@ export async function runPipeline(
   const audio = await voiceScript(script, outDir, tts, { log });
   if (audio.some((a) => a.fallback)) log("Some segments fell back to silence after TTS errors");
   const audioLen = new Map(audio.map((a) => [a.step_id, a.duration_s]));
-  for (const sc of videoPlan.scenes) {
-    const need = (audioLen.get(sc.id) ?? 0) + NARRATION_LEAD_S + 0.5;
-    if (sc.duration_s < need) sc.duration_s = Math.round(need * 10) / 10;
-  }
+  // Fit every scene to its narration: the agent's planned durations assume a slower voice and left
+  // seconds of dead air. Demo scenes keep a floor so the on-screen action still plays.
+  for (const sc of videoPlan.scenes) sc.duration_s = fitSceneDuration(sc, audioLen.get(sc.id));
   await fs.writeFile(path.join(outDir, "video_plan.json"), JSON.stringify(videoPlan, null, 2));
   const srt: Chunk[] = [];
   let t = 0;
@@ -262,4 +261,13 @@ async function researchProblemStats(
     else updated = ev;
   }
   return updated?.videoPlan ? { videoPlan: updated.videoPlan, sessionId: updated.sessionId } : null;
+}
+
+/** Narration + a short beat; demo scenes at least 2.6s (cursor move + click), the end card 2.5s. */
+export function fitSceneDuration(sc: { section: string; narration: string; duration_s: number }, voice?: number): number {
+  if (sc.section === "end") return 2.5;
+  if (!voice || !sc.narration.trim()) return Math.min(sc.duration_s, sc.section === "demo" ? 3 : 4);
+  const tail = sc.section === "demo" ? 0.6 : 0.9;
+  const fit = NARRATION_LEAD_S + voice + tail;
+  return Math.round(Math.max(fit, sc.section === "demo" ? 2.6 : 3) * 10) / 10;
 }

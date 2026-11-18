@@ -194,3 +194,14 @@ describe("source year", () => {
     expect(sourcesMarkdown("P", q.sources)).toContain("- Example Survey: <https://stats.example.org/report>");
   });
 });
+
+describe("scene pacing", async () => {
+  const { fitSceneDuration } = await import("../src/lib/pipeline");
+  it("cuts scenes to narration plus a short beat, with floors", () => {
+    expect(fitSceneDuration({ section: "problem", narration: "x", duration_s: 13 }, 8.1)).toBe(9.3); // was 13: 4.9s of dead air
+    expect(fitSceneDuration({ section: "demo", narration: "x", duration_s: 6 }, 2.3)).toBe(3.2);
+    expect(fitSceneDuration({ section: "demo", narration: "x", duration_s: 6 }, 1.0)).toBe(2.6); // floor so the click shows
+    expect(fitSceneDuration({ section: "solution", narration: "x", duration_s: 5 }, 12)).toBe(13.2); // never shorter than the voice
+    expect(fitSceneDuration({ section: "end", narration: "", duration_s: 3 })).toBe(2.5);
+  });
+});
