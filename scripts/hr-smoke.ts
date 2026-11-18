@@ -14,17 +14,19 @@ const PROBE = `Run these shell commands in your sandbox and report each output v
 Questions: what is your max task runtime? Can you install apt packages? Reply as a short bullet list.`;
 
 async function main() {
-  const { HARNESSROUTER_BASE_URL: base, HARNESSROUTER_API_KEY: key, HARNESS_ID: id, HARNESS_MODEL: model } = process.env;
-  if (!base || !key || !id) throw new Error("Set HARNESSROUTER_BASE_URL, HARNESSROUTER_API_KEY and HARNESS_ID in .env");
+  const base = process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai";
+  const key = process.env.HR_API_KEY || process.env.HARNESSROUTER_API_KEY;
+  const { HARNESS_ID: id, HARNESS_MODEL: model } = process.env;
+  if (!key || !id) throw new Error("Set HR_API_KEY and HARNESS_ID in .env");
   const probe = process.argv.includes("--probe");
   const t0 = Date.now();
   const res = await fetch(`${base.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1/responses`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "UHP-Version": "2026-09-28" },
     body: JSON.stringify({
       input: probe ? PROBE : "Reply with exactly: pit crew online",
       ...(model ? { model } : {}),
-      metadata: { harness_id: id, app: "pit-crew-smoke" },
+      metadata: { harness_id: id },
       stream: true,
     }),
   });

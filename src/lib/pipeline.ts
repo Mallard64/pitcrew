@@ -19,8 +19,8 @@ export const STAGES = ["opening", "planning", "recording", "narrating", "voicing
 export type Stage = (typeof STAGES)[number];
 export type PipelineEvent = { type: "progress"; step: Stage; message: string } | { type: "log"; message: string };
 
-export type JobInput = { projectName: string; liveUrl: string; repoUrl?: string; blurb?: string };
-export type PipelineResult = { contract: Contract; flow: Flow; sessionId?: string; planSource: string; files: string[] };
+export type JobInput = { projectName: string; liveUrl: string; repoUrl?: string; blurb?: string; user?: string };
+export type PipelineResult = { contract: Contract; flow: Flow; sessionId?: string; hrSessionId?: string; planSource: string; files: string[] };
 
 /** Saved next to v1 so revisions don't need to re-crawl the site or GitHub. */
 type Context = { digest: SiteDigest; commits?: Commit[]; readme?: string };
@@ -125,5 +125,5 @@ export async function runPipeline(
   await fs.rm(path.join(outDir, "recording.webm"), { force: true });
 
   const files = OUTPUT_FILES.filter((f) => existsSync(path.join(outDir, f)));
-  return { contract, flow, sessionId: plan.sessionId, planSource: plan.source, files };
+  return { contract, flow, sessionId: plan.sessionId, hrSessionId: plan.hrSessionId, planSource: plan.source, files };
 }

@@ -41,11 +41,12 @@ class FallbackPlanner implements Planner {
 
 export function getPlanner(env: Record<string, string | undefined> = process.env): Planner {
   if (harnessMode(env) === "mock") return new LocalPlanner();
-  const { HARNESSROUTER_BASE_URL, HARNESSROUTER_API_KEY, HARNESS_ID, HARNESS_MODEL } = env;
-  if (!HARNESSROUTER_BASE_URL || !HARNESSROUTER_API_KEY || !HARNESS_ID)
-    throw new Error("HARNESS_MODE=real needs HARNESSROUTER_BASE_URL, HARNESSROUTER_API_KEY and HARNESS_ID");
+  const apiKey = env.HR_API_KEY || env.HARNESSROUTER_API_KEY;
+  const harnessId = env.HARNESS_ID;
+  if (!apiKey || !harnessId) throw new Error("HARNESS_MODE=real needs HR_API_KEY and HARNESS_ID");
+  // The model is configured on the Harness; HARNESS_MODEL only overrides it per task when set.
   return new FallbackPlanner(
-    new HarnessRouterPlanner({ baseUrl: HARNESSROUTER_BASE_URL, apiKey: HARNESSROUTER_API_KEY, harnessId: HARNESS_ID, model: HARNESS_MODEL || undefined }),
+    new HarnessRouterPlanner({ baseUrl: env.HARNESSROUTER_BASE_URL || undefined, apiKey, harnessId, model: env.HARNESS_MODEL || undefined }),
     new LocalPlanner(),
   );
 }

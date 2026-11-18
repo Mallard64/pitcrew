@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 /**
  * HarnessRouter client (UHP 2026-10-19). See docs/hr-api.md.
  * POST {base}/v1/responses with metadata.harness_id, stream=true; continue with previous_response_id.
@@ -5,29 +6,11 @@
 import { FlowSchema } from "../../../harness/schemas/flow";
 import type { PlanRequest, Planner, PlannerEvent } from "./types";
 
-export type HarnessConfig = { baseUrl: string; apiKey: string; harnessId: string; model?: string; fetchImpl?: typeof fetch };
+export type HarnessConfig = { baseUrl?: string; apiKey: string; harnessId: string; model?: string; fetchImpl?: typeof fetch };
 
-export const PLAN_INSTRUCTIONS = `You are Pit Crew, an agent that plans a short narrated demo video of a web product and drafts its build log.
-Our server will execute your click-flow in Chromium at 1280x720, voice your narration, and edit the video.
-
-Rules for flow.steps (5-10 steps, total 45-75 seconds):
-- actions: goto {url} | click {selector} | type {selector, text} | scroll {y: pixels, positive = down} | wait.
-- Story: hook (what it is, who it's for) -> core flow -> the "wow" moment -> close with the URL.
-- Only use selectors you have verified exist on the live page (Playwright syntax, e.g. text=Get started, #id, a[href="/pricing"]). Prefer goto over click when unsure.
-- Never log in, sign up, submit payments, or enter personal data. Use obviously fake demo inputs.
-- Each "say" is at most 25 words, plain and specific, present tense. No hype words ("revolutionary", "game-changing"). Never claim a feature you did not see on the site or in the README.
-- hold_ms is 2500-8000 and at least (words in say / 2.5) seconds + 0.8s.
-- The first step must be a goto to the live URL.
-
-If commits are provided, write build_log_md: dated sections (## Mon DD) from the commits, each with what was built / decided / struggled / next, max 600 words, only facts from the commits and README.
-
-Reply with ONE fenced json block and nothing else:
-\`\`\`json
-{"summary": "3 sentences: who it's for, the problem, the wow moment",
- "flow": {"project_name": "...", "url": "...", "viewport": {"width": 1280, "height": 720},
-          "steps": [{"id": "s1", "action": "goto", "url": "...", "hold_ms": 4000, "say": "..."}]},
- "build_log_md": "markdown or null"}
-\`\`\``;
+/** Standing instructions live in the HarnessRouter Harness (see harnessrouter.json), not in each task. */
+export const UHP_VERSION = "2026-09-28";
+export const DEFAULT_BASE_URL = "https://api.harnessrouter.ai";
 
 export function buildPlanPrompt(req: PlanRequest) {
   const d = req.digest;
@@ -115,14 +98,20 @@ export class HarnessRouterPlanner implements Planner {
 
   private async *call(body: Record<string, unknown>): AsyncIterable<PlannerEvent> {
     const f = this.cfg.fetchImpl ?? fetch;
-    const res = await f(`${this.cfg.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1/responses`, {
+    const base = (this.cfg.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "").replace(/\/v1$/, "");
+    const res = await f(`${base}/v1/responses`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${this.cfg.apiKey}`, "Content-Type": "application/json", Accept: "text/event-stream" },
+      headers: {
+        Authorization: `Bearer ${this.cfg.apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "UHP-Version": UHP_VERSION,
+        "Idempotency-Key": crypto.randomUUID(),
+      },
       body: JSON.stringify({
         ...body,
         ...(this.cfg.model ? { model: this.cfg.model } : {}),
-        metadata: { harness_id: this.cfg.harnessId, app: "pit-crew" },
-        instructions: PLAN_INSTRUCTIONS,
+        metadata: { harness_id: this.cfg.harnessId },
         stream: true,
         timeout_seconds: 420,
       }),
@@ -162,18 +151,21 @@ export class HarnessRouterPlanner implements Planner {
 
     const parsed = extractJson(messageText(final) || text) as { summary?: string; flow?: unknown; build_log_md?: string | null };
     const flow = FlowSchema.parse(parsed.flow);
-    yield { type: "plan", flow, summary: parsed.summary, buildLog: parsed.build_log_md ?? undefined, sessionId: final.id, source: "harness" };
+    const hrSession = typeof final.metadata?.session_id === "string" ? final.metadata.session_id : undefined;
+    yield { type: "plan", flow, summary: parsed.summary, buildLog: parsed.build_log_md ?? undefined, sessionId: final.id, hrSessionId: hrSession, source: "harness" };
   }
 
   plan(req: PlanRequest) {
-    return this.call({ input: buildPlanPrompt(req) });
+    return this.call({ input: buildPlanPrompt(req), ...(req.user ? { user: req.user } : {}) });
   }
 
   revise(req: PlanRequest & { sessionId?: string; previous: unknown; request: string }) {
     const input =
       `Revision request from the user: "${req.request}"\n` +
       `Change only what's needed and reply with the full JSON block again (same format). Keep build_log_md unless asked.`;
-    if (req.sessionId) return this.call({ input, previous_response_id: req.sessionId });
-    return this.call({ input: `${buildPlanPrompt(req)}\n\nPrevious flow:\n${JSON.stringify(req.previous)}\n\n${input}` });
+    const user = req.user ? { user: req.user } : {};
+    // Follow-up on the same result: continue that session. Otherwise start a new task.
+    if (req.sessionId) return this.call({ input, previous_response_id: req.sessionId, ...user });
+    return this.call({ input: `${buildPlanPrompt(req)}\n\nPrevious flow:\n${JSON.stringify(req.previous)}\n\n${input}`, ...user });
   }
 }

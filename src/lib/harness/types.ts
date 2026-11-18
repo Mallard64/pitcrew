@@ -10,11 +10,13 @@ export type PlanRequest = {
   digest: SiteDigest;
   commits?: Commit[];
   readme?: string;
+  /** Opaque per-visitor id sent as UHP `user` (never anything the person typed). */
+  user?: string;
 };
 
 export type PlannerEvent =
   | { type: "log"; message: string }
-  | { type: "plan"; flow: Flow; summary?: string; buildLog?: string; sessionId?: string; source: "harness" | "local" };
+  | { type: "plan"; flow: Flow; summary?: string; buildLog?: string; sessionId?: string; hrSessionId?: string; source: "harness" | "local" };
 
 /**
  * Plan B contract: the planner does the thinking (flow + narration + build log);

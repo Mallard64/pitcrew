@@ -23,6 +23,7 @@ export type Job = {
   render_mode: string | null;
   contract_json: string | null;
   plan_source: string | null;
+  hr_session_id: string | null;
 };
 export type JobEvent = { id: number; job_id: string; ts: number; kind: "progress" | "log" | "status"; step: string | null; message: string };
 export type Artifact = { job_id: string; version: number; name: string; path: string; bytes: number };
@@ -46,6 +47,9 @@ const MIGRATIONS = [
      quote TEXT, can_quote INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
    CREATE TABLE rate_events (key TEXT NOT NULL, ts INTEGER NOT NULL);
    CREATE INDEX rate_events_key ON rate_events(key, ts);`,
+  // session_id holds the latest HarnessRouter response id (for previous_response_id);
+  // hr_session_id holds that response's metadata.session_id (for listing its files).
+  `ALTER TABLE jobs ADD COLUMN hr_session_id TEXT;`,
 ];
 
 export function openDb(file?: string) {
