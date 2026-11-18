@@ -82,3 +82,9 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Dark theme to match the videos. The job page shows stage names that match the pipeline, an elapsed timer against a "usually about 10 min" guide, the look used and the time taken.
 - Bugs found by screenshots: (1) a `background:` shorthand on `.page-glow` wiped out the dark base colour and left the page white; fixed with `background-image` plus a background colour on html and body. (2) A stale Turbopack build cache shipped the old CSS after the fix; a clean `.next` fixed it. (3) The hero glow overflowed sideways on phones; it now has a negative inset only from `sm` up.
 - Browser e2e (Playwright through the real form, real agent): JSON Crack came back ok in 9:45, 73.4s, 6/6 steps, Terminal look picked for a dev tool, all six downloads 200, no console errors. No sideways overflow at 390px on /, /stats or the job page.
+
+## 2026-11-18: Deploy on Railway (Hobby), not Netlify
+- Netlify runs Next.js as short serverless functions: no 10-min jobs, no Chromium/ffmpeg, no persistent SQLite. Railway runs the Dockerfile as one long-lived container with a volume at /data.
+- Railway trial (1 GB / 2 vCPU) could not render: memory sat at the 1 GB ceiling and Remotion timed out per frame, so jobs fell back to the plain editor. Hobby (8 GB / 8 vCPU) renders the full video: JSON Crack, 74.2s, 1080p60, 7/7 steps, 8:58 end to end.
+- Container fixes: full node_modules in the image (tracing missed @rspack/binding), Remotion pre-bundled at build (REMOTION_BUNDLE), and caps because containers report the host's CPU count (RENDER_CONCURRENCY=4, FFMPEG_THREADS=4).
+- Railway service vars: RECORD_SCALE=2, RENDER_SCALE=1.5, RENDER_FPS=60, MAX_CONCURRENT_JOBS=1, JOB_TIMEOUT_MS=2400000, RENDER_FRAME_TIMEOUT_MS=180000, STEP_TIMEOUT_MS=25000, OFFTHREAD_CACHE_MB=1024. Auto-deploy is off (Railway GitHub app not installed): deploy with "Deploy latest commit".
