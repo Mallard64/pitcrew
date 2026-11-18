@@ -18,7 +18,8 @@ import type { Contract } from "../schemas/contract";
 import { ffmpeg, probeDuration } from "./ff";
 import type { PitchVideoProps } from "../../remotion/types";
 
-const ENTRY = path.resolve(__dirname, "../../remotion/index.ts");
+// Resolved from the working directory: inside a Next.js server chunk, __dirname is not the repo.
+const ENTRY = path.resolve(/* turbopackIgnore: true */ process.env.REMOTION_ENTRY || path.join(process.cwd(), "remotion/index.ts"));
 let bundlePromise: Promise<string> | null = null;
 
 /** Webpack bundle of the Remotion project, built once per process. */
@@ -70,7 +71,12 @@ function serveDir(root: string): Promise<{ base: string; close: () => Promise<vo
 }
 
 async function mediaFor(outDir: string, base: string): Promise<PitchVideoProps["media"]> {
-  const media: PitchVideoProps["media"] = { clips: {}, images: {} };
+  const media: PitchVideoProps["media"] = { clips: {}, images: {}, audio: {} };
+  const durations = path.join(outDir, "audio", "durations.json");
+  if (fs.existsSync(durations)) {
+    for (const d of JSON.parse(await fsp.readFile(durations, "utf8")) as { step_id: string; duration_s: number }[])
+      media.audio[d.step_id] = { url: `${base}/audio/${d.step_id}.mp3`, duration_s: d.duration_s };
+  }
   const manifest = path.join(outDir, "clips", "manifest.json");
   if (fs.existsSync(manifest)) {
     const clips = JSON.parse(await fsp.readFile(manifest, "utf8")) as { step_id: string; file: string; duration_s: number; box?: { x: number; y: number; w: number; h: number } }[];

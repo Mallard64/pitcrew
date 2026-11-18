@@ -10,7 +10,7 @@ const EMPTY: PitchVideoProps = {
     flow: { project_name: "Demo", url: "https://example.com", viewport: { width: 1280, height: 720 }, steps: [{ id: "s1", action: "wait", hold_ms: 1000, say: "" }] },
     sources: [],
   },
-  media: { clips: {}, images: {} },
+  media: { clips: {}, images: {}, audio: {} },
 };
 
 export function Root() {

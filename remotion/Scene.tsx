@@ -3,12 +3,13 @@
  * background. The primitives library (C11) and layouts (C12) replace the element renderers here.
  */
 import React from "react";
-import { AbsoluteFill, Img, OffthreadVideo, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { captionChunks, NARRATION_LEAD_S } from "../harness/captions";
 import type { Element, Scene as SceneT, Source } from "../harness/schemas/video_plan";
 import type { Kit } from "./kits/default";
 import type { PitchVideoProps } from "./types";
 
-type Ctx = { kit: Kit; sources: Source[]; media: PitchVideoProps["media"]; url: string; credit: boolean };
+type Ctx = { kit: Kit; sources: Source[]; media: PitchVideoProps["media"]; url: string; credit: boolean; audioDuration?: number };
 
 const fadeUp = (frame: number, delay: number) => ({
   opacity: interpolate(frame - delay, [0, 12], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
@@ -40,24 +41,48 @@ function Clip({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx: Ctx })
   const { fps, width, height } = useVideoConfig();
   const m = ctx.media.clips[el.step_id];
   if (!m) return null;
-  let transform = "none";
+  const clipFrames = Math.max(1, Math.floor(m.duration_s * fps) - 1);
+  const still = ctx.media.images[`shots/${el.step_id}.png`];
+  let style: React.CSSProperties = {};
   if (el.zoom === "target" && m.box) {
-    // Spring zoom toward the target's box, capped so the frame never shows past the video edge.
+    // Spring zoom that also pans the target toward the centre; clamped so no edge of the video shows.
     const scale = Math.min(1.8, Math.max(1, Math.min(width / (m.box.w * 2.2), height / (m.box.h * 3))));
     const k = spring({ frame: frame - 8, fps, config: { damping: 200 }, durationInFrames: 30 });
-    const s = 1 + (scale - 1) * k;
+    const sc = 1 + (scale - 1) * k;
     const cx = m.box.x + m.box.w / 2;
     const cy = m.box.y + m.box.h / 2;
-    transform = `scale(${s})`;
-    return (
-      <AbsoluteFill style={{ transformOrigin: `${cx}px ${cy}px`, transform }}>
-        <OffthreadVideo src={m.url} muted playbackRate={el.speed ?? 1} />
-      </AbsoluteFill>
-    );
+    const tx = Math.min(0, Math.max(width - width * sc, width / 2 - cx * sc));
+    const ty = Math.min(0, Math.max(height - height * sc, height / 2 - cy * sc));
+    style = { transformOrigin: "0 0", transform: `translate(${tx}px, ${ty}px) scale(${sc})` };
   }
   return (
-    <AbsoluteFill>
-      <OffthreadVideo src={m.url} muted playbackRate={el.speed ?? 1} />
+    <AbsoluteFill style={style}>
+      <Sequence durationInFrames={clipFrames} layout="none">
+        <OffthreadVideo src={m.url} muted playbackRate={el.speed ?? 1} />
+      </Sequence>
+      {/* Narration can outlast the clip: hold the step's final screenshot instead of going blank. */}
+      {still && (
+        <Sequence from={clipFrames} layout="none">
+          <Img src={still} style={{ width: "100%", height: "100%" }} />
+        </Sequence>
+      )}
+    </AbsoluteFill>
+  );
+}
+
+function Captions({ text, ctx, top }: { text: string; ctx: Ctx; top?: boolean }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const audio = ctx.audioDuration;
+  if (!text.trim() || !audio) return null;
+  const t = frame / fps;
+  const chunk = captionChunks(text, NARRATION_LEAD_S, audio).find((c) => t >= c.start && t < c.end);
+  if (!chunk) return null;
+  return (
+    <AbsoluteFill style={{ justifyContent: top ? "flex-start" : "flex-end", alignItems: "center", paddingBottom: 40, paddingTop: 40 }}>
+      <div style={{ maxWidth: 1040, padding: "10px 22px", borderRadius: 10, background: "rgba(0,0,0,.72)", color: "#fff", fontSize: 32, lineHeight: 1.3, fontWeight: 600, textAlign: "center", fontFamily: ctx.kit.font }}>
+        {chunk.text}
+      </div>
     </AbsoluteFill>
   );
 }
@@ -115,10 +140,24 @@ function renderElement(el: Element, i: number, ctx: Ctx, frame: number): React.R
   }
 }
 
-export function Scene({ scene, ctx }: { scene: SceneT; ctx: Ctx }) {
+export function Scene({ scene, ctx: baseCtx }: { scene: SceneT; ctx: Ctx }) {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const audio = baseCtx.media.audio[scene.id];
+  const ctx: Ctx = { ...baseCtx, audioDuration: audio?.duration_s };
   const { kit } = ctx;
+  const voice = audio ? (
+    <Sequence from={Math.round(NARRATION_LEAD_S * fps)} layout="none">
+      <Audio src={audio.url} />
+    </Sequence>
+  ) : null;
   const hasClip = scene.elements.some((e) => e.type === "clip");
+  // Keep captions off the thing we're pointing at: move them up when the zoom target sits low.
+  const targetLow = scene.elements.some((e) => {
+    if (e.type !== "clip" || e.zoom !== "target") return false;
+    const b = ctx.media.clips[e.step_id]?.box;
+    return !!b && b.y + b.h / 2 > 720 * 0.6;
+  });
   if (scene.section === "end") {
     return (
       <AbsoluteFill style={{ background: kit.bg, color: kit.fg, fontFamily: kit.font, justifyContent: "center", alignItems: "center" }}>
@@ -126,6 +165,7 @@ export function Scene({ scene, ctx }: { scene: SceneT; ctx: Ctx }) {
         <div style={{ fontSize: kit.bodySize + 4, color: kit.accent, marginTop: 20, ...fadeUp(frame, 10) }}>{ctx.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</div>
         {scene.elements.map((el, i) => renderElement(el, i + 2, ctx, frame))}
         {ctx.credit && <div style={{ position: "absolute", bottom: 36, fontSize: ctx.kit.citationSize, color: kit.muted }}>Made with Pit Crew</div>}
+        {voice}
       </AbsoluteFill>
     );
   }
@@ -135,6 +175,8 @@ export function Scene({ scene, ctx }: { scene: SceneT; ctx: Ctx }) {
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 28, padding: 80 }}>
         {scene.elements.filter((e) => e.type !== "clip").map((el, i) => renderElement(el, i, ctx, frame))}
       </AbsoluteFill>
+      <Captions text={scene.narration} ctx={ctx} top={targetLow} />
+      {voice}
     </AbsoluteFill>
   );
 }

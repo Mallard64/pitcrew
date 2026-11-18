@@ -89,14 +89,14 @@ export function setDb(d: Database.Database) {
   g.__pcDb = d;
 }
 
-export function createJob(input: { project_name: string; live_url: string; repo_url?: string; blurb?: string; contact?: string; client_key: string }): Job {
+export function createJob(input: { project_name: string; live_url: string; repo_url?: string; blurb?: string; problem?: string; whats_next?: string; contact?: string; client_key: string }): Job {
   const id = crypto.randomBytes(6).toString("base64url");
   db()
     .prepare(
-      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, contact, client_key, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued')`,
+      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued')`,
     )
-    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.contact ?? null, input.client_key);
+    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key);
   return getJob(id)!;
 }
 
@@ -205,5 +205,6 @@ export function publicJob(j: Job) {
   return {
     id: j.id, project_name: j.project_name, live_url: j.live_url, status: j.status, version: j.version, error: j.error,
     duration_ms: j.duration_ms, render_mode: j.render_mode, contract_json: j.contract_json, plan_source: j.plan_source,
+    style_kit: j.style_kit, seed: j.seed,
   };
 }

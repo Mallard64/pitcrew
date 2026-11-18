@@ -48,6 +48,20 @@ export default function JobForm() {
         </span>
         <textarea name="blurb" maxLength={300} rows={2} placeholder="Helps hackathon teams ship a demo video before the deadline." className="field" />
       </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium">
+            What problem does this solve? <span className="font-normal text-slate-500">(optional)</span>
+          </span>
+          <textarea name="problem" maxLength={300} rows={2} placeholder="Teams spend hours making a demo video the night before the deadline." className="field" />
+        </label>
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium">
+            What&apos;s next? <span className="font-normal text-slate-500">(optional, one per line)</span>
+          </span>
+          <textarea name="whats_next" maxLength={300} rows={2} placeholder={"Team workspaces\nProduct Hunt launch kit"} className="field" />
+        </label>
+      </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium">
           Email or Discord <span className="font-normal text-slate-500">(optional, only if you want us to follow up)</span>

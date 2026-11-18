@@ -16,6 +16,8 @@ type JobInfo = {
   render_mode: string | null;
   contract_json: string | null;
   plan_source: string | null;
+  style_kit?: string | null;
+  seed?: number | null;
 };
 
 const STAGES = [
@@ -31,6 +33,7 @@ const DOWNLOADS: [string, string][] = [
   ["demo.mp4", "Video (mp4)"],
   ["captions.srt", "Captions (srt)"],
   ["build_log.md", "Build Log draft"],
+  ["submission.md", "Submission text"],
   ["script.md", "Script"],
 ];
 
@@ -146,7 +149,8 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
             <video key={job.version} controls playsInline preload="metadata" poster={has("thumb.jpg") ? fileUrl("thumb.jpg") : undefined} className="aspect-video w-full rounded-2xl bg-black shadow-lg" src={fileUrl("demo.mp4")} />
             {contract && (
               <p className="text-sm text-slate-500">
-                {contract.duration_s}s · {contract.steps_ok}/{contract.steps_total} steps · {job.render_mode === "slideshow" ? "slideshow mode" : "live recording"}
+                {contract.duration_s}s · {contract.steps_ok}/{contract.steps_total} demo steps · {job.render_mode === "remotion" ? "pitch video" : job.render_mode === "slideshow" ? "slideshow fallback" : "fallback editor"}
+                {job.seed != null ? ` · seed ${job.seed}` : ""}
                 {job.version > 1 ? ` · version ${job.version}` : ""}
                 {job.status === "partial" && contract.notes ? <span className="block text-amber-700">Heads up: {contract.notes}</span> : null}
               </p>

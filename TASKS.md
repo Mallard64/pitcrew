@@ -33,8 +33,8 @@ Notes on what's checked (2026-11-17):
 - [x] P0 `harness/scripts/tts.ts` with provider adapter (word timings come in Codex C18).
 - [x] P0 `harness/scripts/assemble.ts` (now the emergency fallback only).
 - [x] P0 `harness/scripts/slideshow.ts` fallback. **Check:** works when recording is disabled.
-- [ ] P0 Director instructions (HARNESS.md) applied to the Harness: fetch with ETag → update `harness/instructions.md` + `harnessrouter.json` → `PUT` with `If-Match` (412 → refetch, redo). **Check:** live `systemPrompt` equals the file.
-- [ ] P0 Plan B loop: turn 1 returns `video_plan.json`; the validator's (C15) issues go back in the same session (max 2 rounds); turn 2 self-review on sampled frames returns one patch or `ship`. **Check:** one real job shows both turns in its log and ships.
+- [x] P0 Director instructions (HARNESS.md) applied to the Harness: fetch with ETag → update `harness/instructions.md` + `harnessrouter.json` → `PUT` with `If-Match` (412 → refetch, redo). **Check:** live `systemPrompt` equals the file.
+- [ ] P0 Plan B loop: turn 1 returns `video_plan.json`; the validator's (C15) issues go back in the same session (max 2 rounds); turn 2 self-review on sampled frames returns one patch or `ship`. **Check:** one real job shows both turns in its log and ships. _(Turn 1 + one zod-repair round done and verified live; C15 rules and the self-review turn are still to do.)_
 - [ ] P0 Research wiring: agent-found stats (or C19 server-side stats) pass through `verify_stats.ts`; only verified stats reach the plan; `sources.md` saved. **Check:** a job with one planted fake stat ships without it and lists it as dropped in the log.
 - [ ] P0 Brand extraction in `src/lib/explore.ts` (`brand: {primary, font}` from the live site) for style-kit adaptation. **Check:** correct color on 3 known sites.
 - [ ] P0 End-to-end run on 3 sites returns the output contract (with `seed`, `style_kit`, `sources`). **Check:** 3 playable videos in `eval/samples/`, all passing the validator.

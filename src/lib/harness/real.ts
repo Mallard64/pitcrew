@@ -4,6 +4,7 @@ import crypto from "node:crypto";
  * POST {base}/v1/responses with metadata.harness_id, stream=true; continue with previous_response_id.
  */
 import { FlowSchema } from "../../../harness/schemas/flow";
+import { VideoPlanSchema } from "../../../harness/schemas/video_plan";
 import type { PlanRequest, Planner, PlannerEvent } from "./types";
 
 export type HarnessConfig = { baseUrl?: string; apiKey: string; harnessId: string; model?: string; fetchImpl?: typeof fetch };
@@ -23,6 +24,8 @@ export function buildPlanPrompt(req: PlanRequest) {
     `Project name: ${req.projectName}`,
     `Live URL: ${req.liveUrl}`,
     req.blurb ? `What it does (from the team): ${req.blurb}` : "",
+    req.problem ? `The problem it solves (from the team): ${req.problem}` : "No problem statement from the team: only use one if the site or README states it.",
+    req.whatsNext ? `What's next (from the team): ${req.whatsNext}` : "No roadmap from the team: omit the next section unless the README or issues state one.",
     `Site digest we collected (verified headings, links and inputs; y = pixel offset from top):\n${JSON.stringify(digest)}`,
     "You may also open the live URL in your browser to verify selectors (max 8 page loads).",
   ];
@@ -96,7 +99,7 @@ export class HarnessRouterPlanner implements Planner {
   readonly name = "harnessrouter";
   constructor(private cfg: HarnessConfig) {}
 
-  private async *call(body: Record<string, unknown>): AsyncIterable<PlannerEvent> {
+  private async *call(body: Record<string, unknown>, repairsLeft = 1): AsyncIterable<PlannerEvent> {
     const f = this.cfg.fetchImpl ?? fetch;
     const base = (this.cfg.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "").replace(/\/v1$/, "");
     const res = await f(`${base}/v1/responses`, {
@@ -149,9 +152,44 @@ export class HarnessRouterPlanner implements Planner {
     if (!final) throw new Error("HarnessRouter stream ended without a terminal event");
     if (final.status !== "completed") throw new Error(`HarnessRouter task ${final.status}: ${final.error?.message ?? ""}`);
 
-    const parsed = extractJson(messageText(final) || text) as { summary?: string; flow?: unknown; build_log_md?: string | null };
-    const flow = FlowSchema.parse(parsed.flow);
     const hrSession = typeof final.metadata?.session_id === "string" ? final.metadata.session_id : undefined;
+    const parsed = extractJson(messageText(final) || text) as {
+      summary?: string;
+      flow?: unknown;
+      video_plan?: unknown;
+      build_log_md?: string | null;
+      submission_md?: string | null;
+    };
+    if (parsed.video_plan !== undefined) {
+      const vp = VideoPlanSchema.safeParse(parsed.video_plan);
+      if (!vp.success) {
+        const issues = vp.error.issues.slice(0, 12).map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`);
+        if (repairsLeft <= 0) throw new Error(`agent video_plan still invalid: ${issues.slice(0, 3).join("; ")}`);
+        yield { type: "log", message: `video plan failed validation (${issues.length} issues); asking the agent to fix it` };
+        yield* this.call(
+          {
+            input: `Your video_plan failed validation:\n- ${issues.join("\n- ")}\nFix exactly these problems and reply with the full JSON block again (same format).`,
+            previous_response_id: final.id,
+            ...(body.user ? { user: body.user } : {}),
+          },
+          repairsLeft - 1,
+        );
+        return;
+      }
+      yield {
+        type: "plan",
+        flow: vp.data.flow,
+        videoPlan: vp.data,
+        summary: parsed.summary,
+        buildLog: parsed.build_log_md ?? undefined,
+        submission: parsed.submission_md ?? undefined,
+        sessionId: final.id,
+        hrSessionId: hrSession,
+        source: "harness",
+      };
+      return;
+    }
+    const flow = FlowSchema.parse(parsed.flow);
     yield { type: "plan", flow, summary: parsed.summary, buildLog: parsed.build_log_md ?? undefined, sessionId: final.id, hrSessionId: hrSession, source: "harness" };
   }
 

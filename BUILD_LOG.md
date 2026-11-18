@@ -43,3 +43,10 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Added a zod schema for the agent's "video plan" (scenes, sections, elements, transitions, seed, style kit, sources) and a Remotion composition that renders it. First version renders headlines, stat callouts with a count-up + "Source: <name>, <year>", bullets, screen clips with spring zoom to the clicked element, and an end card with "Made with Pit Crew".
 - A 13s fixture plan renders to 1280×720 H.264/AAC, exactly 13.0s, well under the 60s budget. Checked the frames by eye this time; the stat lands on exactly 42% with its citation.
 - 57 tests passing.
+
+## Nov 17 (night): first agent-directed pitch videos
+- The agent now returns a full video plan; our server records, voices and renders it with Remotion.
+- Excalidraw (offline planner had managed only 24s): the agent's plan was valid on the first try, 5/5 steps, zoom on the text tool, typing in the hand-drawn font, brand purple pulled from the site, plus `build_log.md` and `submission.md`. It honestly left out the problem and roadmap sections (no source), so the video came out at 48s. Added a rule to make up the time with more demo steps.
+- tldraw, **through the web app's own API in real mode**: 10 scenes (problem → solution → 6 demo → what's next → end), 71s, status `ok`, 172s end to end.
+- Bug found by looking at frames: tldraw's toolbar is at the bottom, so captions covered the zoom target. Zoom now pans the target toward the centre, and captions move to the top for low targets.
+- Bug: `next build` failed with "Unknown module type" because Turbopack tried to bundle esbuild's native binary from Remotion's bundler. Marked Remotion as server-external.

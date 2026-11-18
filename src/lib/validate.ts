@@ -22,6 +22,8 @@ export const JobFormSchema = z.object({
     .transform((v) => (v ? v.replace(/\/+$/, "").replace(/\.git$/, "") : undefined))
     .refine((v) => !v || /^https:\/\/github\.com\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(v), "Repo must look like https://github.com/owner/repo"),
   blurb: optionalText(300),
+  problem: optionalText(300),
+  whats_next: optionalText(300),
   contact: optionalText(100),
 });
 export type JobForm = z.infer<typeof JobFormSchema>;

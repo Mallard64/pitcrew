@@ -103,7 +103,7 @@ async function run({ jobId, revision }: Task) {
   try {
     const planner = state().plannerOverride ?? getPlanner();
     const work = runPipeline(
-      { projectName: job.project_name, liveUrl: job.live_url, repoUrl: job.repo_url ?? undefined, blurb: job.blurb ?? undefined, user: job.client_key },
+      { projectName: job.project_name, liveUrl: job.live_url, repoUrl: job.repo_url ?? undefined, blurb: job.blurb ?? undefined, problem: job.problem ?? undefined, whatsNext: job.whats_next ?? undefined, user: job.client_key },
       jobDir(jobId),
       version,
       (e) => (e.type === "progress" ? emit(jobId, "progress", e.message, e.step) : emit(jobId, "log", e.message)),
@@ -126,6 +126,8 @@ async function run({ jobId, revision }: Task) {
       session_id: res.sessionId ?? job.session_id,
       hr_session_id: res.hrSessionId ?? job.hr_session_id,
       plan_source: res.planSource,
+      style_kit: res.videoPlan.style_kit,
+      seed: res.videoPlan.seed,
       error: status === "failed" ? res.contract.notes || "Rendering failed" : null,
     });
     if (res.contract.notes) emit(jobId, "log", `Notes: ${res.contract.notes}`);

@@ -10,6 +10,8 @@ const TYPES: Record<string, string> = {
   "build_log.md": "text/markdown; charset=utf-8",
   "flow.json": "application/json",
   "thumb.jpg": "image/jpeg",
+  "submission.md": "text/markdown; charset=utf-8",
+  "video_plan.json": "application/json",
 };
 
 /** Serves a job artifact; supports Range requests so the video can seek. */
