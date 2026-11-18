@@ -7,6 +7,7 @@ import { POST as createJob } from "../src/app/api/jobs/route";
 import { GET as getJob } from "../src/app/api/jobs/[id]/route";
 import { GET as events } from "../src/app/api/jobs/[id]/events/route";
 import { POST as revise } from "../src/app/api/jobs/[id]/revise/route";
+import { POST as review } from "../src/app/api/jobs/[id]/review/route";
 import { GET as file } from "../src/app/api/jobs/[id]/files/[name]/route";
 
 let site: { url: string; close: () => Promise<void> };
@@ -80,4 +81,42 @@ describe("API", () => {
     expect(job2.job.version).toBe(2);
     expect(job2.artifacts.every((a: { version: number }) => a.version === 2)).toBe(true);
   }, 240_000);
+
+  it("pauses for a script review, applies the team's edit, look and voice", async () => {
+    const res = await createJob(new Request("http://t/api/jobs", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": "5.6.7.8" },
+      body: JSON.stringify({ project_name: "Fixture App", live_url: `${site.url}/index.html`, look: "studio", voice: "george", review_script: true }),
+    }));
+    expect(res.status).toBe(201);
+    const { id } = await res.json();
+    const get = async () => (await getJob(new Request(`http://t/api/jobs/${id}`), ctx({ id }))).json();
+
+    let job = await get();
+    for (let i = 0; i < 240 && job.job.status !== "review"; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      job = await get();
+    }
+    expect(job.job.status).toBe("review");
+    expect(job.review.voice).toBe("george");
+    expect(job.review.look).toBe("studio");
+    expect(job.review.report.total).toBeGreaterThan(0);
+    const target = job.review.scenes.find((s: { section: string }) => s.section === "solution") ?? job.review.scenes[0];
+
+    const bad = await review(new Request("http://t", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenes: [{ id: "x", narration: "a".repeat(500) }] }) }), ctx({ id }));
+    expect(bad.status).toBe(400);
+    const ok = await review(new Request("http://t", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenes: [{ id: target.id, narration: "Fixture App turns a messy test page into a clear story." }] }) }), ctx({ id }));
+    expect(ok.status).toBe(200);
+    const again = await review(new Request("http://t", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenes: [] }) }), ctx({ id }));
+    expect(again.status).toBe(409);
+
+    const evs = await readSse(id);
+    expect(["ok", "partial"]).toContain(evs.at(-1).message);
+    expect(evs.some((e) => e.message.includes("You edited 1 scene"))).toBe(true);
+    job = await get();
+    expect(job.job.style_kit).toBe("studio");
+    expect(job.artifacts.map((a: { name: string }) => a.name)).toEqual(expect.arrayContaining(["pitch_check.json", "pitch_check.md"]));
+    const script = await (await file(new Request(`http://t/x`), ctx({ id, name: "script.md" }))).text();
+    expect(script).toContain("Fixture App turns a messy test page into a clear story.");
+  }, 300_000);
 });

@@ -95,6 +95,28 @@ export async function* sseEvents(body: ReadableStream<Uint8Array>): AsyncIterabl
   }
 }
 
+/** One readable line per agent tool call for the public job log (null hides it). */
+export function describeToolCall(name: string, args: string): string | null {
+  let a: Record<string, unknown> = {};
+  try {
+    a = JSON.parse(args);
+  } catch {
+    /* partial or non-JSON arguments */
+  }
+  const url = typeof a.url === "string" ? a.url.slice(0, 120) : "";
+  const tool = name.replace(/^mcp__\w+__/, "");
+  if (/navigate|goto|open/i.test(tool)) return url ? `Agent opened ${url}` : "Agent opened a page";
+  if (/screenshot|snapshot/i.test(tool)) return "Agent looked at the page";
+  if (/click/i.test(tool)) return "Agent tried a click to check a selector";
+  if (/type|fill/i.test(tool)) return "Agent tried typing into a field";
+  if (/scroll/i.test(tool)) return "Agent scrolled the page";
+  if (/memory_recall|recall|search_memor/i.test(tool)) return "Agent checked its notes from earlier videos";
+  if (/memory_(store|save|write)|remember/i.test(tool)) return "Agent saved a note for next time";
+  if (/search/i.test(tool)) return "Agent searched the web";
+  if (/fetch|read/i.test(tool)) return url ? `Agent read ${url}` : "Agent read a page";
+  return `Agent used ${tool.replace(/_/g, " ").slice(0, 40)}`;
+}
+
 export class HarnessRouterPlanner implements Planner {
   readonly name = "harnessrouter";
   constructor(private cfg: HarnessConfig) {}
@@ -134,15 +156,13 @@ export class HarnessRouterPlanner implements Planner {
     let text = "";
     for await (const ev of sseEvents(res.body)) {
       const type = String(ev.type ?? "");
-      if (type === "response.created") yield { type: "log", message: `HarnessRouter session started (${(ev.response as UhpResponse)?.id ?? "?"})` };
-      else if (type === "response.output_item.added") {
-        const item = ev.item as { type?: string; name?: string };
-        if (item?.type === "function_call") yield { type: "log", message: `agent tool: ${item.name ?? "?"}` };
-      } else if (type === "response.output_item.done") {
+      // The job page is public: log what the agent is doing in plain words, never response/memory ids.
+      if (type === "response.created") yield { type: "log", message: "Agent started on HarnessRouter" };
+      else if (type === "response.output_item.done") {
         const item = ev.item as { type?: string; name?: string; arguments?: string };
-        if (item?.type === "function_call" && item.arguments) {
-          const a = item.arguments.slice(0, 140);
-          yield { type: "log", message: `agent ${item.name}: ${a}` };
+        if (item?.type === "function_call") {
+          const line = describeToolCall(item.name ?? "", item.arguments ?? "");
+          if (line) yield { type: "log", message: line };
         }
       } else if (type === "response.output_text.delta") text += String(ev.delta ?? "");
       else if (type === "error") yield { type: "log", message: `harness error: ${String(ev.message ?? "")}` };
@@ -160,7 +180,11 @@ export class HarnessRouterPlanner implements Planner {
       build_log_md?: string | null;
       submission_md?: string | null;
       research_queries?: unknown;
+      judge_review?: { notes?: unknown };
     };
+    const judgeNotes = Array.isArray(parsed.judge_review?.notes)
+      ? parsed.judge_review.notes.filter((n): n is string => typeof n === "string").map((n) => n.slice(0, 200)).slice(0, 4)
+      : undefined;
     const researchQueries = Array.isArray(parsed.research_queries)
       ? parsed.research_queries.filter((q): q is string => typeof q === "string" && q.trim().length > 3).map((q) => q.slice(0, 200)).slice(0, 3)
       : undefined;
@@ -190,6 +214,7 @@ export class HarnessRouterPlanner implements Planner {
         sessionId: final.id,
         hrSessionId: hrSession,
         researchQueries,
+        judgeNotes,
         source: "harness",
       };
       return;

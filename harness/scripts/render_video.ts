@@ -12,7 +12,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
+import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { VideoPlanSchema, type VideoPlan } from "../schemas/video_plan";
 import type { Contract } from "../schemas/contract";
 import { ffmpeg, probeDuration } from "./ff";
@@ -135,7 +135,19 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
     const fast = path.join(outDir, ".demo.fast.mp4");
     await ffmpeg(["-i", demo, "-c", "copy", "-movflags", "+faststart", fast]);
     await fsp.rename(fast, demo);
-    await ffmpeg(["-ss", "3", "-i", demo, "-frames:v", "1", "-q:v", "3", path.join(outDir, "thumb.jpg")]).catch(() => ffmpeg(["-i", demo, "-frames:v", "1", "-q:v", "3", path.join(outDir, "thumb.jpg")]));
+    // Poster: the opening headline, fully animated in, without burned-in captions (they sat under the
+    // player's controls). Falls back to a frame grab from the video.
+    const thumb = path.join(outDir, "thumb.jpg");
+    const posterFrame = Math.round(Math.min(plan.scenes[0].duration_s * 0.75, 4) * plan.fps);
+    // Remotion renders the props resolved by selectComposition, so the poster needs its own selection.
+    const posterProps = { ...inputProps, hideCaptions: true };
+    await selectComposition({ serveUrl, id: "PitchVideo", inputProps: posterProps })
+      .then((posterComp) => renderStill({ composition: posterComp, serveUrl, inputProps: posterProps, frame: posterFrame, output: thumb, imageFormat: "jpeg", jpegQuality: 90, scale: OUTPUT_SCALE, timeoutInMilliseconds: Number(process.env.RENDER_FRAME_TIMEOUT_MS) || 30_000 }))
+      .catch((e) => {
+        log(`poster still failed (${(e as Error).message.slice(0, 100)}); using a video frame`);
+        return ffmpeg(["-ss", "3", "-i", demo, "-frames:v", "1", "-q:v", "3", thumb]);
+      })
+      .catch(() => ffmpeg(["-i", demo, "-frames:v", "1", "-q:v", "3", thumb]));
     const duration_s = Math.round((await probeDuration(demo)) * 10) / 10;
     const demoSteps = plan.scenes.flatMap((s) => s.elements).filter((e) => e.type === "clip").length;
     const notes = duration_s < 60 || duration_s > 90 ? `duration ${duration_s}s is outside 60-90s` : "";

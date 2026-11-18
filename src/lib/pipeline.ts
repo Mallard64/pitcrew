@@ -23,19 +23,29 @@ import { fetchRepoFacts, type Commit } from "./buildlog";
 import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
 import { braveSearch, findCandidates, researchPrompt } from "./research/search";
 import { choosePace } from "./pacing";
+import { checkPitch, judgePrompt, mergeJudgeRewrite, pitchCheckMarkdown, type PitchReport } from "./pitchcheck";
+import { resolveVoice, VOICES, LOOK_IDS } from "./voices";
+import { resolveKit } from "../../remotion/kits/default";
 import type { Planner, PlannerEvent, PlanRequest } from "./harness";
 
 export const STAGES = ["opening", "planning", "recording", "narrating", "voicing", "assembling"] as const;
 export type Stage = (typeof STAGES)[number];
 export type PipelineEvent = { type: "progress"; step: Stage; message: string } | { type: "log"; message: string };
 
-export type JobInput = { projectName: string; liveUrl: string; repoUrl?: string; blurb?: string; problem?: string; whatsNext?: string; user?: string };
+export type JobInput = {
+  projectName: string; liveUrl: string; repoUrl?: string; blurb?: string; problem?: string; whatsNext?: string; user?: string;
+  /** Team choices: narrator voice key, forced look, and whether to pause for a script review. */
+  voice?: string; look?: string; reviewScript?: boolean;
+};
+/** What the team sees while the job waits for their script review. */
+export type ReviewDraft = { scenes: { id: string; section: string; narration: string }[]; report: PitchReport; voice: string; look: string };
+export type PipelineHooks = { awaitReview?: (draft: ReviewDraft) => Promise<{ id: string; narration: string }[] | null> };
 export type PipelineResult = { contract: Contract; flow: Flow; videoPlan: VideoPlan; sessionId?: string; hrSessionId?: string; planSource: string; files: string[] };
 
 /** Saved next to v1 so revisions don't need to re-crawl the site or GitHub. */
 type Context = { digest: SiteDigest; commits?: Commit[]; readme?: string };
 
-export const OUTPUT_FILES = ["demo.mp4", "captions.srt", "script.md", "build_log.md", "submission.md", "video_plan.json", "sources.md", "flow.json", "thumb.jpg"];
+export const OUTPUT_FILES = ["demo.mp4", "captions.srt", "script.md", "build_log.md", "submission.md", "video_plan.json", "sources.md", "flow.json", "thumb.jpg", "pitch_check.md", "pitch_check.json"];
 
 export async function runPipeline(
   input: JobInput,
@@ -44,6 +54,7 @@ export async function runPipeline(
   emit: (e: PipelineEvent) => void,
   planner: Planner,
   revision?: { request: string; previous: Flow; sessionId?: string },
+  hooks: PipelineHooks = {},
 ): Promise<PipelineResult> {
   const outDir = path.join(jobDir, `v${version}`);
   await fs.mkdir(outDir, { recursive: true });
@@ -92,7 +103,11 @@ export async function runPipeline(
   }
   if (!plan) throw new Error("Planner returned no plan");
   // A v1 answer (flow only) still gets the pitch structure around it.
-  const videoPlan: VideoPlan = plan.videoPlan ?? localVideoPlan(input, plan.flow, ctx.digest, seedFor(input.liveUrl));
+  let videoPlan: VideoPlan = plan.videoPlan ?? localVideoPlan(input, plan.flow, ctx.digest, seedFor(input.liveUrl));
+  if (input.look && LOOK_IDS.includes(input.look) && videoPlan.style_kit !== input.look) {
+    log(`Using the ${input.look} look you picked (the agent suggested ${videoPlan.style_kit})`);
+    videoPlan.style_kit = input.look;
+  }
   const flow = videoPlan.flow;
   await fs.writeFile(path.join(outDir, "flow.json"), JSON.stringify(flow, null, 2));
   log(`Plan: ${videoPlan.scenes.length} scenes, ${flow.steps.length} demo steps (${plan.source} planner, seed ${videoPlan.seed})`);
@@ -128,12 +143,72 @@ export async function runPipeline(
     }
   }
 
+  // 3b. Judge pass: the agent rereads its script as a hackathon judge and rewrites only the words.
+  // Kept only if our rule checks score at least as well; numbers are re-checked below either way.
+  let report = checkPitch(videoPlan, input.projectName);
+  log(`Pitch check: ${report.score}/${report.total}${report.score < report.total ? ` (to fix: ${report.checks.filter((c) => !c.ok).map((c) => c.id).join(", ")})` : ""}`);
+  if (planner.research && plan.sessionId && plan.source === "harness") {
+    progress("narrating", "Reviewing the pitch the way a judge would");
+    try {
+      let judged: Extract<PlannerEvent, { type: "plan" }> | undefined;
+      for await (const ev of planner.research({ sessionId: plan.sessionId, prompt: judgePrompt(videoPlan, report, input.projectName), user: input.user })) {
+        if (ev.type === "log") log(ev.message);
+        else judged = ev;
+      }
+      if (judged?.videoPlan) {
+        const merged = mergeJudgeRewrite(videoPlan, judged.videoPlan);
+        const after = checkPitch(merged, input.projectName);
+        const notes = judged.judgeNotes ?? [];
+        if (after.score >= report.score) {
+          videoPlan = merged;
+          report = { ...after, judge: { notes, rewritten: true } };
+          if (judged.sessionId) plan.sessionId = judged.sessionId;
+          log(`Judge pass applied: pitch check ${after.score}/${after.total}`);
+        } else {
+          report = { ...report, judge: { notes, rewritten: false } };
+          log(`Judge pass scored lower (${after.score}/${after.total}); keeping the first script`);
+        }
+      }
+    } catch (e) {
+      log(`Judge pass skipped: ${(e as Error).message.slice(0, 160)}`);
+    }
+  }
+
   // 4. Narrate: clean the plan so it only shows what we actually have and can stand behind.
   progress("narrating", "Writing the narration and captions");
   if (videoPlan.sources.some((s) => s.kind === "research")) progress("narrating", "Checking every statistic against its source page");
   for (const n of await verifyResearch(videoPlan)) log(n);
   const dropped = sanitizePlan(videoPlan, clipIds, outDir);
   for (const d of dropped) log(d);
+
+  // 4b. Human in the loop: the team reads (and can edit) the narration before it's voiced.
+  const kitId = resolveKit(videoPlan.style_kit, videoPlan.seed, videoPlan.brand.primary).id;
+  const voiceKey = resolveVoice(input.voice, kitId);
+  if (input.reviewScript && hooks.awaitReview) {
+    progress("narrating", "Waiting for your script review");
+    const edits = await hooks.awaitReview({
+      scenes: videoPlan.scenes.filter((sc) => sc.section !== "end").map((sc) => ({ id: sc.id, section: sc.section, narration: sc.narration })),
+      report: checkPitch(videoPlan, input.projectName),
+      voice: voiceKey,
+      look: kitId,
+    });
+    if (edits?.length) {
+      let changed = 0;
+      for (const e of edits) {
+        const sc = videoPlan.scenes.find((x) => x.id === e.id);
+        if (sc && sc.section !== "end" && sc.narration !== e.narration.trim()) {
+          sc.narration = e.narration.trim();
+          changed++;
+        }
+      }
+      log(changed ? `You edited ${changed} scene${changed === 1 ? "" : "s"}` : "Script approved as written");
+      // The team's words get the same rule as the agent's: no number in the problem without a source.
+      for (const d of sanitizePlan(videoPlan, clipIds, outDir)) log(d);
+    } else log("Continuing with the script as written");
+  }
+  report = { ...checkPitch(videoPlan, input.projectName), judge: report.judge };
+  await fs.writeFile(path.join(outDir, "pitch_check.json"), JSON.stringify(report, null, 2));
+  await fs.writeFile(path.join(outDir, "pitch_check.md"), pitchCheckMarkdown(input.projectName, report));
   await fs.writeFile(path.join(outDir, "sources.md"), sourcesMarkdown(input.projectName, videoPlan.sources));
   // Pace: read a long script a bit faster and a short one a bit slower so the video lands in 60–90s.
   const pace = choosePace(videoPlan.scenes);
@@ -151,7 +226,12 @@ export async function runPipeline(
 
   // 5. Voice each scene, then make every scene at least as long as its narration.
   const tts = ttsConfigFromEnv();
-  progress("voicing", tts.provider === "none" ? "No TTS key set: captions only, silent narration" : `Voicing with ${tts.provider}`);
+  const voice = VOICES[voiceKey];
+  // A team's pick always wins; on "auto" an operator's TTS_VOICE still applies, else the look's voice.
+  const useKey = !!input.voice || !tts.voice;
+  if (useKey && tts.provider === "elevenlabs") tts.voice = voice.elevenlabs;
+  else if (useKey && tts.provider === "openai") tts.voice = voice.openai;
+  progress("voicing", tts.provider === "none" ? "No TTS key set: captions only, silent narration" : useKey ? `Voicing with ${voice.label} (${voice.tone.toLowerCase()})` : `Voicing with ${tts.provider}`);
   const audio = await voiceScript(script, outDir, tts, { log });
   if (audio.some((a) => a.fallback)) log("Some segments fell back to silence after TTS errors");
   const audioLen = new Map(audio.map((a) => [a.step_id, a.duration_s]));
@@ -175,7 +255,7 @@ export async function runPipeline(
     contract = await renderVideo(outDir, log);
   } catch (e) {
     log(`Remotion render failed (${(e as Error).message.split("\n")[0].slice(0, 160)}); using the fallback editor`);
-    contract = await legacyAssemble(input, flow, rec, outDir, log);
+    contract = await legacyAssemble(input, flow, rec, outDir, log, tts);
   }
   if (rec.stepsOk < flow.steps.length) {
     const failed = rec.timings.filter((x) => !x.ok).map((x) => `${x.step_id}: ${x.error ?? "failed"}`);
@@ -226,7 +306,7 @@ export function sanitizePlan(plan: VideoPlan, clipIds: Set<string>, outDir: stri
 }
 
 /** Fallback when Remotion fails: the original ffmpeg editor, narrated per demo step. */
-async function legacyAssemble(input: JobInput, flow: Flow, rec: RecordResult, outDir: string, log: (m: string) => void): Promise<Contract> {
+async function legacyAssemble(input: JobInput, flow: Flow, rec: RecordResult, outDir: string, log: (m: string) => void, tts = ttsConfigFromEnv()): Promise<Contract> {
   const dir = path.join(outDir, ".fallback");
   await fs.mkdir(path.join(dir, "shots"), { recursive: true });
   await fs.copyFile(path.join(outDir, "recording.mp4"), path.join(dir, "recording.mp4"));
@@ -235,7 +315,7 @@ async function legacyAssemble(input: JobInput, flow: Flow, rec: RecordResult, ou
   const okIds = new Set(rec.timings.filter((t) => t.ok).map((t) => t.step_id));
   const script = { segments: flow.steps.filter((s) => okIds.has(s.id)).map((s) => ({ step_id: s.id, text: s.say })) };
   await fs.writeFile(path.join(dir, "script.json"), JSON.stringify(script));
-  await voiceScript(script, dir, ttsConfigFromEnv(), { log });
+  await voiceScript(script, dir, tts, { log });
   const contract = await assembleVideo({ outDir: dir, title: input.projectName, url: input.liveUrl, mode: rec.stepsOk >= 3 ? "recording" : "slideshow", log });
   for (const f of ["demo.mp4", "captions.srt", "thumb.jpg"]) await fs.rename(path.join(dir, f), path.join(outDir, f)).catch(() => {});
   await fs.rm(dir, { recursive: true, force: true });

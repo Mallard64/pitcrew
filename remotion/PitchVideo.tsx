@@ -1,29 +1,14 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
-import { TransitionSeries, linearTiming, type TransitionPresentation } from "@remotion/transitions";
-import { fade } from "@remotion/transitions/fade";
-import { slide } from "@remotion/transitions/slide";
-import { wipe } from "@remotion/transitions/wipe";
+import { TransitionSeries, springTiming } from "@remotion/transitions";
 import { Scene } from "./Scene";
 import { accentOn, resolveKit, type Kit } from "./kits/default";
+import { chooseTransition, presentationFor } from "./transitions";
 import { transitionFrames, framesFor, type PitchVideoProps } from "./types";
 
-// Transitions not built yet (zoom-through, match-cut, whip: C13) fall back to fade.
-// Presentations have different prop types; the series only needs the common shape.
-function presentation(id: string): TransitionPresentation<Record<string, unknown>> {
-  switch (id) {
-    case "slide":
-      return slide() as unknown as TransitionPresentation<Record<string, unknown>>;
-    case "wipe":
-      return wipe() as unknown as TransitionPresentation<Record<string, unknown>>;
-    default:
-      return fade() as unknown as TransitionPresentation<Record<string, unknown>>;
-  }
-}
-
-export function PitchVideo({ plan, media }: PitchVideoProps) {
+export function PitchVideo({ plan, media, hideCaptions }: PitchVideoProps) {
   const kit = resolveKit(plan.style_kit, plan.seed, plan.brand.primary);
-  const ctx = { kit, sources: plan.sources, media, url: plan.flow.url, credit: plan.credit };
+  const ctx = { kit, sources: plan.sources, media, url: plan.flow.url, credit: plan.credit, hideCaptions };
   const children: React.ReactNode[] = [];
   plan.scenes.forEach((scene, i) => {
     const hasNext = i < plan.scenes.length - 1;
@@ -38,8 +23,9 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
       children.push(
         <TransitionSeries.Transition
           key={`${scene.id}-t`}
-          presentation={presentation(plan.scenes[i + 1].transition_in)}
-          timing={linearTiming({ durationInFrames: transitionFrames(plan.fps) })}
+          presentation={presentationFor(chooseTransition(plan.scenes[i + 1].transition_in, scene.section, plan.scenes[i + 1].section, i), plan.size)}
+          // Eased (critically damped spring), fixed length so scene timing stays exact.
+          timing={springTiming({ config: { damping: 200 }, durationInFrames: transitionFrames(plan.fps), durationRestThreshold: 0.001 })}
         />,
       );
     }

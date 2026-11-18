@@ -1,18 +1,30 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { LOOKS, VOICES, VOICE_KEYS } from "@/lib/voices";
 
 export default function JobForm() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [voice, setVoice] = useState("auto");
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const preview = () => {
+    if (voice === "auto") return;
+    audio.current?.pause();
+    audio.current = new Audio(`/voices/${voice}.mp3`);
+    audio.current.play().catch(() => {});
+  };
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const body = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const fd = new FormData(e.currentTarget);
+    const body: Record<string, unknown> = Object.fromEntries(fd.entries());
+    body.review_script = fd.get("review_script") === "on";
+    for (const k of ["voice", "look"]) if (body[k] === "auto") delete body[k];
     try {
       const res = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
@@ -68,6 +80,39 @@ export default function JobForm() {
         </span>
         <input name="contact" maxLength={100} placeholder="you@school.edu" className="field" />
       </label>
+      <fieldset className="space-y-3 rounded-xl border border-white/10 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-200">Your call <span className="font-normal text-slate-500">(optional)</span></legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block space-y-1.5">
+            <span className="text-sm text-slate-300">Narrator</span>
+            <div className="flex gap-2">
+              <select name="voice" value={voice} onChange={(e) => setVoice(e.target.value)} className="field">
+                <option value="auto">Auto: matches the look</option>
+                {VOICE_KEYS.map((k) => (
+                  <option key={k} value={k}>{VOICES[k].label}: {VOICES[k].tone}</option>
+                ))}
+              </select>
+              <button type="button" onClick={preview} disabled={voice === "auto"} className="btn-ghost shrink-0 px-3" aria-label="Play a voice sample">▶</button>
+            </div>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-sm text-slate-300">Look</span>
+            <select name="look" defaultValue="auto" className="field">
+              <option value="auto">Auto: the agent picks</option>
+              {LOOKS.map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <label className="flex items-start gap-2.5 text-sm text-slate-300">
+          <input type="checkbox" name="review_script" className="mt-1 accent-indigo-500" />
+          <span>
+            Let me review the script before it&apos;s voiced
+            <span className="block text-xs text-slate-500">The job pauses after the demo is recorded so you can edit every line. It continues on its own after 10 minutes.</span>
+          </span>
+        </label>
+      </fieldset>
       {error && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p>}
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-slate-500">We only visit public pages. We never log in or submit forms on your site.</p>

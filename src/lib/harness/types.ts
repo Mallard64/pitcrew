@@ -31,6 +31,8 @@ export type PlannerEvent =
       hrSessionId?: string;
       /** Web-search queries for statistics about the problem (the server runs them, C19). */
       researchQueries?: string[];
+      /** Notes from the agent's judge pass (pitch review follow-up). */
+      judgeNotes?: string[];
       source: "harness" | "local";
     };
 

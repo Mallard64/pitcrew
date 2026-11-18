@@ -3,7 +3,7 @@
  * so two pitch videos don't look like the same template. The agent picks one by id in the plan
  * (`style_kit`); an unknown id or "default" falls back to a seed-based pick.
  */
-export type KitId = "midnight" | "paper" | "terminal" | "poster" | "aurora" | "clean";
+export type KitId = "midnight" | "paper" | "terminal" | "poster" | "aurora" | "clean" | "studio" | "blueprint";
 
 export type Kit = {
   id: KitId;
@@ -33,10 +33,17 @@ export type Kit = {
   bar: "glow" | "line" | "block" | "none";
 };
 
-const SANS =
-  "Inter, 'SF Pro Display', -apple-system, 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif";
-const SERIF = "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'DejaVu Serif', serif";
-const MONO = "'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace";
+// Fonts are bundled with the renderer (remotion/fonts.ts, @fontsource), so the server renders the
+// same type as a laptop. The fallbacks only matter if a font file fails to load.
+const SANS = "'Inter Variable', Inter, -apple-system, 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif";
+const SERIF = "'Fraunces Variable', 'Iowan Old Style', Georgia, 'DejaVu Serif', serif";
+const MONO = "'JetBrains Mono Variable', 'SF Mono', Menlo, 'DejaVu Sans Mono', monospace";
+const GROTESK = "'Space Grotesk Variable', 'Inter Variable', 'DejaVu Sans', sans-serif";
+const BRICOLAGE = "'Bricolage Grotesque Variable', 'Inter Variable', 'DejaVu Sans', sans-serif";
+const DISPLAY_SERIF = "'Instrument Serif', 'Fraunces Variable', Georgia, 'DejaVu Serif', serif";
+
+/** Every font family the kits use, for the renderer to wait on before drawing frames. */
+export const FONT_FAMILIES = ["Inter Variable", "Fraunces Variable", "JetBrains Mono Variable", "Space Grotesk Variable", "Bricolage Grotesque Variable", "Instrument Serif"];
 
 type KitBase = Omit<Kit, "accent">;
 const base = { titleSize: 76, bodySize: 32, citationSize: 20 };
@@ -123,9 +130,9 @@ export const KITS: Record<KitId, KitBase> = {
     fg: "#ffffff",
     muted: "rgba(255,255,255,0.82)",
     font: SANS,
-    displayFont: SANS,
+    displayFont: BRICOLAGE,
     titleSize: 84,
-    titleWeight: 900,
+    titleWeight: 800,
     titleCase: "uppercase",
     titleTracking: "-0.02em",
     align: "left",
@@ -147,7 +154,7 @@ export const KITS: Record<KitId, KitBase> = {
     fg: "#ffffff",
     muted: "rgba(255,255,255,0.78)",
     font: SANS,
-    displayFont: SANS,
+    displayFont: GROTESK,
     titleWeight: 700,
     titleCase: "none",
     titleTracking: "-0.03em",
@@ -184,6 +191,54 @@ export const KITS: Record<KitId, KitBase> = {
     caption: "light-card",
     chip: "tag",
     bar: "line",
+  },
+  // Cinematic: warm near-black, large light serif headlines, frosted window. Launch-film feel.
+  studio: {
+    ...base,
+    id: "studio",
+    mode: "dark",
+    bg: "#0e0b09",
+    fg: "#f6efe6",
+    muted: "#b9aa98",
+    font: SANS,
+    displayFont: DISPLAY_SERIF,
+    titleSize: 96,
+    titleWeight: 400,
+    titleCase: "none",
+    titleTracking: "-0.01em",
+    align: "left",
+    backdrop: "glow",
+    fill: "solid",
+    headlineMotion: "fade-up",
+    window: "glass",
+    radius: 18,
+    caption: "glass",
+    chip: "tag",
+    bar: "line",
+  },
+  // Technical but friendly: deep blue drafting grid, geometric grotesk, brand-coloured headlines.
+  blueprint: {
+    ...base,
+    id: "blueprint",
+    mode: "dark",
+    bg: "#071426",
+    fg: "#eaf2ff",
+    muted: "#9db1cf",
+    font: GROTESK,
+    displayFont: GROTESK,
+    titleSize: 74,
+    titleWeight: 700,
+    titleCase: "none",
+    titleTracking: "-0.03em",
+    align: "left",
+    backdrop: "grid",
+    fill: "brand",
+    headlineMotion: "slam",
+    window: "mac-dark",
+    radius: 12,
+    caption: "dark-pill",
+    chip: "mono",
+    bar: "glow",
   },
 };
 

@@ -31,6 +31,7 @@ type Ctx = {
   url: string;
   credit: boolean;
   audioDuration?: number;
+  hideCaptions?: boolean;
 };
 
 /** Recording viewport (CSS px). Zoom boxes from record_flow.ts are in these units. */
@@ -491,7 +492,7 @@ function Captions({ text, ctx, band }: { text: string; ctx: Ctx; band: boolean }
   const fps = DESIGN_FPS;
   const { kit } = ctx;
   const audio = ctx.audioDuration;
-  if (!text.trim() || !audio) return null;
+  if (!text.trim() || !audio || ctx.hideCaptions) return null;
   const t = frame / fps;
   const chunk = captionChunks(text, NARRATION_LEAD_S, audio).find((c) => t >= c.start && t < c.end);
   if (!chunk) return null;

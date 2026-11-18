@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import JobView from "@/components/JobView";
 import { getJob, listArtifacts, publicJob } from "@/lib/db";
+import { pendingReview } from "@/lib/runner";
 
 export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
   await connection();
@@ -9,5 +10,5 @@ export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
   const job = getJob(id);
   if (!job) notFound();
   const artifacts = listArtifacts(id, job.version).map((a) => ({ name: a.name, bytes: a.bytes, version: a.version }));
-  return <JobView initial={{ job: publicJob(job), artifacts }} />;
+  return <JobView initial={{ job: publicJob(job), artifacts, review: job.status === "review" ? pendingReview(id) : null }} />;
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOOK_IDS, VOICE_KEYS } from "./voices";
 
 const optionalText = (max: number) =>
   z
@@ -25,10 +26,21 @@ export const JobFormSchema = z.object({
   problem: optionalText(300),
   whats_next: optionalText(300),
   contact: optionalText(100),
+  voice: z.string().optional().transform((v) => (v && (VOICE_KEYS as string[]).includes(v) ? v : undefined)),
+  look: z.string().optional().transform((v) => (v && LOOK_IDS.includes(v) ? v : undefined)),
+  // Checkbox: "on" from a form post, true from JSON.
+  review_script: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
 });
 export type JobForm = z.infer<typeof JobFormSchema>;
 
-export const ReviseSchema = z.object({ request: z.string().trim().min(2).max(300) });
+export const ReviseSchema = z.object({
+  request: z.string().trim().min(2).max(300),
+  voice: z.string().optional().transform((v) => (v && (VOICE_KEYS as string[]).includes(v) ? v : undefined)),
+});
+/** Script review: the team's edited narration per scene (ids must exist in the draft). */
+export const ReviewSchema = z.object({
+  scenes: z.array(z.object({ id: z.string().min(1).max(40), narration: z.string().max(400) })).max(20),
+});
 export const FeedbackSchema = z.object({
   rating: z.union([z.literal(1), z.literal(-1)]),
   quote: z.string().trim().max(400).optional(),

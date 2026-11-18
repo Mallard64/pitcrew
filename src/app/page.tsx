@@ -28,6 +28,8 @@ const KITS = [
   { id: "poster", label: "Poster", fit: "Bold consumer, events" },
   { id: "aurora", label: "Aurora", fit: "Creative, music, design" },
   { id: "clean", label: "Clean", fit: "Productivity, B2B, health" },
+  { id: "studio", label: "Studio", fit: "Launches, consumer, media" },
+  { id: "blueprint", label: "Blueprint", fit: "Hardware, data, science" },
 ];
 
 const GETS = [
@@ -79,9 +81,10 @@ export default async function Home() {
           <p className="w-fit rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
             For Big Hack Game teams · submissions due Nov 19, 11:59 AM PST
           </p>
-          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
-            Others record a walkthrough.{" "}
-            <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+          {/* One sentence per line, so the break never lands mid-name ("Pit / Crew"). */}
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-balance text-white sm:text-5xl xl:text-6xl">
+            <span className="block">Others record a walkthrough.</span>
+            <span className="block bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
               Pit Crew makes your pitch.
             </span>
           </h1>
@@ -183,14 +186,14 @@ export default async function Home() {
         <div className="space-y-2">
           <p className="eyebrow">Not one template</p>
           <h2 className="text-3xl font-bold tracking-tight text-white">
-            Six looks. The agent picks the one that fits your product.
+            Eight looks. The agent picks the one that fits your product, or you do.
           </h2>
           <p className="max-w-2xl text-slate-400">
-            Each look changes the type, motion, colours, browser window, captions and ending, all
-            built around your brand colour.
+            Each look changes the typeface, motion, colours, transitions, browser window, captions and
+            ending, all built around your brand colour. Pick one in the form, or leave it to the agent.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {KITS.map((k) => (
             <figure
               key={k.id}
@@ -201,14 +204,14 @@ export default async function Home() {
                   src={`/kits/${k.id}.jpg`}
                   alt={`${k.label} look: title scene`}
                   fill
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover transition duration-300 group-hover:opacity-0"
                 />
                 <Image
                   src={`/kits/${k.id}-demo.jpg`}
                   alt={`${k.label} look: demo scene`}
                   fill
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover opacity-0 transition duration-300 group-hover:opacity-100"
                 />
               </div>
@@ -220,7 +223,7 @@ export default async function Home() {
           ))}
         </div>
         <p className="text-xs text-slate-500">
-          Hover a look to see its demo scene. All six stills are from the same tldraw plan.
+          Hover a look to see its demo scene. All eight stills are rendered from the same tldraw plan.
         </p>
       </section>
 

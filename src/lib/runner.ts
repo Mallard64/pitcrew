@@ -8,18 +8,26 @@ import path from "node:path";
 import { config } from "./config";
 import { addArtifact, appendEvent, getJob, listJobs, updateJob, type JobEvent } from "./db";
 import { getPlanner, type Planner } from "./harness";
-import { runPipeline } from "./pipeline";
+import { runPipeline, type ReviewDraft } from "./pipeline";
 import type { Flow } from "../../harness/schemas/flow";
 
 type Task = { jobId: string; revision?: string };
-type RunnerState = { queue: Task[]; active: number; running: Set<string>; bus: EventEmitter; recovered: boolean; plannerOverride?: Planner };
+type Edits = { id: string; narration: string }[] | null;
+type PendingReview = { draft: ReviewDraft; deadline: number; resolve: (edits: Edits) => void; cancel: () => void };
+type RunnerState = {
+  queue: Task[]; active: number; running: Set<string>; bus: EventEmitter; recovered: boolean; plannerOverride?: Planner;
+  reviews: Map<string, PendingReview>;
+};
+
+/** How long a job waits for the team's script review before continuing with the draft as written. */
+export const REVIEW_WAIT_MS = 10 * 60_000;
 
 const g = globalThis as unknown as { __pcRunner?: RunnerState };
 function state(): RunnerState {
   if (!g.__pcRunner) {
     const bus = new EventEmitter();
     bus.setMaxListeners(0);
-    g.__pcRunner = { queue: [], active: 0, running: new Set(), bus, recovered: false };
+    g.__pcRunner = { queue: [], active: 0, running: new Set(), bus, recovered: false, reviews: new Map() };
   }
   return g.__pcRunner;
 }
@@ -47,7 +55,7 @@ function recover() {
   if (s.recovered) return;
   s.recovered = true;
   for (const j of listJobs(500)) {
-    if (j.status === "running") {
+    if (j.status === "running" || j.status === "review") {
       updateJob(j.id, { status: "failed", error: "Server restarted while this job was running. Please submit again." });
       emit(j.id, "status", "failed");
     } else if (j.status === "queued") s.queue.push({ jobId: j.id });
@@ -65,6 +73,20 @@ export function enqueue(task: Task): boolean {
 }
 
 export const queuePosition = (jobId: string) => state().queue.findIndex((t) => t.jobId === jobId);
+
+/** The draft waiting for review, if any (for GET /api/jobs/:id). */
+export function pendingReview(jobId: string) {
+  const r = state().reviews.get(jobId);
+  return r ? { ...r.draft, deadline: r.deadline } : null;
+}
+
+/** Resumes a job waiting for review with the team's edits (null = approve as written). */
+export function submitReview(jobId: string, edits: Edits): boolean {
+  const r = state().reviews.get(jobId);
+  if (!r) return false;
+  r.resolve(edits);
+  return true;
+}
 
 function pump() {
   const s = state();
@@ -99,19 +121,60 @@ async function run({ jobId, revision }: Task) {
     }
   }
 
+  // The job timeout counts working time only: it pauses while the team reviews the script.
   let timer: NodeJS.Timeout | undefined;
+  let budget = config.jobTimeoutMs;
+  let armedAt = Date.now();
+  let fail: (e: Error) => void = () => {};
+  const arm = () => {
+    armedAt = Date.now();
+    timer = setTimeout(() => fail(new Error(`Timed out after ${Math.round(config.jobTimeoutMs / 60000)} minutes`)), budget);
+  };
+  const pause = () => {
+    clearTimeout(timer);
+    budget -= Date.now() - armedAt;
+  };
+  const awaitReview = (draft: ReviewDraft) =>
+    new Promise<Edits>((resolve) => {
+      pause();
+      const deadline = Date.now() + REVIEW_WAIT_MS;
+      const auto = setTimeout(() => done(null, "No review within 10 minutes; continuing with the script as written"), REVIEW_WAIT_MS);
+      const done = (edits: Edits, note?: string) => {
+        clearTimeout(auto);
+        state().reviews.delete(jobId);
+        if (note) emit(jobId, "log", note);
+        updateJob(jobId, { status: "running" });
+        emit(jobId, "status", "running");
+        arm();
+        resolve(edits);
+      };
+      const cancel = () => {
+        clearTimeout(auto);
+        state().reviews.delete(jobId);
+      };
+      state().reviews.set(jobId, { draft, deadline, resolve: (e) => done(e), cancel });
+      updateJob(jobId, { status: "review" });
+      emit(jobId, "status", "review");
+    });
   try {
     const planner = state().plannerOverride ?? getPlanner();
     const work = runPipeline(
-      { projectName: job.project_name, liveUrl: job.live_url, repoUrl: job.repo_url ?? undefined, blurb: job.blurb ?? undefined, problem: job.problem ?? undefined, whatsNext: job.whats_next ?? undefined, user: job.client_key },
+      {
+        projectName: job.project_name, liveUrl: job.live_url, repoUrl: job.repo_url ?? undefined, blurb: job.blurb ?? undefined, problem: job.problem ?? undefined,
+        whatsNext: job.whats_next ?? undefined, user: job.client_key, voice: job.voice ?? undefined, look: job.look ?? undefined,
+        // Revisions are already reviewed by the request itself; only first runs pause.
+        reviewScript: !!job.review_script && !revision,
+      },
       jobDir(jobId),
       version,
       (e) => (e.type === "progress" ? emit(jobId, "progress", e.message, e.step) : emit(jobId, "log", e.message)),
       planner,
       revision && previous ? { request: revision, previous, sessionId: job.session_id ?? undefined } : undefined,
+      { awaitReview },
     );
     const timeout = new Promise<never>((_, rej) => {
-      timer = setTimeout(() => rej(new Error(`Timed out after ${Math.round(config.jobTimeoutMs / 60000)} minutes`)), config.jobTimeoutMs);
+      fail = rej;
+      arm();
     });
     const res = await Promise.race([work, timeout]);
     const dir = path.join(jobDir(jobId), `v${version}`);
@@ -141,5 +204,7 @@ async function run({ jobId, revision }: Task) {
     emit(jobId, "status", keepPrevious ? job.status : "failed");
   } finally {
     clearTimeout(timer);
+    // A job that ended while waiting (timeout) must not resume later.
+    state().reviews.get(jobId)?.cancel();
   }
 }

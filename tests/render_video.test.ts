@@ -30,7 +30,7 @@ describe("renderVideo (Remotion)", () => {
     expect(Math.abs(dur - 13)).toBeLessThanOrEqual(0.2); // 3+3+3+2+2
     expect(secs).toBeLessThan(60);
     expect(ContractSchema.safeParse(contract).success).toBe(true);
-    expect(contract).toMatchObject({ render_mode: "remotion", seed: 7, style_kit: "paper" }); // "default" resolves by seed: 7 % 6 = 1 → paper
+    expect(contract).toMatchObject({ render_mode: "remotion", seed: 7, style_kit: "blueprint" }); // "default" resolves by seed: 7 % 8 = 7 → blueprint
     expect(fs.statSync(path.join(out, "thumb.jpg")).size).toBeGreaterThan(1000);
   }, 300_000);
 

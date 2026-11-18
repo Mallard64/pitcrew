@@ -7,6 +7,8 @@ export type PitchVideoProps = {
   plan: VideoPlan;
   /** Media served over http during the render (clips by step id, images by name). */
   media: { clips: Record<string, ClipMedia>; images: Record<string, string>; audio: Record<string, { url: string; duration_s: number }> };
+  /** Poster frames only: draw the scene without burned-in captions. */
+  hideCaptions?: boolean;
 };
 
 /** Animations are authored in 30fps "design frames" and play at the same speed at any output fps. */

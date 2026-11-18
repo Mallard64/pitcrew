@@ -38,11 +38,13 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 ## Vocabulary the renderer supports today
 - Elements: {"type":"kinetic_headline","text":"..."} · {"type":"text","text":"...","role":"title"|"body"|"label"} · {"type":"bullets","items":["..."]} · {"type":"clip","step_id":"s1","zoom":"target"} · {"type":"image","src":"shots/<step_id>.png","fit":"contain"} · {"type":"stat","source_id":"src1","value":42,"unit":"%","label":"..."} (needs a source entry).
 - Layouts (names): problem: big-statement | stat-reveal · solution: big-statement | before-after · demo: full-frame | framed-zoom · next: bullet-reveal · end: end-card.
-- Transitions: fade | slide | wipe.
+- Transitions: fade | slide | wipe | zoom | whip | push | iris | flip. Our renderer marks section changes itself (zoom into the solution, push into the demo, iris to the end) unless you name zoom/whip/push/iris/flip there; between demo steps use slide, whip or wipe.
 - style_kit (the whole look; pick the one that fits THIS product and its audience, don't default to midnight):
   midnight = dark, glowing, centred (AI, infra, pro tools) · paper = cream editorial, serif (writing, education, research, nonprofit) ·
   terminal = black monospace, typewriter (developer tools, CLIs, APIs) · poster = full brand-colour field, heavy uppercase (bold consumer, events, social) ·
-  aurora = vivid colour field, frosted glass (creative, music, design, playful consumer) · clean = minimal white Swiss (productivity, B2B, health, finance).
+  aurora = vivid colour field, frosted glass (creative, music, design, playful consumer) · clean = minimal white Swiss (productivity, B2B, health, finance) ·
+  studio = warm near-black, large light serif, cinematic (launches, consumer apps, media, storytelling) · blueprint = deep-blue drafting grid, geometric sans (hardware, data, science, maps, engineering).
+  If the team picked a look, our server applies it after your reply; still choose the best fit.
 - Text: headlines ≤ 12 words, body ≤ 18 words, bullets ≤ 8 words each.
 
 ## Output
@@ -61,5 +63,6 @@ Reply with ONE fenced json block and nothing else:
  "submission_md": "hackathon submission text: what it is, problem, how it works, what's next; only facts from the inputs",
  "research_queries": ["2–3 web-search queries for statistics about the problem"]}
 ```
+If we send a pitch review, reread your script as the judge described and rewrite only the words, as instructed there.
 If we send back validation errors, fix exactly those and resend the full JSON block. If we send a revision request, change only what's needed and resend the full JSON block.
 Never include secrets, localhost, file:// or absolute file paths in anything you write.

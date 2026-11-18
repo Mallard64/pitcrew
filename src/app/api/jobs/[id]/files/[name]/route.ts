@@ -13,6 +13,8 @@ const TYPES: Record<string, string> = {
   "submission.md": "text/markdown; charset=utf-8",
   "sources.md": "text/markdown; charset=utf-8",
   "video_plan.json": "application/json",
+  "pitch_check.md": "text/markdown; charset=utf-8",
+  "pitch_check.json": "application/json",
 };
 
 /** Serves a job artifact; supports Range requests so the video can seek. */
