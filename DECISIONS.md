@@ -60,3 +60,7 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Cost: one more agent turn. No extra wall time as long as research finishes before recording does.
 - Sentence splitting protects decimals (23.4%) and skips Title Case nav or headline soup.
 - Source year: kept only if it appears within ~1500 chars of the matched number (news pages print the current year in sidebars); otherwise the citation omits the year (year = 0).
+
+## 2026-11-17: Calmer openings, stricter stat relevance
+- Title scenes enter one element at a time (chip, then headline, then accent bar, then stat count-up, then label, then citation). Before, they animated together, which read as glitchy. Headline words fade up 0.32em with no blur; a clipping-mask reveal was tried and dropped because glyph tops peeked below the line.
+- Research follow-up: a stat must measure the exact pain the product removes. General workplace, productivity, tool or market statistics are rejected, and "when in doubt, use none". The problem headline must name the product's specific situation. On tldraw this replaced "65% of workers have an issue with their tools" with no stat and a product-specific problem line.

@@ -72,7 +72,8 @@ function Stat({
   const frame = useDesignFrame();
   const fps = DESIGN_FPS;
   const src = ctx.sources.find((s) => s.id === el.source_id);
-  const p = spring({ frame: frame - delay, fps, config: { damping: 200 }, durationInFrames: 40 });
+  const p = spring({ frame: frame - delay - 6, fps, config: { damping: 200 }, durationInFrames: 36 });
+  const appear = spring({ frame: frame - delay, fps, config: { damping: 200 }, durationInFrames: 12 });
   const decimals = (String(el.value).split(".")[1] ?? "").length;
   const shown = (el.value * p).toFixed(decimals);
   const citation = !src
@@ -81,7 +82,7 @@ function Stat({
       ? "Source: the team"
       : `Source: ${src.source_name}${src.year ? `, ${src.year}` : ""}`;
   return (
-    <div style={{ textAlign: "center", ...fadeUp(frame, delay) }}>
+    <div style={{ textAlign: "center", opacity: appear, transform: `scale(${interpolate(appear, [0, 1], [0.9, 1])})` }}>
       <div
         style={{
           fontSize: ctx.kit.titleSize * 1.7,
@@ -98,9 +99,9 @@ function Stat({
           </span>
         ) : null}
       </div>
-      <div style={{ fontSize: ctx.kit.bodySize, marginTop: 16 }}>{el.label}</div>
+      <div style={{ fontSize: ctx.kit.bodySize, marginTop: 16, ...fadeUp(frame, delay + 14) }}>{el.label}</div>
       {citation && (
-        <div style={{ fontSize: ctx.kit.citationSize, color: ctx.kit.muted, marginTop: 14 }}>
+        <div style={{ fontSize: ctx.kit.citationSize, color: ctx.kit.muted, marginTop: 14, ...fadeUp(frame, delay + 30) }}>
           {citation}
         </div>
       )}
@@ -362,14 +363,31 @@ function AccentBar({ ctx, frame, delay }: { ctx: Ctx; frame: number; delay: numb
   );
 }
 
+const isHeadline = (el: Element) => el.type === "kinetic_headline" || (el.type === "text" && el.role === "title");
+
+/** How long an element's entrance takes, in design frames (30fps). */
+function entranceFrames(el: Element): number {
+  switch (el.type) {
+    case "kinetic_headline":
+      return el.text.split(/\s+/).length * 3 + 14;
+    case "stat":
+      return 36;
+    case "bullets":
+      return el.items.length * 10 + 10;
+    default:
+      return 12;
+  }
+}
+
 function renderElement(
   el: Element,
   i: number,
   ctx: Ctx,
   frame: number,
   fps: number,
+  startAt?: number,
 ): React.ReactNode {
-  const delay = 6 + i * 8;
+  const delay = startAt ?? 6 + i * 8;
   const { kit } = ctx;
   switch (el.type) {
     case "text":
@@ -389,7 +407,7 @@ function renderElement(
             textAlign: "center",
             lineHeight: 1.3,
             ...(el.role === "title" ? gradientText(kit.accent) : {}),
-            ...fadeUp(frame, delay + 8),
+            ...fadeUp(frame, delay),
           }}
         >
           {el.text}
@@ -413,18 +431,18 @@ function renderElement(
             const p = spring({
               frame: frame - delay - j * 3,
               fps,
-              config: { damping: 16, stiffness: 120 },
-              durationInFrames: 22,
+              config: { damping: 200 },
+              durationInFrames: 16,
             });
+            // Each word fades up a short distance: crisp (no blur), nothing peeks, layout never moves.
             return (
               <span
                 key={j}
                 style={{
                   display: "inline-block",
                   marginRight: "0.24em",
-                  opacity: interpolate(p, [0, 0.5], [0, 1], clamp),
-                  transform: `translateY(${interpolate(p, [0, 1], [34, 0])}px)`,
-                  filter: `blur(${interpolate(p, [0, 1], [10, 0])}px)`,
+                  opacity: interpolate(p, [0, 0.7], [0, 1], clamp),
+                  transform: `translateY(${interpolate(p, [0, 1], [0.32, 0])}em)`,
                   ...gradientText(kit.accent),
                 }}
               >
@@ -626,6 +644,13 @@ export function Scene({
   }
 
   const label = SECTION_LABEL[scene.section];
+  // One thing at a time: each element starts when the previous one has (nearly) finished.
+  const schedule: number[] = [];
+  let at = label ? 8 : 2;
+  for (const el of scene.elements) {
+    schedule.push(at);
+    at += entranceFrames(el) + (isHeadline(el) ? 8 : 2);
+  }
   const headlineCount = scene.elements.filter(
     (e) => e.type === "kinetic_headline" || (e.type === "text" && e.role === "title"),
   ).length;
@@ -643,11 +668,10 @@ export function Scene({
         {label && <SectionChip label={label} ctx={ctx} frame={frame} />}
         {scene.elements.map((el, i) => (
           <React.Fragment key={i}>
-            {renderElement(el, i, ctx, frame, fps)}
-            {headlineCount > 0 &&
-              (el.type === "kinetic_headline" || (el.type === "text" && el.role === "title")) && (
-                <AccentBar ctx={ctx} frame={frame} delay={18} />
-              )}
+            {renderElement(el, i, ctx, frame, fps, schedule[i])}
+            {headlineCount > 0 && isHeadline(el) && (
+              <AccentBar ctx={ctx} frame={frame} delay={schedule[i] + entranceFrames(el) - 4} />
+            )}
           </React.Fragment>
         ))}
       </AbsoluteFill>

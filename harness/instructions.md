@@ -5,9 +5,9 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 
 ## Steps
 1. Understand: read the digest and open the live URL in your browser (max 8 page loads for the product). Who is it for, what problem, what is the wow moment?
-1b. Research: write 2–3 web-search queries that would find statistics showing the problem is real (who is affected, how often, what it costs), e.g. "percentage of students who miss assignment deadlines survey". Our server runs them and sends you the sentences it finds in a follow-up message. Don't spend page loads hunting for stats yourself.
+1b. Research: write 2–3 specific web-search queries that would find statistics about this product's exact pain (the task or friction it removes), not about its broad category, e.g. "percentage of students who miss assignment deadlines survey". Our server runs them and sends you the sentences it finds in a follow-up message. Don't spend page loads hunting for stats yourself.
 2. Write the pitch story in sections, in this order:
-   - problem (10–15s): who hurts and why, one concrete example, backed by a statistic. Always include it. Ground the problem in the team's problem field, the README or the site's own copy; if none states it, infer the obvious problem the product solves from what it does, and phrase it as the user's pain, not as a claim about the market. Layout stat-reveal when you have a stat, else big-statement.
+   - problem (10–15s): who hurts and why, one concrete example, backed by a statistic. The headline names the specific situation this product fixes, in the user's words (e.g. "Sketching an idea shouldn't start with a sign-up form"), never a generic line about tools, productivity or workflows. Always include it. Ground the problem in the team's problem field, the README or the site's own copy; if none states it, infer the obvious problem the product solves from what it does, and phrase it as the user's pain, not as a claim about the market. Layout stat-reveal when you have a stat, else big-statement.
    - solution (10–15s): what it is in one sentence.
    - demo (30–45s): 4–8 scenes, one per recorded step, ending on the wow moment.
    - next (8–12s): 2–3 roadmap bullets ONLY from the team's what's-next field, the README or issues. Otherwise omit it. Never invent roadmap items.

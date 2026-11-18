@@ -116,15 +116,17 @@ export async function findCandidates(
 
 /** The follow-up message that hands the candidates to the agent. */
 export function researchPrompt(candidates: Candidate[]): string {
-  const list = candidates
-    .map((c) => `[${c.id}] ${c.title}\n    ${c.url}\n    "${c.sentence}"`)
-    .join("\n");
+  const list = candidates.map((c) => `[${c.id}] ${c.title}\n    ${c.url}\n    "${c.sentence}"`).join("\n");
   return (
     `Our server searched the web for your research_queries and found these sentences on real pages:\n${list}\n\n` +
-    `Update ONLY the problem scene and "sources": add at most 2 stat elements from these candidates that genuinely show the problem is real (who is affected, how often, what it costs). ` +
-    `Use the candidate's exact url, copy the number and unit exactly as written in its sentence, quote = that sentence, kind "research", verified false, ` +
-    `source_name = the publisher (from the title or domain), year = the year the page states (or the current year if none). ` +
-    `Prefer government, academic and major survey publishers; skip vendor marketing claims and anything off-topic. If none fits honestly, change nothing. ` +
-    `Put each number in its own narration sentence and keep the problem scene 10–15s. Do not change the flow, demo scenes or anything else. Reply with the full JSON block again (same format).`
+    `Relevance test, apply it strictly: a candidate qualifies only if a viewer would immediately see it measures the exact pain THIS product removes ` +
+    `(the specific task, friction or cost shown in the demo). General statistics about workplaces, productivity, "tools", remote work, AI adoption ` +
+    `or market size do NOT qualify unless the product is specifically about that. Vendor marketing claims don't qualify. When in doubt, use none: ` +
+    `a problem scene without a stat is better than a loosely related one.\n\n` +
+    `If one or two qualify: update ONLY the problem scene and "sources". Add a stat element per stat, use the candidate's exact url, copy the number ` +
+    `and unit exactly as written, quote = that sentence, kind "research", verified false, source_name = the publisher (from the title or domain), ` +
+    `year = a year the sentence or title states, else 0. Rewrite the problem headline and narration so the stat and the product's pain read as ` +
+    `one point. Put each number in its own sentence; keep the scene 10–15s. Do not change the flow, demo scenes or anything else. ` +
+    `If none qualify, reply with the JSON unchanged. Either way reply with the full JSON block again (same format).`
   );
 }
