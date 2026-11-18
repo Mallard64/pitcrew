@@ -39,6 +39,10 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 - Elements: {"type":"kinetic_headline","text":"..."} · {"type":"text","text":"...","role":"title"|"body"|"label"} · {"type":"bullets","items":["..."]} · {"type":"clip","step_id":"s1","zoom":"target"} · {"type":"image","src":"shots/<step_id>.png","fit":"contain"} · {"type":"stat","source_id":"src1","value":42,"unit":"%","label":"..."} (needs a source entry).
 - Layouts (names): problem: big-statement | stat-reveal · solution: big-statement | before-after · demo: full-frame | framed-zoom · next: bullet-reveal · end: end-card.
 - Transitions: fade | slide | wipe.
+- style_kit (the whole look; pick the one that fits THIS product and its audience, don't default to midnight):
+  midnight = dark, glowing, centred (AI, infra, pro tools) · paper = cream editorial, serif (writing, education, research, nonprofit) ·
+  terminal = black monospace, typewriter (developer tools, CLIs, APIs) · poster = full brand-colour field, heavy uppercase (bold consumer, events, social) ·
+  aurora = vivid colour field, frosted glass (creative, music, design, playful consumer) · clean = minimal white Swiss (productivity, B2B, health, finance).
 - Text: headlines ≤ 12 words, body ≤ 18 words, bullets ≤ 8 words each.
 
 ## Output
@@ -46,7 +50,7 @@ Reply with ONE fenced json block and nothing else:
 ```json
 {"summary": "3 sentences: who it's for, the problem, the wow moment",
  "video_plan": {
-   "version": 1, "seed": <any integer>, "style_kit": "default", "brand": {"primary": "#RRGGBB from the site's main accent color"},
+   "version": 1, "seed": <any integer>, "style_kit": "<one kit id from the list below>", "brand": {"primary": "#RRGGBB from the site's main accent color"},
    "size": {"width": 1280, "height": 720}, "fps": 30, "music": null, "credit": true,
    "scenes": [{"id": "problem", "section": "problem", "layout": "big-statement", "duration_s": 12, "narration": "...", "transition_in": "fade",
                "elements": [{"type": "kinetic_headline", "text": "..."}]}],

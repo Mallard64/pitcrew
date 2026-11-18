@@ -16,6 +16,7 @@ import { renderMedia, selectComposition } from "@remotion/renderer";
 import { VideoPlanSchema, type VideoPlan } from "../schemas/video_plan";
 import type { Contract } from "../schemas/contract";
 import { ffmpeg, probeDuration } from "./ff";
+import { resolveKit } from "../../remotion/kits/default";
 import type { PitchVideoProps } from "../../remotion/types";
 
 // Resolved from the working directory: inside a Next.js server chunk, __dirname is not the repo.
@@ -40,7 +41,7 @@ export function getBundle(): Promise<string> {
 const TYPES: Record<string, string> = { ".mp4": "video/mp4", ".png": "image/png", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".wav": "audio/wav" };
 
 /** Serves one directory read-only on 127.0.0.1 so the headless renderer can load job media. */
-function serveDir(root: string): Promise<{ base: string; close: () => Promise<void> }> {
+export function serveDir(root: string): Promise<{ base: string; close: () => Promise<void> }> {
   const realRoot = fs.realpathSync(root);
   const server = http.createServer((req, res) => {
     let file: string;
@@ -70,7 +71,7 @@ function serveDir(root: string): Promise<{ base: string; close: () => Promise<vo
   );
 }
 
-async function mediaFor(outDir: string, base: string): Promise<PitchVideoProps["media"]> {
+export async function mediaFor(outDir: string, base: string): Promise<PitchVideoProps["media"]> {
   const media: PitchVideoProps["media"] = { clips: {}, images: {}, audio: {} };
   const durations = path.join(outDir, "audio", "durations.json");
   if (fs.existsSync(durations)) {
@@ -140,7 +141,8 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       steps_total: plan.flow.steps.length,
       notes,
       seed: plan.seed,
-      style_kit: plan.style_kit,
+      // Report the kit actually rendered ("default" or an unknown id resolves by seed).
+      style_kit: resolveKit(plan.style_kit, plan.seed, plan.brand.primary).id,
     };
   } finally {
     await server.close();

@@ -5,7 +5,7 @@ import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import { Scene } from "./Scene";
-import { DEFAULT_KIT, brandTint } from "./kits/default";
+import { accentOn, resolveKit, type Kit } from "./kits/default";
 import { transitionFrames, framesFor, type PitchVideoProps } from "./types";
 
 // Transitions not built yet (zoom-through, match-cut, whip: C13) fall back to fade.
@@ -22,7 +22,7 @@ function presentation(id: string): TransitionPresentation<Record<string, unknown
 }
 
 export function PitchVideo({ plan, media }: PitchVideoProps) {
-  const kit = { ...DEFAULT_KIT, accent: plan.brand.primary };
+  const kit = resolveKit(plan.style_kit, plan.seed, plan.brand.primary);
   const ctx = { kit, sources: plan.sources, media, url: plan.flow.url, credit: plan.credit };
   const children: React.ReactNode[] = [];
   plan.scenes.forEach((scene, i) => {
@@ -47,13 +47,13 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
   return (
     <AbsoluteFill style={{ background: kit.bg }}>
       <TransitionSeries>{children}</TransitionSeries>
-      <Progress color={kit.accent} />
+      <Progress kit={kit} />
     </AbsoluteFill>
   );
 }
 
 /** Thin brand-coloured progress line along the top edge. */
-function Progress({ color }: { color: string }) {
+function Progress({ kit }: { kit: Kit }) {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   return (
@@ -62,10 +62,9 @@ function Progress({ color }: { color: string }) {
         position: "absolute",
         top: 0,
         left: 0,
-        height: 3,
+        height: kit.window === "brutal" ? 6 : 3,
         width: `${(100 * frame) / Math.max(1, durationInFrames - 1)}%`,
-        background: `linear-gradient(90deg, ${brandTint(color, 55)}, ${brandTint(color, 78)})`,
-        boxShadow: `0 0 10px ${brandTint(color, 60)}`,
+        background: kit.window === "brutal" ? "#000" : accentOn(kit),
       }}
     />
   );

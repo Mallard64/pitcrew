@@ -8,8 +8,12 @@ export type TtsConfig = {
   provider: ProviderName;
   apiKey?: string;
   voice?: string;
+  /** Talking pace relative to our natural pitch pace (~3 words/s): 1 = natural, 1.15 = brisker. */
+  pace?: number;
   fetchImpl?: typeof fetch;
 };
+
+const clampNum = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /** Narration speed estimate used for silence and for planning hold times. */
 export const WORDS_PER_SECOND = 2.5;
@@ -31,6 +35,7 @@ export async function openaiTts(text: string, outFile: string, cfg: TtsConfig) {
     body: JSON.stringify({
       model: "gpt-4o-mini-tts",
       voice: cfg.voice || "alloy",
+      speed: clampNum(cfg.pace ?? 1, 0.7, 1.4),
       input: text,
       response_format: "mp3",
       instructions: "Upbeat, clear product-demo narrator. Natural pace.",
@@ -47,8 +52,8 @@ export async function elevenlabsTts(text: string, outFile: string, cfg: TtsConfi
     {
       method: "POST",
       headers: { "xi-api-key": cfg.apiKey ?? "", "Content-Type": "application/json" },
-      // speed 0.85 ≈ 3 words/s (measured); the default ~3.8 words/s is too brisk for a pitch.
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.85 } }),
+      // speed 0.85 ≈ 3 words/s (measured) is pace 1; the default ~3.8 words/s is too brisk for a pitch.
+      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: clampNum(0.85 * (cfg.pace ?? 1), 0.7, 1.2) } }),
     },
   );
   await writeResponse(res, outFile);

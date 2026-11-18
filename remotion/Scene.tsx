@@ -1,10 +1,11 @@
 /**
- * Renders one scene on the animated brand backdrop.
- * - Demo scenes: the recording plays inside a floating browser window; zoom and the target highlight
- *   happen inside the window, and captions sit in their own band below it, so they never cover the app.
- * - Title scenes: section label, gradient kinetic headline, growing accent bar, supporting text.
+ * Renders one scene in the plan's style kit (see kits/default.ts). Every visual choice (backdrop, type,
+ * headline motion, window chrome, captions, label chip, accent, end card) comes from the kit, so
+ * videos for different products look different.
+ * - Demo scenes: the recording plays inside a window; zoom and the target highlight happen inside it,
+ *   and captions sit in their own band below it, so they never cover the app.
+ * - Title scenes: one element at a time: label, headline, accent, then stats/text/bullets.
  * The composition is laid out in 1280x720 units and rendered at a higher scale for crisp output.
- * The primitives library (C11) and layouts (C12) will extend the element renderers here.
  */
 import React from "react";
 import {
@@ -20,7 +21,7 @@ import {
 import { captionChunks, NARRATION_LEAD_S } from "../harness/captions";
 import type { Element, Scene as SceneT, Source } from "../harness/schemas/video_plan";
 import { Backdrop } from "./Backdrop";
-import { brandTint, type Kit } from "./kits/default";
+import { accentOn, brandTint, type Kit } from "./kits/default";
 import { DESIGN_FPS, useDesignFrame, type PitchVideoProps } from "./types";
 
 type Ctx = {
@@ -35,7 +36,7 @@ type Ctx = {
 /** Recording viewport (CSS px). Zoom boxes from record_flow.ts are in these units. */
 const VIEW_W = 1280;
 const VIEW_H = 720;
-/** Browser window geometry in composition units. */
+/** Window geometry in composition units. */
 const WIN_W = 1000;
 const WIN_SCALE = WIN_W / VIEW_W;
 const WIN_CONTENT_H = VIEW_H * WIN_SCALE;
@@ -60,6 +61,31 @@ const SECTION_LABEL: Record<string, string> = {
   next: "What's next",
 };
 
+/** Headline colour treatment for the kit. */
+function fill(kit: Kit): React.CSSProperties {
+  if (kit.fill === "gradient")
+    return {
+      backgroundImage: `linear-gradient(180deg, #ffffff 35%, ${brandTint(kit.accent, 80)})`,
+      WebkitBackgroundClip: "text",
+      backgroundClip: "text",
+      color: "transparent",
+    };
+  if (kit.fill === "brand") return { color: accentOn(kit) };
+  return { color: kit.fg };
+}
+
+function headlineType(kit: Kit, size: number): React.CSSProperties {
+  return {
+    fontFamily: kit.displayFont,
+    fontSize: size,
+    fontWeight: kit.titleWeight,
+    letterSpacing: kit.titleTracking,
+    textTransform: kit.titleCase === "uppercase" ? "uppercase" : undefined,
+    lineHeight: kit.titleCase === "uppercase" ? 0.98 : 1.08,
+    textAlign: kit.align,
+  };
+}
+
 function Stat({
   el,
   ctx,
@@ -71,9 +97,20 @@ function Stat({
 }) {
   const frame = useDesignFrame();
   const fps = DESIGN_FPS;
+  const { kit } = ctx;
   const src = ctx.sources.find((s) => s.id === el.source_id);
-  const p = spring({ frame: frame - delay - 6, fps, config: { damping: 200 }, durationInFrames: 36 });
-  const appear = spring({ frame: frame - delay, fps, config: { damping: 200 }, durationInFrames: 12 });
+  const p = spring({
+    frame: frame - delay - 6,
+    fps,
+    config: { damping: 200 },
+    durationInFrames: 36,
+  });
+  const appear = spring({
+    frame: frame - delay,
+    fps,
+    config: { damping: 200 },
+    durationInFrames: 12,
+  });
   const decimals = (String(el.value).split(".")[1] ?? "").length;
   const shown = (el.value * p).toFixed(decimals);
   const citation = !src
@@ -82,40 +119,54 @@ function Stat({
       ? "Source: the team"
       : `Source: ${src.source_name}${src.year ? `, ${src.year}` : ""}`;
   return (
-    <div style={{ textAlign: "center", opacity: appear, transform: `scale(${interpolate(appear, [0, 1], [0.9, 1])})` }}>
+    <div
+      style={{
+        textAlign: kit.align,
+        opacity: appear,
+        transform: `scale(${interpolate(appear, [0, 1], [0.9, 1])})`,
+        transformOrigin: kit.align === "left" ? "0 50%" : "50% 50%",
+      }}
+    >
       <div
         style={{
-          fontSize: ctx.kit.titleSize * 1.7,
-          fontWeight: 800,
+          ...headlineType(kit, kit.titleSize * 1.7),
           lineHeight: 1,
-          letterSpacing: "-0.03em",
-          ...gradientText(ctx.kit.accent),
+          ...(kit.fill === "solid"
+            ? { color: kit.mode === "light" ? accentOn(kit) : kit.fg }
+            : fill(kit)),
         }}
       >
         {shown}
         {el.unit ? (
-          <span style={{ fontSize: ctx.kit.titleSize * 0.7 }}>
+          <span style={{ fontSize: kit.titleSize * 0.7 }}>
             {el.unit === "%" ? "%" : ` ${el.unit}`}
           </span>
         ) : null}
       </div>
-      <div style={{ fontSize: ctx.kit.bodySize, marginTop: 16, ...fadeUp(frame, delay + 14) }}>{el.label}</div>
+      <div
+        style={{
+          fontSize: kit.bodySize,
+          marginTop: 16,
+          color: kit.fg,
+          ...fadeUp(frame, delay + 14),
+        }}
+      >
+        {el.label}
+      </div>
       {citation && (
-        <div style={{ fontSize: ctx.kit.citationSize, color: ctx.kit.muted, marginTop: 14, ...fadeUp(frame, delay + 30) }}>
+        <div
+          style={{
+            fontSize: kit.citationSize,
+            color: kit.muted,
+            marginTop: 14,
+            ...fadeUp(frame, delay + 30),
+          }}
+        >
           {citation}
         </div>
       )}
     </div>
   );
-}
-
-function gradientText(brand: string): React.CSSProperties {
-  return {
-    backgroundImage: `linear-gradient(180deg, #ffffff 35%, ${brandTint(brand, 80)})`,
-    WebkitBackgroundClip: "text",
-    backgroundClip: "text",
-    color: "transparent",
-  };
 }
 
 /** The recording at native viewport size; zoom/pan and the target highlight are applied in viewport px. */
@@ -124,6 +175,7 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
   const { fps: realFps, durationInFrames: realDuration } = useVideoConfig();
   const fps = DESIGN_FPS;
   const durationInFrames = (realDuration * DESIGN_FPS) / realFps;
+  const { kit } = ctx;
   const m = ctx.media.clips[el.step_id];
   if (!m) return null;
   const clipFrames = Math.max(1, Math.floor(m.duration_s * realFps) - 1);
@@ -143,8 +195,22 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
     const tx = Math.min(0, Math.max(VIEW_W - VIEW_W * sc, VIEW_W / 2 - cx * sc));
     const ty = Math.min(0, Math.max(VIEW_H - VIEW_H * sc, VIEW_H / 2 - cy * sc));
     transform = `translate(${tx}px, ${ty}px) scale(${sc})`;
-    const glow = interpolate(frame, [26, 38], [0, 1], clamp) * (0.75 + 0.25 * Math.sin(frame / 7));
+    const on = interpolate(frame, [26, 38], [0, 1], clamp);
+    const pulse = 0.75 + 0.25 * Math.sin(frame / 7);
     const pad = 8;
+    const ring: React.CSSProperties =
+      kit.window === "brutal"
+        ? {
+            border: "4px solid #000",
+            background: brandTint(kit.accent, 55, 0.18),
+            boxShadow: "6px 6px 0 #000",
+          }
+        : kit.window === "terminal"
+          ? { border: `2px dashed ${accentOn(kit)}`, boxShadow: `0 0 18px ${accentOn(kit, 0.6)}` }
+          : {
+              border: `3px solid ${accentOn(kit)}`,
+              boxShadow: `0 0 0 6px ${accentOn(kit, 0.2)}, 0 0 28px ${accentOn(kit, 0.9)}`,
+            };
     highlight = (
       <div
         style={{
@@ -153,17 +219,15 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
           top: m.box.y - pad,
           width: m.box.w + pad * 2,
           height: m.box.h + pad * 2,
-          borderRadius: 12,
-          border: `3px solid ${brandTint(ctx.kit.accent, 62)}`,
-          boxShadow: `0 0 0 6px ${brandTint(ctx.kit.accent, 62, 0.2)}, 0 0 28px ${brandTint(ctx.kit.accent, 60)}`,
-          opacity: glow,
+          borderRadius: Math.min(12, kit.radius),
+          opacity: on * (kit.window === "brutal" ? 1 : pulse),
+          ...ring,
         }}
       />
     );
   } else {
     // A slow push-in keeps wide shots alive.
-    const sc = interpolate(frame, [0, durationInFrames], [1, 1.035], clamp);
-    transform = `scale(${sc})`;
+    transform = `scale(${interpolate(frame, [0, durationInFrames], [1, 1.035], clamp)})`;
   }
   return (
     <div
@@ -194,36 +258,119 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
   );
 }
 
-/** Floating browser window that tilts in and holds the clip. */
+/** Window chrome per kit: macOS dark/light, terminal, neo-brutalist, frosted glass. */
+function chrome(kit: Kit) {
+  switch (kit.window) {
+    case "mac-light":
+      return {
+        frame: {
+          background: "#fff",
+          border: "1px solid rgba(0,0,0,0.12)",
+          boxShadow: "0 30px 70px rgba(40,30,10,0.18), 0 2px 6px rgba(0,0,0,0.06)",
+        },
+        bar: {
+          background: "linear-gradient(#f3f3f3, #e8e8e8)",
+          borderBottom: "1px solid rgba(0,0,0,0.1)",
+        },
+        url: { background: "#fff", color: "#555", border: "1px solid rgba(0,0,0,0.08)" },
+        dots: true,
+      };
+    case "terminal":
+      return {
+        frame: {
+          background: "#000",
+          border: `1px solid ${accentOn(kit, 0.6)}`,
+          boxShadow: `0 0 40px ${accentOn(kit, 0.25)}, 0 30px 80px rgba(0,0,0,0.6)`,
+        },
+        bar: { background: "#0b0f14", borderBottom: `1px solid ${accentOn(kit, 0.35)}` },
+        url: { background: "transparent", color: accentOn(kit), border: "none" },
+        dots: false,
+      };
+    case "brutal":
+      return {
+        frame: { background: "#fff", border: "4px solid #000", boxShadow: "16px 16px 0 #000" },
+        bar: { background: "#fff", borderBottom: "4px solid #000" },
+        url: {
+          background: "#000",
+          color: "#fff",
+          border: "none",
+          fontWeight: 800,
+          textTransform: "uppercase" as const,
+          letterSpacing: "0.06em",
+        },
+        dots: false,
+      };
+    case "glass":
+      return {
+        frame: {
+          background: "rgba(255,255,255,0.14)",
+          border: "1px solid rgba(255,255,255,0.45)",
+          boxShadow: "0 30px 90px rgba(10,5,40,0.45)",
+          backdropFilter: "blur(18px)",
+          padding: 8,
+        },
+        bar: { background: "transparent" },
+        url: {
+          background: "rgba(255,255,255,0.18)",
+          color: "#fff",
+          border: "1px solid rgba(255,255,255,0.3)",
+        },
+        dots: true,
+      };
+    default:
+      return {
+        frame: {
+          background: "#11151f",
+          border: "1px solid rgba(255,255,255,0.14)",
+          boxShadow: `0 40px 90px rgba(0,0,0,0.55), 0 0 70px ${brandTint(kit.accent, 55, 0.25)}`,
+        },
+        bar: {
+          background: "linear-gradient(#1d2230, #171b26)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+        },
+        url: { background: "rgba(255,255,255,0.07)", color: "#c9d1e0", border: "none" },
+        dots: true,
+      };
+  }
+}
+
 function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode }) {
   const frame = useDesignFrame();
   const fps = DESIGN_FPS;
+  const { kit } = ctx;
+  const c = chrome(kit);
   const p = spring({
     frame,
     fps,
-    config: { damping: 18, stiffness: 90, mass: 0.9 },
+    config:
+      kit.window === "brutal"
+        ? { damping: 12, stiffness: 160 }
+        : { damping: 18, stiffness: 90, mass: 0.9 },
     durationInFrames: 36,
   });
-  const tilt = interpolate(p, [0, 1], [10, 0]);
-  const scale = interpolate(p, [0, 1], [0.93, 1]);
-  const lift = interpolate(p, [0, 1], [26, 0]);
+  // Each kit enters differently: tilt-up (default), slide-in from the left (brutal), plain rise (terminal).
+  const enter =
+    kit.window === "brutal"
+      ? `translateX(${interpolate(p, [0, 1], [-60, 0])}px)`
+      : kit.window === "terminal"
+        ? `translateY(${interpolate(p, [0, 1], [14, 0])}px)`
+        : `translateY(${interpolate(p, [0, 1], [26, 0])}px) rotateX(${interpolate(p, [0, 1], [10, 0])}deg) scale(${interpolate(p, [0, 1], [0.93, 1])})`;
+  const pad = (c.frame as { padding?: number }).padding ?? 0;
   return (
     <AbsoluteFill style={{ perspective: 1600 }}>
       <div
         style={{
           position: "absolute",
-          left: WIN_LEFT,
-          top: WIN_TOP,
-          width: WIN_W,
-          height: WIN_BAR + WIN_CONTENT_H,
-          borderRadius: 14,
+          left: WIN_LEFT - pad,
+          top: WIN_TOP - pad,
+          width: WIN_W + pad * 2,
+          height: WIN_BAR + WIN_CONTENT_H + pad * 2,
+          borderRadius: kit.radius,
           overflow: "hidden",
-          background: "#11151f",
-          border: "1px solid rgba(255,255,255,0.14)",
-          boxShadow: `0 40px 90px rgba(0,0,0,0.55), 0 0 70px ${brandTint(ctx.kit.accent, 55, 0.25)}`,
-          transform: `translateY(${lift}px) rotateX(${tilt}deg) scale(${scale})`,
+          transform: enter,
           transformOrigin: "50% 100%",
           opacity: interpolate(p, [0, 0.3], [0, 1], clamp),
+          ...c.frame,
         }}
       >
         <div
@@ -233,30 +380,36 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
             alignItems: "center",
             padding: "0 12px",
             gap: 7,
-            background: "linear-gradient(#1d2230, #171b26)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            ...c.bar,
           }}
         >
-          {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-            <div key={c} style={{ width: 11, height: 11, borderRadius: 6, background: c }} />
-          ))}
-          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          {c.dots
+            ? ["#ff5f57", "#febc2e", "#28c840"].map((d) => (
+                <div key={d} style={{ width: 11, height: 11, borderRadius: 6, background: d }} />
+              ))
+            : null}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              justifyContent: kit.window === "terminal" ? "flex-start" : "center",
+            }}
+          >
             <div
               style={{
-                minWidth: 300,
+                minWidth: kit.window === "terminal" ? 0 : 300,
                 padding: "3px 16px",
-                borderRadius: 7,
-                background: "rgba(255,255,255,0.07)",
-                color: "#c9d1e0",
+                borderRadius: Math.min(7, kit.radius),
                 fontSize: 13,
                 textAlign: "center",
-                fontFamily: ctx.kit.font,
+                fontFamily: kit.font,
+                ...c.url,
               }}
             >
-              {host(ctx.url)}
+              {kit.window === "terminal" ? `● ~/${host(ctx.url)}` : host(ctx.url)}
             </div>
           </div>
-          <div style={{ width: 47 }} />
+          {c.dots ? <div style={{ width: 47 }} /> : null}
         </div>
         <div
           style={{
@@ -265,6 +418,7 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
             height: WIN_CONTENT_H,
             overflow: "hidden",
             background: "#fff",
+            borderRadius: kit.window === "glass" ? kit.radius - 8 : 0,
           }}
         >
           <div
@@ -284,40 +438,87 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
   );
 }
 
+function captionStyle(kit: Kit): React.CSSProperties {
+  switch (kit.caption) {
+    case "light-card":
+      return {
+        background: "rgba(255,255,255,0.94)",
+        color: kit.fg,
+        border: "1px solid rgba(0,0,0,0.08)",
+        boxShadow: "0 8px 24px rgba(40,30,10,0.12)",
+        borderRadius: 10,
+      };
+    case "mono-bar":
+      return {
+        background: "rgba(0,0,0,0.85)",
+        color: kit.fg,
+        borderLeft: `4px solid ${accentOn(kit)}`,
+        borderRadius: 2,
+        textAlign: "left",
+      };
+    case "block":
+      return {
+        background: "#000",
+        color: "#fff",
+        borderRadius: 0,
+        fontWeight: 800,
+        textTransform: "uppercase",
+        letterSpacing: "0.02em",
+        fontSize: 25,
+      };
+    case "glass":
+      return {
+        background: "rgba(255,255,255,0.16)",
+        color: "#fff",
+        border: "1px solid rgba(255,255,255,0.35)",
+        backdropFilter: "blur(14px)",
+        borderRadius: 18,
+        textShadow: "0 1px 8px rgba(0,0,0,0.35)",
+      };
+    default:
+      return {
+        background: "rgba(8,11,20,0.62)",
+        color: "#fff",
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: 12,
+        textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+      };
+  }
+}
+
 function Captions({ text, ctx, band }: { text: string; ctx: Ctx; band: boolean }) {
   const frame = useDesignFrame();
   const fps = DESIGN_FPS;
+  const { kit } = ctx;
   const audio = ctx.audioDuration;
   if (!text.trim() || !audio) return null;
   const t = frame / fps;
   const chunk = captionChunks(text, NARRATION_LEAD_S, audio).find((c) => t >= c.start && t < c.end);
   if (!chunk) return null;
   const pop = interpolate(t - chunk.start, [0, 0.15], [0.6, 1], clamp);
+  const left = !band && kit.align === "left";
   return (
     <AbsoluteFill
       style={{
         top: band ? CAPTION_TOP : undefined,
         justifyContent: band ? "flex-start" : "flex-end",
-        alignItems: "center",
+        alignItems: left ? "flex-start" : "center",
         paddingBottom: band ? 0 : 34,
+        paddingLeft: left ? 110 : 0,
       }}
     >
       <div
         style={{
           maxWidth: 1060,
           padding: "8px 22px",
-          borderRadius: 12,
-          background: "rgba(8,11,20,0.62)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          color: "#fff",
           fontSize: 27,
           lineHeight: 1.3,
           fontWeight: 650,
           letterSpacing: "-0.01em",
           textAlign: "center",
-          fontFamily: ctx.kit.font,
+          fontFamily: kit.font,
           opacity: pop,
-          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+          ...captionStyle(kit),
         }}
       >
         {chunk.text}
@@ -327,49 +528,118 @@ function Captions({ text, ctx, band }: { text: string; ctx: Ctx; band: boolean }
 }
 
 function SectionChip({ label, ctx, frame }: { label: string; ctx: Ctx; frame: number }) {
-  return (
-    <div
-      style={{
-        padding: "7px 18px",
-        borderRadius: 999,
-        border: `1px solid ${brandTint(ctx.kit.accent, 65, 0.4)}`,
-        background: `${brandTint(ctx.kit.accent, 50, 0.13)}`,
-        color: brandTint(ctx.kit.accent, 80),
-        fontSize: 17,
-        fontWeight: 700,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        ...fadeUp(frame, 0),
-      }}
-    >
-      {label}
-    </div>
-  );
+  const { kit } = ctx;
+  const anim = fadeUp(frame, 0);
+  switch (kit.chip) {
+    case "tag":
+      return (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            color: accentOn(kit),
+            fontSize: 17,
+            fontWeight: 700,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            ...anim,
+          }}
+        >
+          <span style={{ width: 36, height: 2, background: accentOn(kit) }} />
+          {label}
+        </div>
+      );
+    case "mono":
+      return (
+        <div
+          style={{ fontFamily: kit.font, color: accentOn(kit), fontSize: 19, ...anim }}
+        >{`// ${label.toLowerCase()}`}</div>
+      );
+    case "block":
+      return (
+        <div
+          style={{
+            background: "#000",
+            color: "#fff",
+            padding: "8px 16px",
+            fontSize: 18,
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            ...anim,
+          }}
+        >
+          {label}
+        </div>
+      );
+    default: {
+      const light = kit.mode === "light";
+      return (
+        <div
+          style={{
+            padding: "7px 18px",
+            borderRadius: 999,
+            border: `1px solid ${light ? accentOn(kit, 0.4) : brandTint(kit.accent, 65, 0.4)}`,
+            background:
+              kit.backdrop === "aurora"
+                ? "rgba(255,255,255,0.16)"
+                : brandTint(kit.accent, 50, 0.13),
+            color:
+              kit.backdrop === "aurora"
+                ? "#fff"
+                : light
+                  ? accentOn(kit)
+                  : brandTint(kit.accent, 80),
+            fontSize: 17,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            ...anim,
+          }}
+        >
+          {label}
+        </div>
+      );
+    }
+  }
 }
 
 function AccentBar({ ctx, frame, delay }: { ctx: Ctx; frame: number; delay: number }) {
-  const fps = DESIGN_FPS;
-  const p = spring({ frame: frame - delay, fps, config: { damping: 200 }, durationInFrames: 24 });
+  const { kit } = ctx;
+  const p = spring({
+    frame: frame - delay,
+    fps: DESIGN_FPS,
+    config: { damping: 200 },
+    durationInFrames: 24,
+  });
+  if (kit.bar === "none") return null;
+  if (kit.bar === "block")
+    return <div style={{ width: 160 * p, height: 16, background: "#000" }} />;
+  if (kit.bar === "line") return <div style={{ width: 72 * p, height: 3, background: kit.fg }} />;
   return (
     <div
       style={{
         width: 140 * p,
         height: 6,
         borderRadius: 3,
-        background: `linear-gradient(90deg, ${brandTint(ctx.kit.accent, 60)}, ${brandTint(ctx.kit.accent, 82)})`,
-        boxShadow: `0 0 18px ${brandTint(ctx.kit.accent, 60)}`,
+        background: `linear-gradient(90deg, ${brandTint(kit.accent, 60)}, ${brandTint(kit.accent, 82)})`,
+        boxShadow: `0 0 18px ${brandTint(kit.accent, 60)}`,
       }}
     />
   );
 }
 
-const isHeadline = (el: Element) => el.type === "kinetic_headline" || (el.type === "text" && el.role === "title");
+const isHeadline = (el: Element) =>
+  el.type === "kinetic_headline" || (el.type === "text" && el.role === "title");
 
 /** How long an element's entrance takes, in design frames (30fps). */
-function entranceFrames(el: Element): number {
+function entranceFrames(el: Element, kit: Kit): number {
   switch (el.type) {
     case "kinetic_headline":
-      return el.text.split(/\s+/).length * 3 + 14;
+      return kit.headlineMotion === "typewriter"
+        ? Math.min(48, el.text.length * 1.1) + 8
+        : el.text.split(/\s+/).length * 3 + 14;
     case "stat":
       return 36;
     case "bullets":
@@ -377,6 +647,92 @@ function entranceFrames(el: Element): number {
     default:
       return 12;
   }
+}
+
+function Headline({
+  text,
+  kit,
+  frame,
+  delay,
+}: {
+  text: string;
+  kit: Kit;
+  frame: number;
+  delay: number;
+}) {
+  const words = text.split(/\s+/);
+  const size = (words.length > 9 ? 0.85 : 1) * kit.titleSize;
+  const style: React.CSSProperties = {
+    ...headlineType(kit, size),
+    maxWidth: kit.align === "left" ? 1060 : 1120,
+  };
+  if (kit.headlineMotion === "typewriter") {
+    // Characters appear at a steady rate, with a blinking block cursor.
+    const perChar = Math.min(1.1, 48 / Math.max(1, text.length));
+    const shown = Math.max(0, Math.min(text.length, Math.floor((frame - delay) / perChar)));
+    const blink = Math.floor(frame / 8) % 2 === 0;
+    return (
+      <div style={{ ...style, ...fill(kit) }}>
+        <span>{text.slice(0, shown)}</span>
+        <span style={{ visibility: "hidden" }}>{text.slice(shown)}</span>
+        <span
+          style={{
+            display: "inline-block",
+            width: "0.55em",
+            height: "0.9em",
+            marginLeft: 4,
+            verticalAlign: "-0.08em",
+            background: accentOn(kit),
+            opacity: blink ? 1 : 0,
+          }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div style={style}>
+      {words.map((w, j) => {
+        const p =
+          kit.headlineMotion === "slam"
+            ? spring({
+                frame: frame - delay - j * 3,
+                fps: DESIGN_FPS,
+                config: { damping: 11, stiffness: 220 },
+                durationInFrames: 14,
+              })
+            : spring({
+                frame: frame - delay - j * 3,
+                fps: DESIGN_FPS,
+                config: { damping: 200 },
+                durationInFrames: 16,
+              });
+        const motion =
+          kit.headlineMotion === "slam"
+            ? {
+                opacity: interpolate(p, [0, 0.4], [0, 1], clamp),
+                transform: `scale(${interpolate(p, [0, 1], [1.35, 1])})`,
+              }
+            : {
+                opacity: interpolate(p, [0, 0.7], [0, 1], clamp),
+                transform: `translateY(${interpolate(p, [0, 1], [0.32, 0])}em)`,
+              };
+        return (
+          <span
+            key={j}
+            style={{
+              display: "inline-block",
+              marginRight: "0.24em",
+              transformOrigin: "50% 60%",
+              ...motion,
+              ...fill(kit),
+            }}
+          >
+            {w}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function renderElement(
@@ -389,70 +745,39 @@ function renderElement(
 ): React.ReactNode {
   const delay = startAt ?? 6 + i * 8;
   const { kit } = ctx;
+  const light = kit.mode === "light";
   switch (el.type) {
     case "text":
-      return (
+      return el.role === "title" ? (
         <div
           key={i}
           style={{
-            fontSize:
-              el.role === "title"
-                ? kit.titleSize
-                : el.role === "label"
-                  ? kit.citationSize
-                  : kit.bodySize,
-            fontWeight: el.role === "title" ? 800 : 500,
-            color: el.role === "title" ? undefined : kit.muted,
+            ...headlineType(kit, kit.titleSize),
+            maxWidth: 1060,
+            ...fill(kit),
+            ...fadeUp(frame, delay),
+          }}
+        >
+          {el.text}
+        </div>
+      ) : (
+        <div
+          key={i}
+          style={{
+            fontSize: el.role === "label" ? kit.citationSize : kit.bodySize,
+            fontWeight: 500,
+            color: kit.muted,
             maxWidth: 980,
-            textAlign: "center",
+            textAlign: kit.align,
             lineHeight: 1.3,
-            ...(el.role === "title" ? gradientText(kit.accent) : {}),
             ...fadeUp(frame, delay),
           }}
         >
           {el.text}
         </div>
       );
-    case "kinetic_headline": {
-      const words = el.text.split(/\s+/);
-      return (
-        <div
-          key={i}
-          style={{
-            fontSize: words.length > 9 ? kit.titleSize * 0.85 : kit.titleSize,
-            fontWeight: 800,
-            maxWidth: 1120,
-            textAlign: "center",
-            lineHeight: 1.08,
-            letterSpacing: "-0.035em",
-          }}
-        >
-          {words.map((w, j) => {
-            const p = spring({
-              frame: frame - delay - j * 3,
-              fps,
-              config: { damping: 200 },
-              durationInFrames: 16,
-            });
-            // Each word fades up a short distance: crisp (no blur), nothing peeks, layout never moves.
-            return (
-              <span
-                key={j}
-                style={{
-                  display: "inline-block",
-                  marginRight: "0.24em",
-                  opacity: interpolate(p, [0, 0.7], [0, 1], clamp),
-                  transform: `translateY(${interpolate(p, [0, 1], [0.32, 0])}em)`,
-                  ...gradientText(kit.accent),
-                }}
-              >
-                {w}
-              </span>
-            );
-          })}
-        </div>
-      );
-    }
+    case "kinetic_headline":
+      return <Headline key={i} text={el.text} kit={kit} frame={frame} delay={delay} />;
     case "stat":
       return <Stat key={i} el={el} ctx={ctx} delay={delay} />;
     case "bullets":
@@ -465,6 +790,7 @@ function renderElement(
             gap: 16,
             fontSize: kit.bodySize,
             maxWidth: 1000,
+            color: kit.fg,
           }}
         >
           {el.items.map((it, j) => (
@@ -475,9 +801,22 @@ function renderElement(
                 gap: 16,
                 alignItems: "center",
                 padding: "12px 22px",
-                borderRadius: 14,
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: kit.radius,
+                background:
+                  kit.window === "brutal"
+                    ? "#fff"
+                    : light
+                      ? "rgba(255,255,255,0.75)"
+                      : "rgba(255,255,255,0.06)",
+                color: kit.window === "brutal" ? "#000" : kit.fg,
+                border:
+                  kit.window === "brutal"
+                    ? "3px solid #000"
+                    : light
+                      ? "1px solid rgba(0,0,0,0.08)"
+                      : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: kit.window === "brutal" ? "6px 6px 0 #000" : undefined,
+                fontFamily: kit.font,
                 ...fadeUp(frame, delay + j * 10),
               }}
             >
@@ -485,10 +824,9 @@ function renderElement(
                 style={{
                   width: 10,
                   height: 10,
-                  borderRadius: 5,
+                  borderRadius: kit.radius ? 5 : 0,
                   flexShrink: 0,
-                  background: brandTint(kit.accent, 65),
-                  boxShadow: `0 0 12px ${brandTint(kit.accent, 60)}`,
+                  background: accentOn(kit),
                 }}
               />
               <span>{it}</span>
@@ -506,9 +844,9 @@ function renderElement(
             maxWidth: "78%",
             maxHeight: "66%",
             objectFit: el.fit,
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.14)",
-            boxShadow: "0 30px 80px rgba(0,0,0,.5)",
+            borderRadius: kit.radius,
+            border: light ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "0 30px 80px rgba(0,0,0,.35)",
             ...fadeUp(frame, delay),
           }}
         />
@@ -519,7 +857,7 @@ function renderElement(
         <div
           key={i}
           style={{
-            borderRadius: 14,
+            borderRadius: kit.radius,
             overflow: "hidden",
             boxShadow: "0 30px 80px rgba(0,0,0,.45)",
             width: 1000,
@@ -535,6 +873,119 @@ function renderElement(
       // clip is rendered by the demo layout; node / arrow / icon / shape / diagram arrive with C11 + C16.
       return null;
   }
+}
+
+function EndCard({
+  ctx,
+  frame,
+  scene,
+  fps,
+}: {
+  ctx: Ctx;
+  frame: number;
+  scene: SceneT;
+  fps: number;
+}) {
+  const { kit } = ctx;
+  const pulse = 0.6 + 0.4 * Math.sin(frame / 6);
+  const url = host(ctx.url);
+  const cta: React.CSSProperties =
+    kit.window === "brutal"
+      ? {
+          background: "#000",
+          color: "#fff",
+          padding: "16px 34px",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          boxShadow: "10px 10px 0 rgba(0,0,0,0.35)",
+        }
+      : kit.window === "terminal"
+        ? { color: accentOn(kit), fontFamily: kit.font, padding: "10px 0" }
+        : kit.window === "glass"
+          ? {
+              background: "rgba(255,255,255,0.18)",
+              border: "1px solid rgba(255,255,255,0.45)",
+              color: "#fff",
+              padding: "14px 34px",
+              borderRadius: 999,
+              backdropFilter: "blur(14px)",
+            }
+          : kit.mode === "light"
+            ? {
+                background: brandTint(kit.accent, 38),
+                color: "#fff",
+                padding: "14px 34px",
+                borderRadius: kit.radius,
+              }
+            : {
+                background: `linear-gradient(135deg, ${brandTint(kit.accent, 52)}, ${brandTint(kit.accent, 40)})`,
+                color: "#fff",
+                padding: "14px 34px",
+                borderRadius: 999,
+                boxShadow: `0 0 ${30 + 30 * pulse}px ${brandTint(kit.accent, 55, 0.67)}, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              };
+  const left = kit.align === "left";
+  const blink = Math.floor(frame / 8) % 2 === 0;
+  return (
+    <AbsoluteFill style={{ color: kit.fg, fontFamily: kit.font }}>
+      <AbsoluteFill
+        style={{
+          justifyContent: "center",
+          alignItems: left ? "flex-start" : "center",
+          gap: 26,
+          paddingLeft: left ? 110 : 0,
+        }}
+      >
+        <div
+          style={{ ...headlineType(kit, kit.titleSize * 1.15), ...fill(kit), ...fadeUp(frame, 2) }}
+        >
+          Try it now
+        </div>
+        <div style={{ fontSize: kit.bodySize + 6, fontWeight: 700, ...cta, ...fadeUp(frame, 10) }}>
+          {kit.window === "terminal" ? (
+            <>
+              {`$ open ${url}`}
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "0.55em",
+                  height: "0.9em",
+                  marginLeft: 6,
+                  verticalAlign: "-0.08em",
+                  background: accentOn(kit),
+                  opacity: blink ? 1 : 0,
+                }}
+              />
+            </>
+          ) : (
+            url
+          )}
+        </div>
+        {scene.elements.map((el, i) => renderElement(el, i + 2, ctx, frame, fps))}
+      </AbsoluteFill>
+      {ctx.credit && (
+        <AbsoluteFill
+          style={{
+            justifyContent: "flex-end",
+            alignItems: left ? "flex-start" : "center",
+            paddingBottom: 30,
+            paddingLeft: left ? 110 : 0,
+          }}
+        >
+          <div
+            style={{
+              fontSize: kit.citationSize,
+              color: kit.muted,
+              letterSpacing: "0.04em",
+              ...fadeUp(frame, 18),
+            }}
+          >
+            Made with Pit Crew
+          </div>
+        </AbsoluteFill>
+      )}
+    </AbsoluteFill>
+  );
 }
 
 export function Scene({
@@ -558,61 +1009,17 @@ export function Scene({
     </Sequence>
   ) : null;
   // Offset the backdrop animation per scene so cuts don't look like a loop restarting.
-  const backdrop = <Backdrop brand={kit.accent} base={kit.bg} drift={index * 137} />;
+  const backdrop = <Backdrop kit={kit} drift={index * 137} />;
   const clip = scene.elements.find(
     (e): e is Extract<Element, { type: "clip" }> =>
       e.type === "clip" && !!ctx.media.clips[e.step_id],
   );
 
   if (scene.section === "end") {
-    const pulse = 0.6 + 0.4 * Math.sin(frame / 6);
     return (
-      <AbsoluteFill style={{ color: kit.fg, fontFamily: kit.font }}>
+      <AbsoluteFill>
         {backdrop}
-        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 26 }}>
-          <div
-            style={{
-              fontSize: kit.titleSize * 1.15,
-              fontWeight: 800,
-              letterSpacing: "-0.04em",
-              ...gradientText(kit.accent),
-              ...fadeUp(frame, 2),
-            }}
-          >
-            Try it now
-          </div>
-          <div
-            style={{
-              fontSize: kit.bodySize + 6,
-              fontWeight: 700,
-              padding: "14px 34px",
-              borderRadius: 999,
-              color: "#fff",
-              background: `linear-gradient(135deg, ${brandTint(kit.accent, 52)}, ${brandTint(kit.accent, 40)})`,
-              boxShadow: `0 0 ${30 + 30 * pulse}px ${brandTint(kit.accent, 55, 0.67)}, inset 0 1px 0 rgba(255,255,255,0.3)`,
-              ...fadeUp(frame, 10),
-            }}
-          >
-            {host(ctx.url)}
-          </div>
-          {scene.elements.map((el, i) => renderElement(el, i + 2, ctx, frame, fps))}
-        </AbsoluteFill>
-        {ctx.credit && (
-          <AbsoluteFill
-            style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 30 }}
-          >
-            <div
-              style={{
-                fontSize: ctx.kit.citationSize,
-                color: kit.muted,
-                letterSpacing: "0.04em",
-                ...fadeUp(frame, 18),
-              }}
-            >
-              Made with Pit Crew
-            </div>
-          </AbsoluteFill>
-        )}
+        <EndCard ctx={ctx} frame={frame} scene={scene} fps={fps} />
         {voice}
       </AbsoluteFill>
     );
@@ -649,28 +1056,30 @@ export function Scene({
   let at = label ? 8 : 2;
   for (const el of scene.elements) {
     schedule.push(at);
-    at += entranceFrames(el) + (isHeadline(el) ? 8 : 2);
+    at += entranceFrames(el, kit) + (isHeadline(el) ? 8 : 2);
   }
-  const headlineCount = scene.elements.filter(
-    (e) => e.type === "kinetic_headline" || (e.type === "text" && e.role === "title"),
-  ).length;
+  const left = kit.align === "left";
   return (
     <AbsoluteFill style={{ color: kit.fg, fontFamily: kit.font }}>
       {backdrop}
       <AbsoluteFill
         style={{
           justifyContent: "center",
-          alignItems: "center",
+          alignItems: left ? "flex-start" : "center",
           gap: 26,
-          padding: "60px 80px 120px",
+          padding: left ? "60px 110px 120px" : "60px 80px 120px",
         }}
       >
         {label && <SectionChip label={label} ctx={ctx} frame={frame} />}
         {scene.elements.map((el, i) => (
           <React.Fragment key={i}>
             {renderElement(el, i, ctx, frame, fps, schedule[i])}
-            {headlineCount > 0 && isHeadline(el) && (
-              <AccentBar ctx={ctx} frame={frame} delay={schedule[i] + entranceFrames(el) - 4} />
+            {isHeadline(el) && (
+              <AccentBar
+                ctx={ctx}
+                frame={frame}
+                delay={schedule[i] + entranceFrames(el, kit) - 4}
+              />
             )}
           </React.Fragment>
         ))}

@@ -22,6 +22,7 @@ import { checkPublicUrl, makeRequestGuard } from "./ssrf";
 import { fetchRepoFacts, type Commit } from "./buildlog";
 import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
 import { braveSearch, findCandidates, researchPrompt } from "./research/search";
+import { choosePace } from "./pacing";
 import type { Planner, PlannerEvent, PlanRequest } from "./harness";
 
 export const STAGES = ["opening", "planning", "recording", "narrating", "voicing", "assembling"] as const;
@@ -134,7 +135,12 @@ export async function runPipeline(
   const dropped = sanitizePlan(videoPlan, clipIds, outDir);
   for (const d of dropped) log(d);
   await fs.writeFile(path.join(outDir, "sources.md"), sourcesMarkdown(input.projectName, videoPlan.sources));
-  const script = { segments: videoPlan.scenes.filter((sc) => sc.narration.trim()).map((sc) => ({ step_id: sc.id, text: sc.narration })) };
+  // Pace: read a long script a bit faster and a short one a bit slower so the video lands in 60–90s.
+  const pace = choosePace(videoPlan.scenes);
+  log(`Voice pace ${pace.base}× (estimated length ${pace.estimate}s)`);
+  const script = {
+    segments: videoPlan.scenes.filter((sc) => sc.narration.trim()).map((sc) => ({ step_id: sc.id, text: sc.narration, pace: pace.perScene.get(sc.id) })),
+  };
   await fs.writeFile(path.join(outDir, "script.json"), JSON.stringify(script, null, 2));
   await fs.writeFile(
     path.join(outDir, "script.md"),
@@ -267,7 +273,7 @@ async function researchProblemStats(
 export function fitSceneDuration(sc: { section: string; narration: string; duration_s: number }, voice?: number): number {
   if (sc.section === "end") return 2.5;
   if (!voice || !sc.narration.trim()) return Math.min(sc.duration_s, sc.section === "demo" ? 3 : 4);
-  const tail = sc.section === "demo" ? 0.6 : 0.9;
+  const tail = sc.section === "demo" ? 0.45 : 0.7;
   const fit = NARRATION_LEAD_S + voice + tail;
   return Math.round(Math.max(fit, sc.section === "demo" ? 2.6 : 3) * 10) / 10;
 }

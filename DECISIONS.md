@@ -70,3 +70,9 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Scenes are now cut to their narration: lead 0.3s + voice + a 0.6s beat (demo) or 0.9s (titles). Floors are 2.6s for demo scenes (cursor move + click) and 3s for title scenes; the end card is 2.5s.
 - ElevenLabs `speed: 0.85` gives about 3.0 words/s (measured). The agent is told about 3 words/s and that its words, not its durations, set the length.
 - Result on tldraw: 62.4s, with only two gaps over 1.5s (about 1.7s each) plus the end card.
+
+## 2026-11-18: Talking pace range, gap trimming, six style kits (C14a)
+- Pace: `src/lib/pacing.ts` picks a base pace per video (0.88–1.25× natural, about 3 words/s) so the estimated length lands in 62–86s. A long script is read briskly and a short one more calmly. Sections vary around it: problem ×0.95, demo ×1.06. The pace goes per segment to the TTS (ElevenLabs speed = 0.85 × pace, clamped 0.7–1.2; OpenAI speed = pace).
+- Gaps: each TTS clip has its leading and trailing silence trimmed (ffmpeg silenceremove at -45dB). Scene beats are 0.45s for demo and 0.7s for titles.
+- Kits: midnight, paper, terminal, poster, aurora and clean. Each sets the backdrop, display font, weight and case, alignment, headline motion (fade-up, typewriter, slam), window chrome (mac-dark, mac-light, terminal, brutal, glass), caption style, label chip, accent bar, zoom ring and end-card CTA. The agent picks one by product type; "default" or an unknown id resolves by seed. The contract reports the kit actually rendered.
+- Fonts are system stacks (Iowan/Palatino/Georgia for serif, SF Mono/Menlo for mono). Linux will fall back to DejaVu until fonts are bundled.

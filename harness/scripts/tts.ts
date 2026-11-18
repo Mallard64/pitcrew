@@ -7,7 +7,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ScriptSchema } from "../schemas/script";
-import { probeDuration } from "./ff";
+import { ffmpeg, probeDuration } from "./ff";
 import { silence, synthesize, type ProviderName, type TtsConfig } from "./tts/providers";
 
 export type SegmentAudio = { step_id: string; duration_s: number; fallback?: boolean };
@@ -40,7 +40,7 @@ export async function voiceScript(
   const audioDir = path.join(outDir, "audio");
   await fs.mkdir(audioDir, { recursive: true });
 
-  const voiceOne = async (seg: { step_id: string; text: string }): Promise<SegmentAudio> => {
+  const voiceOne = async (seg: { step_id: string; text: string; pace?: number }): Promise<SegmentAudio> => {
     const file = path.join(audioDir, `${seg.step_id}.mp3`);
     let fallback = false;
     if (!seg.text.trim()) {
@@ -49,7 +49,8 @@ export async function voiceScript(
       let lastErr: unknown;
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-          await synthesize(seg.text, file, cfg);
+          await synthesize(seg.text, file, { ...cfg, pace: seg.pace ?? cfg.pace });
+          await trimSilence(file).catch((e) => log(`could not trim ${seg.step_id}: ${(e as Error).message.slice(0, 80)}`));
           lastErr = undefined;
           break;
         } catch (e) {
@@ -80,6 +81,18 @@ export async function voiceScript(
   );
   await fs.writeFile(path.join(audioDir, "durations.json"), JSON.stringify(results, null, 2));
   return results;
+}
+
+/**
+ * Removes the silence TTS providers put before and after speech (often 0.2–0.5s each side), which
+ * otherwise stacks up into visible gaps between scenes. Keeps a 60ms tail so words don't clip.
+ */
+export async function trimSilence(file: string) {
+  const tmp = file.replace(/\.mp3$/, ".trim.mp3");
+  const cut = "silenceremove=start_periods=1:start_duration=0:start_threshold=-45dB:start_silence=0.05";
+  await ffmpeg(["-i", file, "-af", `${cut},areverse,${cut},areverse`, "-ar", "44100", "-b:a", "128k", tmp]);
+  if ((await probeDuration(tmp)) > 0.3) await fs.rename(tmp, file);
+  else await fs.rm(tmp, { force: true });
 }
 
 async function main() {

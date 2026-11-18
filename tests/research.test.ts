@@ -198,10 +198,39 @@ describe("source year", () => {
 describe("scene pacing", async () => {
   const { fitSceneDuration } = await import("../src/lib/pipeline");
   it("cuts scenes to narration plus a short beat, with floors", () => {
-    expect(fitSceneDuration({ section: "problem", narration: "x", duration_s: 13 }, 8.1)).toBe(9.3); // was 13: 4.9s of dead air
-    expect(fitSceneDuration({ section: "demo", narration: "x", duration_s: 6 }, 2.3)).toBe(3.2);
+    expect(fitSceneDuration({ section: "problem", narration: "x", duration_s: 13 }, 8.1)).toBe(9.1); // was 13: 4.9s of dead air
+    expect(fitSceneDuration({ section: "demo", narration: "x", duration_s: 6 }, 2.3)).toBe(3.1);
     expect(fitSceneDuration({ section: "demo", narration: "x", duration_s: 6 }, 1.0)).toBe(2.6); // floor so the click shows
-    expect(fitSceneDuration({ section: "solution", narration: "x", duration_s: 5 }, 12)).toBe(13.2); // never shorter than the voice
+    expect(fitSceneDuration({ section: "solution", narration: "x", duration_s: 5 }, 12)).toBe(13); // never shorter than the voice
     expect(fitSceneDuration({ section: "end", narration: "", duration_s: 3 })).toBe(2.5);
+  });
+});
+
+describe("talking pace", async () => {
+  const { choosePace, estimateLength } = await import("../src/lib/pacing");
+  const scene = (id: string, section: string, n: number) => ({ id, section, narration: Array(n).fill("word").join(" ") });
+  it("keeps the natural pace when the script already fits", () => {
+    const scenes = [scene("p", "problem", 30), scene("s", "solution", 35), ...[1, 2, 3, 4, 5, 6].map((i) => scene(`d${i}`, "demo", 18)), scene("e", "end", 0)];
+    expect(choosePace(scenes).base).toBe(1);
+  });
+  it("speeds up a long script and slows a short one, within limits", () => {
+    const long = [scene("p", "problem", 60), scene("s", "solution", 60), ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => scene(`d${i}`, "demo", 25))];
+    const fast = choosePace(long);
+    expect(fast.base).toBeGreaterThan(1);
+    expect(fast.estimate).toBeLessThanOrEqual(estimateLength(long, 1));
+    expect(fast.perScene.get("d1")!).toBeGreaterThan(fast.perScene.get("p")!); // demo brisker than problem
+    const short = [scene("s", "solution", 20), scene("d1", "demo", 10), scene("e", "end", 0)];
+    expect(choosePace(short).base).toBe(0.88); // clamped: never drags
+  });
+});
+
+describe("style kits", async () => {
+  const { resolveKit, KIT_IDS } = await import("../remotion/kits/default");
+  it("uses the agent's kit when valid and a seed pick otherwise", () => {
+    expect(KIT_IDS.length).toBeGreaterThanOrEqual(6);
+    expect(resolveKit("terminal", 1, "#336699").id).toBe("terminal");
+    const picks = new Set([0, 1, 2, 3, 4, 5].map((seed) => resolveKit("default", seed, "#336699").id));
+    expect(picks.size).toBe(6); // "default" spreads across all kits
+    expect(resolveKit("nope", 7, "#336699").accent).toBe("#336699");
   });
 });
