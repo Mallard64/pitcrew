@@ -118,7 +118,8 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       enforceAudioTrack: true,
       outputLocation: demo,
       inputProps,
-      concurrency: Math.max(1, Math.min(8, os.cpus().length - 1)),
+      // os.cpus() reports the host inside containers; RENDER_CONCURRENCY caps it to the plan's real size.
+      concurrency: Number(process.env.RENDER_CONCURRENCY) || Math.max(1, Math.min(8, os.cpus().length - 1)),
       onProgress: ({ progress }) => {
         const pct = Math.floor(progress * 10) * 10;
         if (pct !== last) log(`rendering ${pct}%`);
