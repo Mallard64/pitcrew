@@ -32,3 +32,9 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Kept the existing Harness (so the ID already in use stays) and updated it the safe way: fetch with ETag, full PUT with If-Match, re-read. Model is now claude-sonnet-5.5, with Pit Crew instructions.
 - The sandbox probe got refused with `role_mismatch`, which is the guardrail working. Rephrased as an in-scope pre-flight check: web + Chromium OK, no ffmpeg, no root, no search tool. That confirms Plan B (we render), and statistics research moves server-side.
 - First real agent-planned video: tailwindcss.com, 8/8 steps, 66.9s, 141s end to end. The agent checked each element in its own browser before using it.
+
+## Nov 17 (late): demo footage polish (C17)
+- Recorder: eased cursor moves (18–30 points), human-speed typing (60–90ms/char, jittered), and per step the target's bounding box, the cursor path, and how long a loading spinner was visible.
+- New `polish_footage.ts` cuts one clip per step and speeds loading up 4×. On the fixture, a 3s spinner step went from about 6s to about 4s, and zoom boxes match the real element within 4px.
+- Bug caught by the test: the loading window was first timed from when we *started checking*, after the network-idle wait, so 0.7s of spinner was missed (1.89s saved against a 2s target). It's now timed from the moment the page painted.
+- 55 tests passing.

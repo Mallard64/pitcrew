@@ -4,11 +4,18 @@
  * CLI: tsx harness/scripts/record_flow.ts <flow.json> <out_dir>
  * Outputs: <out_dir>/recording.webm, <out_dir>/shots/<step_id>.png, <out_dir>/timings.json
  * Exit code: 0 if at least one step succeeded, 2 otherwise.
+ *
+ * Polish (C17): eased cursor moves, human-speed typing, a hold after each action, and per step
+ * the target's bounding box, the cursor path and any loading window (spinner/progress) so
+ * polish_footage.ts can zoom to the target and speed up dead time.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { chromium, type Page } from "playwright";
 import { FlowSchema, type Flow, type Step } from "../schemas/flow";
+
+export type Box = { x: number; y: number; w: number; h: number };
+export type CursorPoint = { t: number; x: number; y: number };
 
 export type StepTiming = {
   step_id: string;
@@ -16,6 +23,12 @@ export type StepTiming = {
   start_ms: number;
   end_ms: number;
   error?: string;
+  /** Bounding box (viewport px) of the zoom target after the action. */
+  box?: Box;
+  /** Cursor positions during the step, ms relative to video start. */
+  cursor?: CursorPoint[];
+  /** Time a loading indicator was visible after the action (dead time), ms relative to video start. */
+  wait?: { start_ms: number; end_ms: number };
 };
 
 export type RecordResult = {
@@ -29,9 +42,12 @@ export type RecordOptions = {
   allowRequest?: (url: string) => boolean | Promise<boolean>;
   log?: (msg: string) => void;
   stepTimeoutMs?: number;
+  /** Max time to wait for loading indicators to disappear after an action. */
+  readyTimeoutMs?: number;
 };
 
 const SETTLE_MS = 700;
+const TYPE_DELAY_MS: [number, number] = [60, 90];
 
 // A visible cursor so viewers can follow clicks; Playwright's headless video has none.
 const CURSOR_SCRIPT = `
@@ -52,7 +68,71 @@ const CURSOR_SCRIPT = `
   })();
 `;
 
+// Plain JS string (not a function) so bundlers can't inject helpers into browser code.
+const LOADING_JS = `(() => {
+  const sel = '[aria-busy="true"],[role="progressbar"],.spinner,.loading,.loader,[class*="spinner"],[class*="Spinner"],[class*="skeleton"],[class*="Skeleton"],[class*="loading"]';
+  for (const el of document.querySelectorAll(sel)) {
+    if (el.id === '__pc_cursor') continue;
+    const r = el.getBoundingClientRect();
+    const st = getComputedStyle(el);
+    if (r.width > 4 && r.height > 4 && st.visibility !== 'hidden' && st.display !== 'none' && st.opacity !== '0') return true;
+  }
+  return false;
+})()`;
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const between = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+
+class Recorder {
+  private pos = { x: 640, y: 360 };
+  cursor: CursorPoint[] = [];
+  constructor(
+    private page: Page,
+    private t0: number,
+  ) {}
+
+  now() {
+    return Date.now() - this.t0;
+  }
+
+  /** Eased move; 18–30 intermediate points depending on distance. */
+  async moveTo(x: number, y: number) {
+    const dist = Math.hypot(x - this.pos.x, y - this.pos.y);
+    const steps = Math.round(Math.min(30, Math.max(18, dist / 25)));
+    const from = { ...this.pos };
+    this.cursor.push({ t: this.now(), ...from });
+    for (let i = 1; i <= steps; i++) {
+      const k = easeInOut(i / steps);
+      await this.page.mouse.move(from.x + (x - from.x) * k, from.y + (y - from.y) * k);
+      await sleep(14);
+    }
+    this.pos = { x, y };
+    this.cursor.push({ t: this.now(), x, y });
+  }
+
+  async moveToSelector(selector: string, timeout: number) {
+    const loc = this.page.locator(selector).first();
+    await loc.scrollIntoViewIfNeeded({ timeout });
+    const box = await loc.boundingBox({ timeout });
+    if (box) {
+      await this.moveTo(box.x + box.width / 2, box.y + box.height / 2);
+      await sleep(250);
+    }
+    return loc;
+  }
+
+  /** Waits for visible loading indicators to clear; returns the window they were visible, if any. */
+  async waitForReady(maxMs: number, since?: number): Promise<StepTiming["wait"]> {
+    const isLoading = () => this.page.evaluate(LOADING_JS).catch(() => false) as Promise<boolean>;
+    if (!(await isLoading())) return undefined;
+    // Count from when the action finished (page painted), not from this first check.
+    const start = since ?? this.now();
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline && (await isLoading())) await sleep(100);
+    return { start_ms: start, end_ms: this.now() };
+  }
+}
 
 async function dismissCookieBanner(page: Page) {
   const btn = page
@@ -65,44 +145,52 @@ async function dismissCookieBanner(page: Page) {
   }
 }
 
-async function moveCursorTo(page: Page, selector: string, timeout: number) {
-  const loc = page.locator(selector).first();
-  await loc.scrollIntoViewIfNeeded({ timeout });
-  const box = await loc.boundingBox({ timeout });
-  if (box) {
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 18 });
-    await sleep(250);
-  }
-  return loc;
-}
-
-async function runStep(page: Page, step: Step, timeout: number) {
+/** Runs one step; returns when the action itself finished (ms since video start), for dead-time timing. */
+async function runStep(rec: Recorder, page: Page, step: Step, timeout: number): Promise<number> {
+  let done = 0;
   switch (step.action) {
     case "goto":
       await page.goto(step.url!, { waitUntil: "domcontentloaded", timeout });
+      done = rec.now();
       await page.waitForLoadState("networkidle", { timeout: 4000 }).catch(() => {});
       await dismissCookieBanner(page);
       break;
     case "click": {
-      const loc = await moveCursorTo(page, step.selector!, timeout);
+      const loc = await rec.moveToSelector(step.selector!, timeout);
       await loc.click({ timeout });
+      done = rec.now();
       await page.waitForLoadState("domcontentloaded", { timeout: 4000 }).catch(() => {});
       break;
     }
     case "type": {
-      const loc = await moveCursorTo(page, step.selector!, timeout);
+      const loc = await rec.moveToSelector(step.selector!, timeout);
       await loc.click({ timeout });
-      await loc.pressSequentially(step.text ?? "", {
-        delay: 60,
-        timeout: Math.max(timeout, 20000),
-      });
+      // Human speed: 60–90ms per character, jittered.
+      for (const ch of step.text ?? "") {
+        await page.keyboard.type(ch);
+        await sleep(between(...TYPE_DELAY_MS));
+      }
       break;
     }
     case "scroll":
       await page.evaluate(`window.scrollBy({ top: ${Number(step.y ?? 600)}, behavior: "smooth" })`);
+      await sleep(600); // let smooth scrolling finish before measuring boxes
       break;
     case "wait":
       break;
+  }
+  return done || rec.now();
+}
+
+async function targetBox(page: Page, step: Step): Promise<Box | undefined> {
+  const selector = step.zoom ?? (step.action === "click" || step.action === "type" ? step.selector : undefined);
+  if (!selector) return undefined;
+  try {
+    const b = await page.locator(selector).first().boundingBox({ timeout: 1500 });
+    if (!b || b.width < 1 || b.height < 1) return undefined;
+    return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
+  } catch {
+    return undefined;
   }
 }
 
@@ -114,6 +202,7 @@ export async function recordFlow(
   const flow: Flow = FlowSchema.parse(flowInput);
   const log = opts.log ?? (() => {});
   const timeout = opts.stepTimeoutMs ?? 10_000;
+  const readyTimeout = opts.readyTimeoutMs ?? 10_000;
   const shotsDir = path.join(outDir, "shots");
   const rawDir = path.join(outDir, ".raw-video");
   await fs.mkdir(shotsDir, { recursive: true });
@@ -140,22 +229,27 @@ export async function recordFlow(
       });
     }
     const page = await context.newPage();
-    const t0 = Date.now();
+    const rec = new Recorder(page, Date.now());
     page.mouse.move(640, 360).catch(() => {});
 
     for (const step of flow.steps) {
-      const start = Date.now() - t0;
+      const start = rec.now();
+      rec.cursor = [];
       let ok = true;
       let error: string | undefined;
+      let wait: StepTiming["wait"];
       try {
-        await runStep(page, step, timeout);
+        const actionDone = await runStep(rec, page, step, timeout);
+        wait = await rec.waitForReady(readyTimeout, actionDone);
       } catch (e) {
         ok = false;
         error = (e as Error).message.split("\n")[0].slice(0, 300);
         log(`step ${step.id} (${step.action}) failed: ${error}`);
       }
+      // The hold starts once the page is ready, so dead time never eats into it.
       const afterAction = Date.now();
       await sleep(Math.min(SETTLE_MS, step.hold_ms));
+      const box = ok ? await targetBox(page, step) : undefined;
       if (ok) {
         await page
           .screenshot({ path: path.join(shotsDir, `${step.id}.png`), timeout: 5000 })
@@ -164,8 +258,13 @@ export async function recordFlow(
       const elapsedHold = Date.now() - afterAction;
       // Failed steps are dropped from the cut, so don't spend video time on them.
       if (ok) await sleep(Math.max(0, step.hold_ms - elapsedHold));
-      timings.push({ step_id: step.id, ok, start_ms: start, end_ms: Date.now() - t0, error });
-      if (ok) log(`step ${step.id} ok`);
+      const t: StepTiming = { step_id: step.id, ok, start_ms: start, end_ms: rec.now() };
+      if (error) t.error = error;
+      if (box) t.box = box;
+      if (rec.cursor.length) t.cursor = rec.cursor;
+      if (wait && wait.end_ms - wait.start_ms >= 300) t.wait = wait;
+      timings.push(t);
+      if (ok) log(`step ${step.id} ok${t.wait ? ` (waited ${t.wait.end_ms - t.wait.start_ms}ms for loading)` : ""}`);
     }
 
     const video = page.video();

@@ -140,7 +140,8 @@ Issue messages are written for the agent ("scene p1: stat 's2' has no verified s
 
 ---
 
-## [ ] C17 Demo-footage polish
+## [x] C17 Demo-footage polish
+_Done (Claude Code, Nov 17, at the user's request). Dead time is detected from loading indicators in the DOM (spinner/progress/aria-busy/skeleton), not pixel stillness alone. See DECISIONS.md. Acceptance: `tests/polish_footage.test.ts`._
 **Paths:** `harness/scripts/record_flow.ts` (extend), `harness/scripts/polish_footage.ts`, `tests/polish_footage.test.ts`
 - Recorder: record per step the target's bounding box (`zoom` selector, else the action selector) and the cursor path; smooth cursor (eased, 18–30 steps), human-speed typing (60–90ms/char, jittered), hold after each action. Output added to `timings.json`: `{ box?: {x,y,w,h}, cursor?: [{t,x,y}] }`.
 - `polish_footage.ts <out_dir>`: cuts `recording.webm` into `clips/<step_id>.mp4`; detects dead time (frames with <0.5% pixel change for >1s, e.g. spinners/loading) and cuts or speeds it up (max 4×); writes `clips/manifest.json` `{step_id, duration_s, box, speedups[]}`.

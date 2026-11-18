@@ -12,6 +12,8 @@ export const StepSchema = z
     y: z.number().int().optional(),
     hold_ms: z.number().int().min(1000).max(8000),
     say: z.string().refine((s) => wordCount(s) <= 25, "say must be 25 words or fewer"),
+    /** Selector whose bounding box the camera zooms to (C17); defaults to the action selector. */
+    zoom: z.string().min(1).nullable().optional(),
   })
   .superRefine((s, ctx) => {
     if (s.action === "goto" && !s.url) ctx.addIssue({ code: "custom", message: "goto needs url" });
