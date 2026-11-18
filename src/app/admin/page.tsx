@@ -12,15 +12,15 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const jobs = listJobs(300);
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Jobs ({jobs.length})</h1>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <h1 className="text-2xl font-bold text-white">Jobs ({jobs.length})</h1>
+      <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-white/[0.04] text-xs uppercase text-slate-400">
             <tr>{["When", "Project", "Status", "Time", "Mode", "Planner", "Contact", "Error", ""].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr>
           </thead>
           <tbody>
             {jobs.map((j) => (
-              <tr key={j.id} className="border-t border-slate-100 align-top">
+              <tr key={j.id} className="border-t border-white/5 align-top text-slate-300">
                 <td className="whitespace-nowrap px-3 py-2 text-slate-500">{new Date(j.created_at).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
                 <td className="px-3 py-2"><a className="font-medium underline" href={`/jobs/${j.id}`}>{j.project_name}</a><div className="max-w-[16rem] truncate text-xs text-slate-500">{j.live_url}</div></td>
                 <td className="px-3 py-2">{j.status}{j.version > 1 ? ` (v${j.version})` : ""}</td>
@@ -28,7 +28,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 <td className="px-3 py-2">{j.render_mode ?? "–"}</td>
                 <td className="px-3 py-2">{j.plan_source ?? "–"}</td>
                 <td className="px-3 py-2">{j.contact ?? ""}</td>
-                <td className="max-w-xs px-3 py-2 text-xs text-red-700">{j.error ?? ""}</td>
+                <td className="max-w-xs px-3 py-2 text-xs text-red-300">{j.error ?? ""}</td>
                 <td className="px-3 py-2">
                   <form action="/api/admin/rerun" method="post">
                     <input type="hidden" name="token" value={token} />

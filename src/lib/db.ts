@@ -203,7 +203,7 @@ export function countRateEvents(key: string, sinceTs: number) {
 /** Job fields safe to send to the browser (no contact info or client key). */
 export function publicJob(j: Job) {
   return {
-    id: j.id, project_name: j.project_name, live_url: j.live_url, status: j.status, version: j.version, error: j.error,
+    id: j.id, created_at: j.created_at, project_name: j.project_name, live_url: j.live_url, status: j.status, version: j.version, error: j.error,
     duration_ms: j.duration_ms, render_mode: j.render_mode, contract_json: j.contract_json, plan_source: j.plan_source,
     style_kit: j.style_kit, seed: j.seed,
   };

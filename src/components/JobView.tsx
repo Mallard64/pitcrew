@@ -7,6 +7,7 @@ type Ev = { id: number; kind: "progress" | "log" | "status"; step: string | null
 type Artifact = { name: string; bytes: number; version: number };
 type JobInfo = {
   id: string;
+  created_at: number;
   project_name: string;
   live_url: string;
   status: string;
@@ -21,13 +22,17 @@ type JobInfo = {
 };
 
 const STAGES = [
-  ["opening", "Opening site"],
-  ["planning", "Planning flow"],
-  ["recording", "Recording"],
-  ["narrating", "Writing narration"],
+  ["opening", "Opening your site"],
+  ["planning", "Writing the pitch"],
+  ["recording", "Recording the demo"],
+  ["narrating", "Checking facts"],
   ["voicing", "Voicing"],
-  ["assembling", "Assembling"],
+  ["assembling", "Rendering"],
 ] as const;
+/** Typical end-to-end time today (see BUILD_LOG); shown as a rough guide, never a promise. */
+const TYPICAL_MIN = 10;
+const KIT_LABEL: Record<string, string> = { midnight: "Midnight", paper: "Paper", terminal: "Terminal", poster: "Poster", aurora: "Aurora", clean: "Clean" };
+const mmss = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}`;
 const FINAL = ["ok", "partial", "failed"];
 const DOWNLOADS: [string, string][] = [
   ["demo.mp4", "Video (mp4)"],
@@ -48,6 +53,8 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
   const [reviseText, setReviseText] = useState("");
   const [msg, setMsg] = useState("");
   const lastId = useRef(0);
+  const [startedAt, setStartedAt] = useState(initial.job.created_at);
+  const [now, setNow] = useState(() => Date.now());
   const logRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
@@ -90,6 +97,12 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [events]);
 
+  useEffect(() => {
+    if (FINAL.includes(job.status) && !revising) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [job.status, revising]);
+
   const running = !FINAL.includes(job.status);
   const lastProgress = [...events].reverse().find((e) => e.kind === "progress");
   const stageIdx = running ? Math.max(0, STAGES.findIndex(([k]) => k === lastProgress?.step)) : STAGES.length;
@@ -104,6 +117,7 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
     const d = await r.json();
     if (!r.ok) return setMsg(d.error ?? "Could not start the revision");
     setRevising(true);
+    setStartedAt(Date.now());
     setReviseText("");
     setJob((j) => ({ ...j, status: "queued" }));
     listen();
@@ -112,22 +126,27 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{job.project_name}</h1>
-        <a href={job.live_url} target="_blank" rel="noreferrer" className="w-fit text-sm text-slate-500 underline-offset-2 hover:underline">{job.live_url}</a>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{job.project_name}</h1>
+        <a href={job.live_url} target="_blank" rel="noreferrer" className="w-fit text-sm text-slate-400 underline-offset-2 hover:underline">{job.live_url}</a>
       </div>
 
       {(running || revising) && (
         <div className="card space-y-4" aria-live="polite">
           <ol className="grid grid-cols-2 gap-2 sm:grid-cols-6">
             {STAGES.map(([key, label], i) => (
-              <li key={key} className={`rounded-lg border px-3 py-2 text-xs font-medium ${i < stageIdx ? "border-emerald-200 bg-emerald-50 text-emerald-800" : i === stageIdx ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-400"}`}>
+              <li key={key} className={`rounded-lg border px-3 py-2 text-xs font-medium ${i < stageIdx ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : i === stageIdx ? "border-indigo-400 bg-indigo-500 text-white" : "border-white/10 text-slate-500"}`}>
                 {i < stageIdx ? "✓ " : i === stageIdx ? <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-white align-middle" /> : null}
                 {label}
               </li>
             ))}
           </ol>
-          <p className="text-sm text-slate-600">{job.status === "queued" ? "Waiting for a free slot…" : (lastProgress?.message ?? "Starting…")}</p>
-          <div ref={logRef} className="max-h-48 overflow-auto rounded-lg bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-300">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+            <p className="text-slate-300">{job.status === "queued" ? "Waiting for a free slot…" : (lastProgress?.message ?? "Starting…")}</p>
+            <p className="font-mono text-slate-500">
+              {mmss(Math.max(0, now - startedAt))} elapsed · usually ~{TYPICAL_MIN} min
+            </p>
+          </div>
+          <div ref={logRef} className="max-h-56 overflow-auto rounded-lg border border-white/5 bg-black/50 p-3 font-mono text-xs leading-relaxed text-slate-400">
             {events.filter((e) => e.kind !== "status").map((e) => (
               <div key={e.id} className={e.kind === "progress" ? "text-white" : ""}>{e.kind === "progress" ? "▸ " : "  "}{e.message}</div>
             ))}
@@ -137,30 +156,31 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
       )}
 
       {job.status === "failed" && (
-        <div className="card border-red-200 bg-red-50">
-          <h2 className="font-semibold text-red-800">This one didn&apos;t work</h2>
-          <p className="mt-1 text-sm text-red-700">{job.error ?? "Unknown error"}</p>
-          <p className="mt-3 text-sm text-red-700">Common causes: the site needs a login, blocks headless browsers, or took too long to load. <Link href="/#make" className="font-semibold underline">Try again</Link>, maybe with a different page of your app.</p>
+        <div className="card border-red-500/30 bg-red-500/10">
+          <h2 className="font-semibold text-red-200">This one didn&apos;t work</h2>
+          <p className="mt-1 text-sm text-red-200/90">{job.error ?? "Unknown error"}</p>
+          <p className="mt-3 text-sm text-red-200/80">Common causes: the site needs a login, blocks headless browsers, or took too long to load. <Link href="/#make" className="font-semibold underline">Try again</Link>, maybe with a different page of your app.</p>
         </div>
       )}
 
       {!running && has("demo.mp4") && (
         <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
           <div className="space-y-3">
-            <video key={job.version} controls playsInline preload="metadata" poster={has("thumb.jpg") ? fileUrl("thumb.jpg") : undefined} className="aspect-video w-full rounded-2xl bg-black shadow-lg" src={fileUrl("demo.mp4")} />
+            <video key={job.version} controls playsInline preload="metadata" poster={has("thumb.jpg") ? fileUrl("thumb.jpg") : undefined} className="aspect-video w-full rounded-2xl border border-white/10 bg-black shadow-2xl" src={fileUrl("demo.mp4")} />
             {contract && (
               <p className="text-sm text-slate-500">
                 {contract.duration_s}s · {contract.steps_ok}/{contract.steps_total} demo steps · {job.render_mode === "remotion" ? "pitch video" : job.render_mode === "slideshow" ? "slideshow fallback" : "fallback editor"}
-                {job.seed != null ? ` · seed ${job.seed}` : ""}
+                {job.style_kit && KIT_LABEL[job.style_kit] ? ` · ${KIT_LABEL[job.style_kit]} look` : ""}
+                {job.duration_ms ? ` · made in ${mmss(job.duration_ms)}` : ""}
                 {job.version > 1 ? ` · version ${job.version}` : ""}
-                {job.status === "partial" && contract.notes ? <span className="block text-amber-700">Heads up: {contract.notes}</span> : null}
+                {job.status === "partial" && contract.notes ? <span className="block text-amber-300">Heads up: {contract.notes}</span> : null}
               </p>
             )}
-            {job.error && <p className="text-sm text-amber-700">{job.error}</p>}
+            {job.error && <p className="text-sm text-amber-300">{job.error}</p>}
           </div>
           <aside className="space-y-4">
             <div className="card space-y-2">
-              <h2 className="font-semibold">Downloads</h2>
+              <h2 className="font-semibold text-white">Downloads</h2>
               {DOWNLOADS.filter(([n]) => has(n)).map(([n, label]) => (
                 <a key={n} href={fileUrl(n, true)} className="btn-ghost w-full justify-between">
                   <span>{label}</span>
@@ -170,9 +190,9 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
               {!has("build_log.md") && <p className="text-xs text-slate-500">Add a public GitHub repo next time to get a Build Log draft.</p>}
             </div>
             <form onSubmit={revise} className="card space-y-2">
-              <h2 className="font-semibold">Revise</h2>
+              <h2 className="font-semibold text-white">Revise</h2>
               <textarea value={reviseText} onChange={(e) => setReviseText(e.target.value)} rows={2} maxLength={300} placeholder="e.g. make it shorter, focus on pricing" className="field text-sm" />
-              {msg && <p className="text-xs text-red-700">{msg}</p>}
+              {msg && <p className="text-xs text-red-300">{msg}</p>}
               <button className="btn w-full" disabled={reviseText.trim().length < 2 || revising}>Make a new version</button>
             </form>
             <Feedback jobId={job.id} />
@@ -191,13 +211,13 @@ function Feedback({ jobId }: { jobId: string }) {
   const send = async (r: 1 | -1, q?: string) => {
     await fetch(`/api/jobs/${jobId}/feedback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating: r, quote: q, can_quote: canQuote }) });
   };
-  if (sent) return <div className="card text-sm text-slate-600">Thanks for the feedback!</div>;
+  if (sent) return <div className="card text-sm text-slate-400">Thanks for the feedback!</div>;
   return (
     <div className="card space-y-2">
-      <h2 className="font-semibold">Was this useful?</h2>
+      <h2 className="font-semibold text-white">Was this useful?</h2>
       <div className="flex gap-2">
         {([1, -1] as const).map((r) => (
-          <button key={r} type="button" aria-pressed={rating === r} onClick={() => { setRating(r); if (r === -1) { send(r); setSent(true); } }} className={`btn-ghost flex-1 text-lg ${rating === r ? "border-slate-900" : ""}`}>
+          <button key={r} type="button" aria-pressed={rating === r} onClick={() => { setRating(r); if (r === -1) { send(r); setSent(true); } }} className={`btn-ghost flex-1 text-lg ${rating === r ? "border-indigo-400" : ""}`}>
             {r === 1 ? "👍" : "👎"}
           </button>
         ))}
@@ -205,7 +225,7 @@ function Feedback({ jobId }: { jobId: string }) {
       {rating === 1 && (
         <form onSubmit={(e) => { e.preventDefault(); send(1, quote); setSent(true); }} className="space-y-2">
           <textarea value={quote} onChange={(e) => setQuote(e.target.value)} rows={2} maxLength={400} placeholder="One line on how it helped (optional)" className="field text-sm" />
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-400">
             <input type="checkbox" checked={canQuote} onChange={(e) => setCanQuote(e.target.checked)} /> You can quote me
           </label>
           <button className="btn w-full">Send</button>

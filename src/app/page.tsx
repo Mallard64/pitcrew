@@ -1,57 +1,278 @@
+import Image from "next/image";
 import { connection } from "next/server";
 import JobForm from "@/components/JobForm";
 import { getStats } from "@/lib/db";
 
-const STEPS = [
-  { t: "Paste your link", d: "Your live URL, plus your repo if you want a Build Log draft." },
-  { t: "We tour your app", d: "An agent plans a 45–90s walkthrough, records it in Chromium and writes the narration." },
-  { t: "Download and revise", d: "Get demo.mp4, captions and a Build Log draft. Ask for changes in plain words." },
+// Real, unedited Pit Crew output (re-encoded to 720p for the web). Both are public products, used as samples.
+const SAMPLES = [
+  {
+    file: "tldraw",
+    name: "tldraw",
+    url: "tldraw.com",
+    kit: "midnight",
+    note: "62s · problem → solution → 7-step live demo · voiced + captioned",
+  },
+  {
+    file: "excalidraw",
+    name: "Excalidraw",
+    url: "excalidraw.com",
+    kit: "paper",
+    note: "71s · the agent chose the editorial look for a hand-drawn tool",
+  },
+];
+
+const KITS = [
+  { id: "midnight", label: "Midnight", fit: "AI, infra, pro tools" },
+  { id: "paper", label: "Paper", fit: "Writing, education, research" },
+  { id: "terminal", label: "Terminal", fit: "Developer tools, APIs" },
+  { id: "poster", label: "Poster", fit: "Bold consumer, events" },
+  { id: "aurora", label: "Aurora", fit: "Creative, music, design" },
+  { id: "clean", label: "Clean", fit: "Productivity, B2B, health" },
+];
+
+const GETS = [
+  {
+    t: "A 60–90s pitch video",
+    d: "Problem → solution → live demo → what's next. Narrated, captioned, 1080p60, with zooms on every click.",
+  },
+  {
+    t: "Submission text",
+    d: "What it is, the problem, how it works and what's next, written from your site and repo. Ready to paste.",
+  },
+  {
+    t: "Build Log draft",
+    d: "Dated sections from your commit history: what you built, decided, struggled with. Add a public repo to get it.",
+  },
+  {
+    t: "sources.md",
+    d: "Every statistic in the video with the page it came from and the exact sentence we matched. No source, no stat.",
+  },
+];
+
+const HOW = [
+  {
+    t: "An agent studies your app",
+    d: "It opens your live site, reads your copy (and README), and writes the pitch: the problem, the one-line solution, the wow moment.",
+  },
+  {
+    t: "It records a real demo",
+    d: "It plans the clicks, verifies every selector, and we record them in Chromium with a smooth cursor, human-speed typing and zooms.",
+  },
+  {
+    t: "Every number is checked",
+    d: "Statistics come from a web search; we re-fetch each source page and keep a number only if it appears there exactly.",
+  },
+  {
+    t: "Voiced, styled, rendered",
+    d: "Narration is voiced at a pace that fits 60–90s, the agent picks a look that suits your product, and Remotion renders it.",
+  },
 ];
 
 export default async function Home() {
   await connection();
   const s = getStats();
   return (
-    <div className="space-y-14">
-      <section className="space-y-5 text-center">
-        <p className="mx-auto w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-          For Big Hack Game teams · submissions due Nov 19, 11:59 AM PST
-        </p>
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">Your demo video, done before the deadline.</h1>
-        <p className="mx-auto max-w-2xl text-lg text-slate-600">
-          Paste your project&apos;s link. Pit Crew tours your app, records it, narrates it and hands you a{" "}
-          <span className="font-semibold text-slate-900">demo.mp4</span>, captions and a <span className="font-semibold text-slate-900">Build Log</span> draft.
-        </p>
-        {s.videos_made > 0 && (
-          <p className="text-sm text-slate-500">
-            <span className="font-semibold text-slate-900">{s.videos_made}</span> demo video{s.videos_made === 1 ? "" : "s"} made for{" "}
-            <span className="font-semibold text-slate-900">{s.unique_projects}</span> project{s.unique_projects === 1 ? "" : "s"} so far
+    <div className="space-y-24">
+      {/* Hero */}
+      <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+        <div className="space-y-6">
+          <p className="w-fit rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
+            For Big Hack Game teams · submissions due Nov 19, 11:59 AM PST
           </p>
-        )}
-      </section>
-
-      <section id="make" className="mx-auto max-w-2xl scroll-mt-20">
-        <JobForm />
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-3">
-        {STEPS.map((x, i) => (
-          <div key={x.t} className="card">
-            <div className="mb-2 grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white">{i + 1}</div>
-            <h3 className="font-semibold">{x.t}</h3>
-            <p className="mt-1 text-sm text-slate-600">{x.d}</p>
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
+            Others record a walkthrough.{" "}
+            <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+              Pit Crew makes your pitch.
+            </span>
+          </h1>
+          <p className="max-w-xl text-lg text-slate-400">
+            Paste your project&apos;s live link. You get a narrated pitch video with a real recorded
+            demo, submission text and a Build Log draft, with every statistic checked against its
+            source.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <a href="#make" className="btn px-5 py-3">
+              Make my pitch video
+            </a>
+            <a href="#samples" className="btn-ghost px-5 py-3">
+              Watch a sample
+            </a>
           </div>
-        ))}
+          {s.videos_made > 0 && (
+            <p className="text-sm text-slate-500">
+              <span className="font-semibold text-slate-200">{s.videos_made}</span> video
+              {s.videos_made === 1 ? "" : "s"} made for{" "}
+              <span className="font-semibold text-slate-200">{s.unique_projects}</span> project
+              {s.unique_projects === 1 ? "" : "s"} so far
+            </p>
+          )}
+        </div>
+        <div className="relative">
+          <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br sm:-inset-6 from-indigo-500/20 to-fuchsia-500/10 blur-2xl" />
+          <video
+            className="relative aspect-video w-full rounded-2xl border border-white/10 bg-black shadow-2xl"
+            src="/samples/tldraw.mp4"
+            poster="/samples/tldraw.jpg"
+            controls
+            playsInline
+            preload="none"
+          />
+          <p className="relative mt-2 text-xs text-slate-500">
+            Sample: made by Pit Crew from tldraw.com, unedited. Turn the sound on.
+          </p>
+        </div>
       </section>
 
-      <section className="card space-y-2 text-sm text-slate-600">
-        <h2 className="text-base font-semibold text-slate-900">What to expect</h2>
-        <ul className="list-disc space-y-1 pl-5">
-          <li>Most videos take 2–5 minutes. You can leave the page open and watch progress live.</li>
-          <li>Login-walled apps: we record your public pages only and tell you so.</li>
-          <li>If a click fails, we drop that step rather than show a broken screen. Revise to steer it.</li>
-          <li>Narration only describes what is on your site or in your description. Check it before you submit.</li>
-        </ul>
+      {/* What you get */}
+      <section className="space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">What you get</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">
+            A whole submission kit, not just a screen recording
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {GETS.map((g) => (
+            <div key={g.t} className="card">
+              <h3 className="font-semibold text-white">{g.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{g.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Samples */}
+      <section id="samples" className="scroll-mt-24 space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">Samples</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">
+            Real output, straight from a live link
+          </h2>
+          <p className="max-w-2xl text-slate-400">
+            No editing afterwards. Both came from pasting a URL; the agent wrote the script and
+            picked the look.
+          </p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {SAMPLES.map((v) => (
+            <figure key={v.file} className="card space-y-3 p-3 sm:p-3">
+              <video
+                className="aspect-video w-full rounded-xl bg-black"
+                src={`/samples/${v.file}.mp4`}
+                poster={`/samples/${v.file}.jpg`}
+                controls
+                playsInline
+                preload="none"
+              />
+              <figcaption className="px-2 pb-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold text-white">{v.name}</span>
+                  <span className="text-xs text-slate-500">
+                    {v.url} · {v.kit} look
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-400">{v.note}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      {/* Looks */}
+      <section className="space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">Not one template</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">
+            Six looks. The agent picks the one that fits your product.
+          </h2>
+          <p className="max-w-2xl text-slate-400">
+            Each look changes the type, motion, colours, browser window, captions and ending, all
+            built around your brand colour.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {KITS.map((k) => (
+            <figure
+              key={k.id}
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+            >
+              <div className="relative aspect-video">
+                <Image
+                  src={`/kits/${k.id}.jpg`}
+                  alt={`${k.label} look: title scene`}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover transition duration-300 group-hover:opacity-0"
+                />
+                <Image
+                  src={`/kits/${k.id}-demo.jpg`}
+                  alt={`${k.label} look: demo scene`}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover opacity-0 transition duration-300 group-hover:opacity-100"
+                />
+              </div>
+              <figcaption className="flex items-baseline justify-between px-4 py-3">
+                <span className="font-semibold text-white">{k.label}</span>
+                <span className="text-xs text-slate-500">{k.fit}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <p className="text-xs text-slate-500">
+          Hover a look to see its demo scene. All six stills are from the same tldraw plan.
+        </p>
+      </section>
+
+      {/* How */}
+      <section id="how" className="scroll-mt-24 space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">How it works</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">
+            An agent directs it. Our server makes sure it&apos;s true.
+          </h2>
+        </div>
+        <ol className="grid gap-4 md:grid-cols-2">
+          {HOW.map((h, i) => (
+            <li key={h.t} className="card flex gap-4">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-500 text-sm font-bold text-white">
+                {i + 1}
+              </span>
+              <div>
+                <h3 className="font-semibold text-white">{h.t}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-400">{h.d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Form */}
+      <section id="make" className="scroll-mt-24 grid gap-10 lg:grid-cols-[1fr_1.4fr]">
+        <div className="space-y-5">
+          <p className="eyebrow">Make yours</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">Paste your link</h2>
+          <ul className="space-y-3 text-sm text-slate-400">
+            <li>
+              <span className="font-semibold text-slate-200">About 10 minutes.</span> Leave the page
+              open; you can watch every step live.
+            </li>
+            <li>
+              <span className="font-semibold text-slate-200">Public pages only.</span> We never log
+              in, sign up or submit forms on your site. Login-walled apps get their public pages.
+            </li>
+            <li>
+              <span className="font-semibold text-slate-200">Statistics only with a source.</span>{" "}
+              If no number is checkably about your problem, the video has none.
+            </li>
+            <li>
+              <span className="font-semibold text-slate-200">You stay the editor.</span> Narration
+              only describes what&apos;s on your site or in your fields. Watch it before you submit,
+              and ask for a revision in plain words.
+            </li>
+          </ul>
+        </div>
+        <JobForm />
       </section>
     </div>
   );
