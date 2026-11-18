@@ -7,7 +7,7 @@ Standing instructions are stored **in the Harness** (`system_prompt`), not sent 
 ## Harnesses (multi-harness cost routing)
 | Role | Env | Base + model | Job |
 |---|---|---|---|
-| **Director** (exists) | `HARNESS_ID` | `claude-code` + `claude-sonnet-5.5` (guide's pick for strict-JSON output; claude-code passed HarnessRouter's browser test) | Pitch story, demo flow, directing (video plan), self-review |
+| **Director** (exists, `chrn_68b8f33c…`) | `HARNESS_ID` | `hermes` + `claude-sonnet-5.5` (existing harness kept so its ID stays; base can't change) | Pitch story, demo flow, directing (video plan), self-review |
 | **Writer** (optional, P1) | `HARNESS_ID_WRITER` | a cheaper pairing from the guide's table | `build_log.md` + `submission.md` from commits/README/issues |
 Log the cost difference per job in BUILD_LOG.md once both run (numbers from HarnessRouter `usage`, never estimated).
 
