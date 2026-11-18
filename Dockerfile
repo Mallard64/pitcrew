@@ -22,6 +22,9 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 COPY --from=build /app/.next/standalone ./
+# Remotion loads native packages at runtime (@rspack/binding-*, esbuild, compositor) that output tracing misses;
+# ship the full node_modules from the deps stage over the traced subset.
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 RUN mkdir -p /data
