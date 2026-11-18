@@ -52,7 +52,8 @@ _Done (Claude Code, Nov 17). Word timings are added in C18._
 
 ---
 
-## [ ] C3 Remotion project + scene renderer from the video plan
+## [x] C3 Remotion project + scene renderer from the video plan
+_Done (Claude Code, Nov 17, at the user's request). Remotion pinned to 4.0.539. `Scene.tsx` is a minimal renderer (text, headline, stat with citation, bullets, image, clip with spring zoom to the C17 box, device frame, end card + credit); C11/C12 replace it. Transitions: fade/slide/wipe; others fall back to fade until C13. Acceptance: `tests/render_video.test.ts` (13s fixture renders in well under 60s; duration ±0.2s; H.264/AAC 1280×720)._
 **Paths:** `remotion/index.ts`, `remotion/Root.tsx`, `remotion/PitchVideo.tsx`, `remotion/Scene.tsx`, `harness/schemas/video_plan.ts`, `harness/scripts/render_video.ts`, `tests/render_video.test.ts`, `tests/fixtures/plans/*.json`
 - Add `remotion`, `@remotion/cli`, `@remotion/renderer`, `@remotion/bundler`, `@remotion/media-utils` (exact pinned versions). License notes in DECISIONS.md.
 - `harness/schemas/video_plan.ts` (zod):

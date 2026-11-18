@@ -1,0 +1,19 @@
+{
+  "version": 1, "seed": 7, "style_kit": "default", "brand": { "primary": "#22c55e" },
+  "size": { "width": 1280, "height": 720 }, "fps": 30, "music": null, "credit": true,
+  "scenes": [
+    { "id": "p1", "section": "problem", "layout": "stat-reveal", "duration_s": 3, "narration": "Teams lose hours on demo videos.",
+      "elements": [ { "type": "stat", "source_id": "src1", "value": 42, "unit": "%", "label": "of fixture teams ship late" } ], "transition_in": "fade" },
+    { "id": "s1", "section": "solution", "layout": "big-statement", "duration_s": 3, "narration": "Fixture App fixes that.",
+      "elements": [ { "type": "kinetic_headline", "text": "Paste a link, get a pitch", "animation": "word-by-word" } ], "transition_in": "slide" },
+    { "id": "d1", "section": "demo", "layout": "full-frame", "duration_s": 3, "narration": "Here it is.",
+      "elements": [ { "type": "text", "text": "Demo goes here", "role": "title" } ], "transition_in": "wipe" },
+    { "id": "n1", "section": "next", "layout": "bullet-reveal", "duration_s": 2, "narration": "Next up.",
+      "elements": [ { "type": "bullets", "items": ["Team mode", "Product Hunt kit"], "animation": "slide-up" } ], "transition_in": "fade" },
+    { "id": "e1", "section": "end", "layout": "end-card", "duration_s": 2, "narration": "", "elements": [], "transition_in": "fade" }
+  ],
+  "flow": { "project_name": "Fixture", "url": "https://example.com", "viewport": { "width": 1280, "height": 720 },
+            "steps": [ { "id": "s1", "action": "goto", "url": "https://example.com", "hold_ms": 2000, "say": "Home." } ] },
+  "sources": [ { "id": "src1", "stat": "42%", "claim_text": "42% of fixture teams ship late", "source_name": "Fixture Survey", "url": "https://example.com/survey",
+                 "year": 2025, "quote": "42% of fixture teams ship late", "verified": true, "kind": "research" } ]
+}

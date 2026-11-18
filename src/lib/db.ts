@@ -24,6 +24,12 @@ export type Job = {
   contract_json: string | null;
   plan_source: string | null;
   hr_session_id: string | null;
+  problem: string | null;
+  whats_next: string | null;
+  style_kit: string | null;
+  seed: number | null;
+  is_finalist: number;
+  paid: number;
 };
 export type JobEvent = { id: number; job_id: string; ts: number; kind: "progress" | "log" | "status"; step: string | null; message: string };
 export type Artifact = { job_id: string; version: number; name: string; path: string; bytes: number };
@@ -50,6 +56,13 @@ const MIGRATIONS = [
   // session_id holds the latest HarnessRouter response id (for previous_response_id);
   // hr_session_id holds that response's metadata.session_id (for listing its files).
   `ALTER TABLE jobs ADD COLUMN hr_session_id TEXT;`,
+  // Spec v2 (C3): pitch-video form fields, render identity, finalist + paid flags.
+  `ALTER TABLE jobs ADD COLUMN problem TEXT;
+   ALTER TABLE jobs ADD COLUMN whats_next TEXT;
+   ALTER TABLE jobs ADD COLUMN style_kit TEXT;
+   ALTER TABLE jobs ADD COLUMN seed INTEGER;
+   ALTER TABLE jobs ADD COLUMN is_finalist INTEGER NOT NULL DEFAULT 0;
+   ALTER TABLE jobs ADD COLUMN paid INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 export function openDb(file?: string) {

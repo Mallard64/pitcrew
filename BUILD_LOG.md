@@ -38,3 +38,8 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - New `polish_footage.ts` cuts one clip per step and speeds loading up 4×. On the fixture, a 3s spinner step went from about 6s to about 4s, and zoom boxes match the real element within 4px.
 - Bug caught by the test: the loading window was first timed from when we *started checking*, after the network-idle wait, so 0.7s of spinner was missed (1.89s saved against a 2s target). It's now timed from the moment the page painted.
 - 55 tests passing.
+
+## Nov 17 (late): Remotion renderer (C3)
+- Added a zod schema for the agent's "video plan" (scenes, sections, elements, transitions, seed, style kit, sources) and a Remotion composition that renders it. First version renders headlines, stat callouts with a count-up + "Source: <name>, <year>", bullets, screen clips with spring zoom to the clicked element, and an end card with "Made with Pit Crew".
+- A 13s fixture plan renders to 1280×720 H.264/AAC, exactly 13.0s, well under the 60s budget. Checked the frames by eye this time; the stat lands on exactly 42% with its citation.
+- 57 tests passing.

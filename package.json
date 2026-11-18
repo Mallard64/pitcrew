@@ -14,11 +14,16 @@
     "postbuild": "cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/"
   },
   "dependencies": {
+    "@remotion/bundler": "4.0.539",
+    "@remotion/cli": "4.0.539",
+    "@remotion/renderer": "4.0.539",
+    "@remotion/transitions": "4.0.539",
     "better-sqlite3": "^13.2.0",
     "next": "16.4.6",
     "playwright": "1.65.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "remotion": "4.0.539",
     "zod": "^4.6.7"
   },
   "devDependencies": {
