@@ -11,6 +11,7 @@ const TYPES: Record<string, string> = {
   "flow.json": "application/json",
   "thumb.jpg": "image/jpeg",
   "submission.md": "text/markdown; charset=utf-8",
+  "sources.md": "text/markdown; charset=utf-8",
   "video_plan.json": "application/json",
 };
 

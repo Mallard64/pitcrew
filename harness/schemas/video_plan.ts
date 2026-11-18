@@ -72,7 +72,8 @@ export const VideoPlanSchema = z.object({
   style_kit: z.string().min(1),
   brand: z.object({ primary: z.string().regex(/^#[0-9a-fA-F]{6}$/), font: z.string().optional() }),
   size: z.union([z.object({ width: z.literal(1280), height: z.literal(720) }), z.object({ width: z.literal(1920), height: z.literal(1080) })]),
-  fps: z.literal(30),
+  // The agent plans at 30; the renderer may output 60 (animations are fps-independent).
+  fps: z.union([z.literal(30), z.literal(60)]),
   music: z.object({ track: z.string(), duck_db: z.number() }).nullable().optional(),
   credit: z.boolean().default(true),
   scenes: z.array(SceneSchema).min(1).max(20),

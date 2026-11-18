@@ -34,6 +34,7 @@ const DOWNLOADS: [string, string][] = [
   ["captions.srt", "Captions (srt)"],
   ["build_log.md", "Build Log draft"],
   ["submission.md", "Submission text"],
+  ["sources.md", "Sources"],
   ["script.md", "Script"],
 ];
 

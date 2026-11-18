@@ -20,6 +20,7 @@ import { seedFor } from "./harness/local";
 import { exploreSite, type SiteDigest } from "./explore";
 import { checkPublicUrl, makeRequestGuard } from "./ssrf";
 import { fetchRepoFacts, type Commit } from "./buildlog";
+import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
 import type { Planner, PlannerEvent, PlanRequest } from "./harness";
 
 export const STAGES = ["opening", "planning", "recording", "narrating", "voicing", "assembling"] as const;
@@ -32,7 +33,7 @@ export type PipelineResult = { contract: Contract; flow: Flow; videoPlan: VideoP
 /** Saved next to v1 so revisions don't need to re-crawl the site or GitHub. */
 type Context = { digest: SiteDigest; commits?: Commit[]; readme?: string };
 
-export const OUTPUT_FILES = ["demo.mp4", "captions.srt", "script.md", "build_log.md", "submission.md", "video_plan.json", "flow.json", "thumb.jpg"];
+export const OUTPUT_FILES = ["demo.mp4", "captions.srt", "script.md", "build_log.md", "submission.md", "video_plan.json", "sources.md", "flow.json", "thumb.jpg"];
 
 export async function runPipeline(
   input: JobInput,
@@ -108,8 +109,11 @@ export async function runPipeline(
 
   // 4. Narrate: clean the plan so it only shows what we actually have and can stand behind.
   progress("narrating", "Writing the narration and captions");
+  if (videoPlan.sources.some((s) => s.kind === "research")) progress("narrating", "Checking every statistic against its source page");
+  for (const n of await verifyResearch(videoPlan)) log(n);
   const dropped = sanitizePlan(videoPlan, clipIds, outDir);
   for (const d of dropped) log(d);
+  await fs.writeFile(path.join(outDir, "sources.md"), sourcesMarkdown(input.projectName, videoPlan.sources));
   const script = { segments: videoPlan.scenes.filter((sc) => sc.narration.trim()).map((sc) => ({ step_id: sc.id, text: sc.narration })) };
   await fs.writeFile(path.join(outDir, "script.json"), JSON.stringify(script, null, 2));
   await fs.writeFile(
@@ -164,26 +168,35 @@ export async function runPipeline(
 
 /**
  * Removes what we can't show truthfully: clips for steps that didn't record, scenes left empty,
- * and statistics without a verified source. Research stats stay off until our verifier exists (C19);
- * only team-provided numbers with a source entry are kept. Returns log lines for what was dropped.
+ * statistics without a verified source (verifyResearch must run first), and problem-scene sentences
+ * stating numbers no kept stat backs. Returns log lines for what was dropped.
  */
 export function sanitizePlan(plan: VideoPlan, clipIds: Set<string>, outDir: string): string[] {
   const notes: string[] = [];
-  const sourceOk = (id: string) => plan.sources.some((s) => s.id === id && s.kind === "team-provided");
+  const sourceOk = (id: string) => plan.sources.some((s) => s.id === id && (s.kind === "team-provided" || s.verified));
   for (const sc of plan.scenes) {
     const before = sc.elements.length;
     sc.elements = sc.elements.filter((el) => {
       if (el.type === "clip" && !clipIds.has(el.step_id) && !existsSync(path.join(outDir, "shots", `${el.step_id}.png`))) return false;
       if (el.type === "stat" && !sourceOk(el.source_id)) {
-        notes.push(`Dropped stat "${el.value}${el.unit ?? ""} ${el.label}" in ${sc.id}: no verified source (source checking isn't live yet)`);
+        notes.push(`Dropped stat "${el.value}${el.unit ?? ""} ${el.label}" in ${sc.id}: no verified source`);
         return false;
       }
       return true;
     });
     if (before && !sc.elements.length && sc.section === "demo") notes.push(`Dropped demo scene ${sc.id}: its step didn't record`);
   }
-  plan.scenes = plan.scenes.filter((sc) => sc.section !== "demo" || sc.elements.length > 0);
-  plan.sources = plan.sources.filter((s) => s.kind === "team-provided");
+  const keptValues = plan.scenes.flatMap((sc) => sc.elements.flatMap((el) => (el.type === "stat" ? [el.value] : [])));
+  notes.push(...scrubUnbackedNumbers(plan, keptValues));
+  plan.scenes = plan.scenes.filter((sc) => {
+    if (sc.section === "demo") return sc.elements.length > 0;
+    if (sc.section === "problem" && !sc.elements.length && !sc.narration.trim()) {
+      notes.push(`Dropped scene ${sc.id}: nothing verifiable left in it`);
+      return false;
+    }
+    return true;
+  });
+  plan.sources = plan.sources.filter((s) => s.kind === "team-provided" || s.verified);
   return notes;
 }
 

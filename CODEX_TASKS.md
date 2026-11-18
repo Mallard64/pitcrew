@@ -159,7 +159,8 @@ _Done (Claude Code, Nov 17, at the user's request). Dead time is detected from l
 
 ---
 
-## [ ] C19 Server-side research: search + fetch + number-match verifier
+## [~] C19 Server-side research: search + fetch + number-match verifier
+_Partly done (Claude Code, Nov 17): fetch + exact number/unit verifier + sources.md + narration scrub in `src/lib/research/verify.ts` (tests: `tests/research.test.ts`). The agent proposes the URL (it has page fetch, no search). Still open: a server-side search API for finding candidate sources._
 Only needed if the Phase 0 probe shows the sandbox can't search/fetch; **the verifier is needed either way** (agent-found stats are verified by our code too).
 **Paths:** `src/lib/research/search.ts`, `src/lib/research/fetch_page.ts`, `src/lib/research/verify_stats.ts`, `src/lib/research/sources_md.ts`, `tests/verify_stats.test.ts`, `tests/fixtures/pages/*.html`
 - `search.ts`: provider adapter (`SEARCH_PROVIDER`, `SEARCH_API_KEY`), returns `{title,url,snippet,published?}[]`; prefers .gov/.edu/major survey domains and last-3-years results (ranking only; no claims made here).

@@ -46,3 +46,10 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Title scenes: a section chip, a gradient headline whose words blur in, and a growing accent bar. The end card is a glowing URL pill. A thin progress line runs along the top.
 - Recording density is now 2× (2560×1440 clips), so 1.8× zooms stay sharp in the 1080p output. Cost: about 58s to record and about 200s to render for a 66s video on an M-series laptop.
 - No bundled font yet: installing `@fontsource-variable/inter` was blocked by a permission rule, so a Linux render falls back to DejaVu Sans. Needs a human decision.
+
+## 2026-11-17: 60fps, near-lossless frames, research stats (C19), ElevenLabs
+- Quality: Remotion's default frame capture is JPEG q80, which softened screenshots. Now `jpegQuality: 98`, x264 crf 15 with the `medium` preset, and 60fps output (`RENDER_FPS=30` to halve render time). Screencast frames are JPEG q100 and the recording uses crf 12. Clips are crf 16 at 60fps.
+- Animations are written in 30fps "design frames" (`useDesignFrame`), so springs and fades keep the same speed at any output fps.
+- Problem section is now always attempted. The old rule (only when the team stated the problem) left most videos without one. The agent grounds the problem in team, README or site copy, or infers the obvious pain without market claims.
+- Research statistics: the agent opens a reputable page that states the number (it has page fetch, no search) and returns url + quote. `src/lib/research/verify.ts` re-fetches the url (SSRF-checked on every redirect, HTML/text only, 3MB cap) and keeps the stat only if the exact value and unit appear in the page text, e.g. 64% matches "64%" or "64 percent" but never 164%. On failure, the stat, its source and every problem-scene sentence or text element that states an unbacked number are removed; an empty problem scene is dropped. `sources.md` lists every shown stat with the page excerpt we actually matched.
+- TTS: ElevenLabs falls back to `ELEVENLABS_API_KEY`. The default voice changed from Rachel to Brian, because free-tier API keys can't use library voices (HTTP 402). Model is `eleven_multilingual_v2`.

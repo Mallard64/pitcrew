@@ -12,7 +12,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ffmpeg, probeDuration } from "./ff";
-import { RECORD_SCALE, type Box, type CursorPoint, type StepTiming } from "./record_flow";
+import { recordScale, type Box, type CursorPoint, type StepTiming } from "./record_flow";
 
 export const DEAD_MIN_S = 1;
 export const SPEEDUP = 4; // max allowed by the spec
@@ -30,9 +30,9 @@ export type ClipInfo = {
 };
 
 // Clips keep the recording's device-pixel resolution (2560x1440 at the default scale).
-const W = Math.round((1280 * RECORD_SCALE) / 2) * 2;
-const H = Math.round((720 * RECORD_SCALE) / 2) * 2;
-const FPS = 30;
+const W = () => Math.round((1280 * recordScale()) / 2) * 2;
+const H = () => Math.round((720 * recordScale()) / 2) * 2;
+const FPS = 60;
 
 /** Splits a step window into normal and sped-up segments (seconds, relative to the window start). */
 export function planSegments(t: StepTiming): { from: number; to: number; factor: number }[] {
@@ -58,7 +58,7 @@ export async function polishFootage(outDir: string, log: (m: string) => void = (
 
   // Normalise Playwright's variable-frame-rate webm once so per-step seeks are exact.
   const cfr = path.join(clipsDir, ".rec.mp4");
-  await ffmpeg(["-i", path.join(outDir, "recording.mp4"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-an", cfr]);
+  await ffmpeg(["-i", path.join(outDir, "recording.mp4"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-an", cfr]);
   const total = await probeDuration(cfr);
 
   const clips: ClipInfo[] = [];
@@ -72,13 +72,13 @@ export async function polishFootage(outDir: string, log: (m: string) => void = (
     );
     filters.push(
       `${segs.map((_, i) => `[s${i}]`).join("")}concat=n=${segs.length}:v=1:a=0,fps=${FPS},` +
-        `scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v]`,
+        `scale=${W()}:${H()}:force_original_aspect_ratio=decrease,pad=${W()}:${H()}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v]`,
     );
     const file = path.join(clipsDir, `${t.step_id}.mp4`);
     await ffmpeg([
       "-ss", start.toFixed(3), "-t", rawLen.toFixed(3), "-i", cfr,
       "-filter_complex", filters.join(";"), "-map", "[v]",
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-r", String(FPS), "-an", "-movflags", "+faststart", file,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-r", String(FPS), "-an", "-movflags", "+faststart", file,
     ]);
     const speedups = segs.filter((s) => s.factor > 1).map((s) => ({ start_s: +s.from.toFixed(3), end_s: +s.to.toFixed(3), factor: s.factor }));
     const info: ClipInfo = {

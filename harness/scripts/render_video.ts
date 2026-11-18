@@ -88,9 +88,12 @@ async function mediaFor(outDir: string, base: string): Promise<PitchVideoProps["
 }
 
 const OUTPUT_SCALE = Number(process.env.RENDER_SCALE) || 1.5;
+/** 60fps output makes zooms, springs and cursor moves smooth. RENDER_FPS=30 halves render time. */
+const outputFps = (): 30 | 60 => (process.env.RENDER_FPS === "30" ? 30 : 60);
 
 export async function renderVideo(outDir: string, log: (m: string) => void = () => {}): Promise<Contract & { seed: number; style_kit: string }> {
   const plan: VideoPlan = VideoPlanSchema.parse(JSON.parse(await fsp.readFile(path.join(outDir, "video_plan.json"), "utf8")));
+  plan.fps = outputFps();
   const server = await serveDir(outDir);
   try {
     const inputProps = { plan, media: await mediaFor(outDir, server.base) } satisfies PitchVideoProps;
@@ -105,13 +108,16 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       codec: "h264",
       // Compose in 1280x720 coordinates, output 1080p: text and shapes render crisp at full size.
       scale: OUTPUT_SCALE,
-      crf: 18,
-      x264Preset: "fast",
+      // Frames are captured as near-lossless JPEG (Remotion's default 80 visibly softens screenshots).
+      imageFormat: "jpeg",
+      jpegQuality: 98,
+      crf: 15,
+      x264Preset: "medium",
       audioCodec: "aac",
       enforceAudioTrack: true,
       outputLocation: demo,
       inputProps,
-      concurrency: Math.max(1, Math.min(4, os.cpus().length - 1)),
+      concurrency: Math.max(1, Math.min(8, os.cpus().length - 1)),
       onProgress: ({ progress }) => {
         const pct = Math.floor(progress * 10) * 10;
         if (pct !== last) log(`rendering ${pct}%`);

@@ -72,7 +72,7 @@ class ScreenRecorder {
     });
     await cdp.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 92,
+      quality: 100,
       maxWidth: size.width,
       maxHeight: size.height,
       everyNthFrame: 1,
@@ -97,15 +97,15 @@ class ScreenRecorder {
     const { width: w, height: h } = size;
     await ffmpeg([
       "-f", "concat", "-safe", "0", "-i", list,
-      "-vf", `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,fps=30,format=yuv420p`,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-an", outFile,
+      "-vf", `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,fps=60,format=yuv420p`,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "12", "-an", outFile,
     ]);
     return true;
   }
 }
 
 /** Device-pixel ratio for recording; 2 keeps 1.8x zooms sharp in a 1080p render. */
-export const RECORD_SCALE = Number(process.env.RECORD_SCALE) || 2;
+export const recordScale = () => Number(process.env.RECORD_SCALE) || 2;
 const SETTLE_MS = 700;
 const TYPE_DELAY_MS: [number, number] = [60, 90];
 
@@ -271,6 +271,7 @@ export async function recordFlow(
   const browser = await chromium.launch({ headless: true });
   const timings: StepTiming[] = [];
   let videoPath = path.join(outDir, "recording.mp4");
+  const RECORD_SCALE = recordScale();
   const pixelSize = {
     width: Math.round(flow.viewport.width * RECORD_SCALE / 2) * 2,
     height: Math.round(flow.viewport.height * RECORD_SCALE / 2) * 2,

@@ -40,13 +40,14 @@ export async function openaiTts(text: string, outFile: string, cfg: TtsConfig) {
 }
 
 export async function elevenlabsTts(text: string, outFile: string, cfg: TtsConfig) {
-  const voice = cfg.voice || "21m00Tcm4TlvDq8ikWAM";
+  // Default: "Brian", a premade voice (library voices like Rachel need a paid plan via the API).
+  const voice = cfg.voice || "nPczCjzI2devNBz1zQrb";
   const res = await (cfg.fetchImpl ?? fetch)(
     `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`,
     {
       method: "POST",
       headers: { "xi-api-key": cfg.apiKey ?? "", "Content-Type": "application/json" },
-      body: JSON.stringify({ text, model_id: "eleven_turbo_v2_5" }),
+      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
     },
   );
   await writeResponse(res, outFile);

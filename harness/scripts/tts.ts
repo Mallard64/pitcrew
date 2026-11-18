@@ -20,8 +20,10 @@ export function ttsConfigFromEnv(env: Record<string, string | undefined> = proce
     ? (p as ProviderName)
     : "none";
   // A paid provider without a key would fail on every segment; degrade up front.
-  // OpenAI can reuse the account-wide OPENAI_API_KEY instead of a TTS-specific one.
-  const apiKey = env.TTS_API_KEY || (provider === "openai" ? env.OPENAI_API_KEY : undefined);
+  // Paid providers can reuse their account-wide key instead of a TTS-specific one.
+  const apiKey =
+    env.TTS_API_KEY ||
+    (provider === "openai" ? env.OPENAI_API_KEY : provider === "elevenlabs" ? env.ELEVENLABS_API_KEY : undefined);
   if ((provider === "openai" || provider === "elevenlabs") && !apiKey) return { provider: "none" };
   return { provider, apiKey, voice: env.TTS_VOICE || undefined };
 }

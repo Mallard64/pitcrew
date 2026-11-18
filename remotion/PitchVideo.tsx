@@ -6,7 +6,7 @@ import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import { Scene } from "./Scene";
 import { DEFAULT_KIT, brandTint } from "./kits/default";
-import { TRANSITION_FRAMES, framesFor, type PitchVideoProps } from "./types";
+import { transitionFrames, framesFor, type PitchVideoProps } from "./types";
 
 // Transitions not built yet (zoom-through, match-cut, whip: C13) fall back to fade.
 // Presentations have different prop types; the series only needs the common shape.
@@ -28,7 +28,7 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
   plan.scenes.forEach((scene, i) => {
     const hasNext = i < plan.scenes.length - 1;
     // Each transition overlaps two scenes; extend the outgoing scene so the total stays = sum of durations.
-    const frames = framesFor(scene.duration_s, plan.fps) + (hasNext ? TRANSITION_FRAMES : 0);
+    const frames = framesFor(scene.duration_s, plan.fps) + (hasNext ? transitionFrames(plan.fps) : 0);
     children.push(
       <TransitionSeries.Sequence key={scene.id} durationInFrames={frames}>
         <Scene scene={scene} ctx={ctx} index={i} />
@@ -39,7 +39,7 @@ export function PitchVideo({ plan, media }: PitchVideoProps) {
         <TransitionSeries.Transition
           key={`${scene.id}-t`}
           presentation={presentation(plan.scenes[i + 1].transition_in)}
-          timing={linearTiming({ durationInFrames: TRANSITION_FRAMES })}
+          timing={linearTiming({ durationInFrames: transitionFrames(plan.fps) })}
         />,
       );
     }

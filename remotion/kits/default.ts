@@ -37,7 +37,8 @@ export function hexToHsl(hex: string): [number, number, number] {
   if (max === min) return [0, 0, Math.round(l * 100)];
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  const h =
+    max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
   return [Math.round(h * 60), Math.round(s * 100), Math.round(l * 100)];
 }
 

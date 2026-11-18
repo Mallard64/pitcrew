@@ -3,11 +3,20 @@
  * (brand hue and a shifted hue), a faint dot grid and a vignette. Pure CSS, so it renders crisp at any scale.
  */
 import React from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill } from "remotion";
+import { useDesignFrame } from "./types";
 import { hexToHsl } from "./kits/default";
 
-export function Backdrop({ brand, base, drift = 0 }: { brand: string; base: string; drift?: number }) {
-  const frame = useCurrentFrame() + drift;
+export function Backdrop({
+  brand,
+  base,
+  drift = 0,
+}: {
+  brand: string;
+  base: string;
+  drift?: number;
+}) {
+  const frame = useDesignFrame() + drift;
   const [h, s] = hexToHsl(brand);
   const sat = Math.max(55, Math.min(90, s));
   const glowA = `hsla(${h}, ${sat}%, 58%, 0.55)`;
@@ -33,7 +42,11 @@ export function Backdrop({ brand, base, drift = 0 }: { brand: string; base: stri
           WebkitMaskImage: "radial-gradient(70% 70% at 50% 50%, black, transparent)",
         }}
       />
-      <AbsoluteFill style={{ background: "radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.55))" }} />
+      <AbsoluteFill
+        style={{
+          background: "radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.55))",
+        }}
+      />
     </AbsoluteFill>
   );
 }

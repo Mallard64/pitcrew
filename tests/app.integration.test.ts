@@ -14,6 +14,9 @@ beforeAll(async () => {
   process.env.PITCREW_TEST_ALLOW_LOCAL = "1";
   process.env.HARNESS_MODE = "mock";
   process.env.TTS_PROVIDER = "none";
+  // Fast render settings: this test checks the app flow; quality settings are covered elsewhere.
+  process.env.RENDER_FPS = "30";
+  process.env.RECORD_SCALE = "1";
   process.env.DATA_DIR = tmpDir("pc-app-");
   setDb(openDb(path.join(process.env.DATA_DIR, "pitcrew.db")));
   site = await serveDir(path.resolve(__dirname, "fixtures/site"));
@@ -21,6 +24,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await site.close();
   delete process.env.PITCREW_TEST_ALLOW_LOCAL;
+  delete process.env.RENDER_FPS;
+  delete process.env.RECORD_SCALE;
 });
 
 const ctx = <T extends object>(p: T) => ({ params: Promise.resolve(p) });

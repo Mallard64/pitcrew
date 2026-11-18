@@ -46,5 +46,6 @@ describe("voiceScript", () => {
     expect(ttsConfigFromEnv({ TTS_PROVIDER: "openai", TTS_API_KEY: "x" }).provider).toBe("openai");
     expect(ttsConfigFromEnv({ TTS_PROVIDER: "openai", OPENAI_API_KEY: "k" })).toMatchObject({ provider: "openai", apiKey: "k" });
     expect(ttsConfigFromEnv({ TTS_PROVIDER: "elevenlabs", OPENAI_API_KEY: "k" }).provider).toBe("none");
+    expect(ttsConfigFromEnv({ TTS_PROVIDER: "elevenlabs", ELEVENLABS_API_KEY: "e" })).toMatchObject({ provider: "elevenlabs", apiKey: "e" });
   });
 });
