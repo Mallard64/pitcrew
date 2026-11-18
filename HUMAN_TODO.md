@@ -6,11 +6,12 @@ Only a human can do these. Everything else runs in the repo. Deadline: **Nov 19,
 - [ ] **Post the Discord concierge offer tonight** (`launch/discord-post.md`) in the Berkeley and Stanford Discords: free pitch videos, run semi-manually until the app is live. Forward requests to Claude/the operator.
 - [ ] **Create a Stripe payment link**: "Pit Crew HD: 1080p, no credit", $5. Put the URL in `.env` as `STRIPE_PAYMENT_LINK`.
 - [ ] **Pick/license a background music set (royalty-free)**: 1–3 tracks per mood (calm, upbeat, bold, playful). Put them in `assets/music/<mood>/` and note the license source in DECISIONS.md.
-- [ ] If research runs server-side (Phase 0 decides): get a search API key (e.g. Brave, Tavily or SerpAPI) → `.env` as `SEARCH_PROVIDER` + `SEARCH_API_KEY`.
+- [ ] **Needed (Phase 0 decided research runs server-side):** get a search API key (e.g. Brave, Tavily or SerpAPI) → `.env` as `SEARCH_PROVIDER` + `SEARCH_API_KEY`.
 
 ## 1. Keys and Harness ID
 - [x] HarnessRouter API key and Harness ID in `.env` (`HR_API_KEY`, `HARNESS_ID`). Base URL corrected to `https://api.harnessrouter.ai` (it pointed at TokenRouter).
-- [ ] Allow the live check: Claude needs permission to send one read-only request with the key to `api.harnessrouter.ai` (it was blocked by the auto-mode classifier). Then it runs `scripts/hr-smoke.ts` + `--probe` and writes `harnessrouter.json`.
+- [x] TokenRouter key with credit saved in HarnessRouter BYOK; smoke test + probe passed.
+- [ ] Fix `HARNESSROUTER_BASE_URL` at the source you copy `.env` from: it must be `https://api.harnessrouter.ai` (it keeps reverting to TokenRouter's URL).
 - [ ] Get a TTS key: ElevenLabs preferred (gives word timings for highlighted captions) or OpenAI (`TTS_PROVIDER`, `TTS_API_KEY`). Without one, videos are silent with captions.
 
 ## 2. Event page

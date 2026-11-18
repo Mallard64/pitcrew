@@ -26,3 +26,9 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Plan: move rendering from ffmpeg to Remotion with an agent-directed video plan (style kits, layouts, transitions, seeded variation) and a validator. Statistics only with a fetched source and an exact number match in code.
 - Found and fixed a config bug: the HarnessRouter base URL in `.env` pointed at TokenRouter.
 - Docs and task lists updated; nothing built for this yet.
+
+## Nov 17 (night): HarnessRouter live
+- Three different failures before the first green call: (1) `.env` sent our HarnessRouter key to TokenRouter's URL, which gave 401; (2) the TokenRouter account behind HarnessRouter had $0.00 of credit, which gave 403 on every model; (3) a new TokenRouter key had been added to `.env` but not to HarnessRouter's bring-your-own-key settings. All three were config problems, not code.
+- Kept the existing Harness (so the ID already in use stays) and updated it the safe way: fetch with ETag, full PUT with If-Match, re-read. Model is now claude-sonnet-5.5, with Pit Crew instructions.
+- The sandbox probe got refused with `role_mismatch`, which is the guardrail working. Rephrased as an in-scope pre-flight check: web + Chromium OK, no ffmpeg, no root, no search tool. That confirms Plan B (we render), and statistics research moves server-side.
+- First real agent-planned video: tailwindcss.com, 8/8 steps, 66.9s, 141s end to end. The agent checked each element in its own browser before using it.

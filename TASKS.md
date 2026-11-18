@@ -23,10 +23,10 @@ Notes on what's checked (2026-11-17):
 
 ## Phase 0: Verify the platform (GATE, P0), target: Nov 17 evening
 - [x] P0 Read UHP spec + `/v1/openapi.json`; write `docs/hr-api.md` with exact endpoints, request/response fields, streaming event types, session continuation, file/artifact retrieval. **Check:** doc cites real field names from the spec.
-- [ ] P0 Hello-world: `scripts/hr-smoke.ts` sends one request to `HARNESS_ID` and prints the streamed events. **Check:** runs green against the real API. (Key + Harness ID are in `.env`; base URL fixed to `https://api.harnessrouter.ai`.)
-- [ ] P0 Write `harnessrouter.json` from the live Harness (fetch by `HARNESS_ID`; name, base, model, instructions). **Check:** file matches `GET /v1/harnesses/{id}`.
-- [ ] P0 Sandbox capability probe: `curl -sI https://example.com`, `which ffmpeg`, `npx playwright --version`, Chromium launch, max runtime, return a 5MB file, **and whether the agent can web-search and fetch pages** (decides agent-side vs server-side research, C19). **Check:** results recorded in DECISIONS.md.
-- [ ] P0 Decide **Plan A vs. Plan B** (see SPEC) and agent- vs server-side research; record why in DECISIONS.md.
+- [x] P0 Hello-world: `scripts/hr-smoke.ts` sends one request to `HARNESS_ID` and prints the streamed events. **Check:** runs green against the real API. Passed Nov 17 17:30 PT (claude-sonnet-5.5).
+- [x] P0 Write `harnessrouter.json` from the live Harness (fetch by `HARNESS_ID`; name, base, model, instructions). **Check:** file matches `GET /v1/harnesses/{id}`.
+- [x] P0 Sandbox capability probe: `curl -sI https://example.com`, `which ffmpeg`, `npx playwright --version`, Chromium launch, max runtime, return a 5MB file, **and whether the agent can web-search and fetch pages** (decides agent-side vs server-side research, C19). **Check:** results recorded in DECISIONS.md.
+- [x] P0 Decide **Plan A vs. Plan B** (see SPEC) and agent- vs server-side research; record why in DECISIONS.md.
 
 ## Phase 1: Harness v2: the director (P0), target: Nov 18 morning
 - [x] P0 `harness/scripts/record_flow.ts` (zoom boxes come in Codex C17).
@@ -45,7 +45,7 @@ Notes on what's checked (2026-11-17):
 ## Phase 2: App (P0), target: Nov 18 midday
 - [x] P0 Next.js scaffold, Tailwind, SQLite, `.env.example`, Dockerfile.
 - [x] P0 Form + validation + SSRF guard + rate limits.
-- [ ] P0 Job runner: call HarnessRouter (streaming), persist events, map to progress steps, store artifacts. (Done in mock mode; real mode untested.)
+- [ ] P0 Job runner: call HarnessRouter (streaming), persist events, map to progress steps, store artifacts. (Real-mode planner verified through `runPipeline` via `scripts/run-local.ts`; still to run one job through the web API/runner in real mode.)
 - [x] P0 `/jobs/[id]`: SSE progress, video player, downloads.
 - [ ] P0 Revise flow using the same session. **Check:** "make it shorter" yields a shorter video.
 - [x] P0 `/stats` public metrics + landing counter (real numbers from DB only).

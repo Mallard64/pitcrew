@@ -5,13 +5,15 @@
  */
 import { sseEvents } from "../src/lib/harness/real";
 
-const PROBE = `Run these shell commands in your sandbox and report each output verbatim, then answer the questions:
-1) curl -sI https://example.com | head -1
-2) which ffmpeg && ffmpeg -version | head -1
-3) npx --yes playwright --version
-4) node -e "require('playwright').chromium.launch().then(b=>{console.log('chromium ok');return b.close()}).catch(e=>console.log('chromium fail',e.message))"
-5) head -c 5000000 /dev/urandom > probe.bin && ls -la probe.bin   (keep probe.bin as an artifact)
-Questions: what is your max task runtime? Can you install apt packages? Reply as a short bullet list.`;
+const PROBE = `Pre-flight check before planning a demo video (part of your Pit Crew job): we need to know which demo-pipeline steps can run in your environment. Do not plan a video yet. Run each check and report the raw result in one bullet each:
+1) Fetch https://example.com and report the HTTP status and page title (can you reach the public web?).
+2) Run a web search for "US Census Bureau small business statistics 2024" and list the first 2 result URLs (can you search?).
+3) Fetch https://www.census.gov and report whether the page text loaded (can you fetch a source page for statistics?).
+4) Shell: which ffmpeg && ffmpeg -version | head -1
+5) Shell: npx --yes playwright --version, then try launching Chromium headless and report ok/fail.
+6) Shell: head -c 5000000 /dev/urandom > probe.bin && ls -la probe.bin (keep probe.bin in your working directory as a file).
+7) Your max task runtime and whether you can install apt packages, if you know.
+If a check is impossible, say "not available" and why. Reply only with the 7 bullets.`;
 
 async function main() {
   const base = process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai";
