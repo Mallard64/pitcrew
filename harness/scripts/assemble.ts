@@ -3,7 +3,7 @@
  *
  * CLI: tsx harness/scripts/assemble.ts <out_dir> --title "<project_name>" --url "<url>" [--slideshow]
  * Inputs in out_dir: timings.json, script.json, audio/*.mp3, audio/durations.json,
- *                    and recording.webm (recording mode) or shots/*.png (slideshow mode)
+ *                    and recording.mp4 (recording mode) or shots/*.png (slideshow mode)
  * Outputs: demo.mp4 (1280x720 H.264 + AAC, faststart), captions.srt, thumb.jpg
  * Prints the output contract JSON on stdout.
  */
@@ -179,8 +179,8 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
 
   let recording = "";
   if (mode === "recording") {
-    const webm = path.join(outDir, "recording.webm");
-    if (!existsSync(webm)) throw new Error("recording.webm missing");
+    const webm = path.join(outDir, "recording.mp4");
+    if (!existsSync(webm)) throw new Error("recording.mp4 missing");
     // Normalise Playwright's variable-frame-rate webm once so per-step seeks are exact.
     recording = path.join(work, "rec.mp4");
     await ffmpeg([

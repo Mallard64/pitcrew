@@ -156,7 +156,7 @@ export async function runPipeline(
   contract.steps_ok = rec.stepsOk;
   contract.steps_total = flow.steps.length;
   // Big intermediates aren't needed once demo.mp4 exists.
-  await fs.rm(path.join(outDir, "recording.webm"), { force: true });
+  await fs.rm(path.join(outDir, "recording.mp4"), { force: true });
 
   const files = OUTPUT_FILES.filter((f) => existsSync(path.join(outDir, f)));
   return { contract, flow, videoPlan, sessionId: plan.sessionId, hrSessionId: plan.hrSessionId, planSource: plan.source, files };
@@ -191,7 +191,7 @@ export function sanitizePlan(plan: VideoPlan, clipIds: Set<string>, outDir: stri
 async function legacyAssemble(input: JobInput, flow: Flow, rec: RecordResult, outDir: string, log: (m: string) => void): Promise<Contract> {
   const dir = path.join(outDir, ".fallback");
   await fs.mkdir(path.join(dir, "shots"), { recursive: true });
-  await fs.copyFile(path.join(outDir, "recording.webm"), path.join(dir, "recording.webm"));
+  await fs.copyFile(path.join(outDir, "recording.mp4"), path.join(dir, "recording.mp4"));
   await fs.copyFile(path.join(outDir, "timings.json"), path.join(dir, "timings.json"));
   for (const f of await fs.readdir(path.join(outDir, "shots"))) await fs.copyFile(path.join(outDir, "shots", f), path.join(dir, "shots", f));
   const okIds = new Set(rec.timings.filter((t) => t.ok).map((t) => t.step_id));

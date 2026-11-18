@@ -87,6 +87,8 @@ async function mediaFor(outDir: string, base: string): Promise<PitchVideoProps["
   return media;
 }
 
+const OUTPUT_SCALE = Number(process.env.RENDER_SCALE) || 1.5;
+
 export async function renderVideo(outDir: string, log: (m: string) => void = () => {}): Promise<Contract & { seed: number; style_kit: string }> {
   const plan: VideoPlan = VideoPlanSchema.parse(JSON.parse(await fsp.readFile(path.join(outDir, "video_plan.json"), "utf8")));
   const server = await serveDir(outDir);
@@ -101,8 +103,10 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       composition,
       serveUrl,
       codec: "h264",
-      crf: 23,
-      x264Preset: "veryfast",
+      // Compose in 1280x720 coordinates, output 1080p: text and shapes render crisp at full size.
+      scale: OUTPUT_SCALE,
+      crf: 18,
+      x264Preset: "fast",
       audioCodec: "aac",
       enforceAudioTrack: true,
       outputLocation: demo,

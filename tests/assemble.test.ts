@@ -14,7 +14,7 @@ async function synthInputs(withRecording: boolean) {
   fs.mkdirSync(path.join(out, "audio"));
   fs.mkdirSync(path.join(out, "shots"));
   if (withRecording)
-    await ffmpeg(["-f", "lavfi", "-i", "testsrc=size=1280x720:rate=25:duration=9", "-c:v", "libvpx", "-b:v", "1M", path.join(out, "recording.webm")]);
+    await ffmpeg(["-f", "lavfi", "-i", "testsrc=size=1280x720:rate=25:duration=9", "-c:v", "libx264", "-pix_fmt", "yuv420p", path.join(out, "recording.mp4")]);
   const timings = steps.map((id, i) => ({ step_id: id, ok: true, start_ms: i * 3000, end_ms: (i + 1) * 3000 }));
   const durations = [];
   for (const [i, id] of steps.entries()) {

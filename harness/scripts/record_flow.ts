@@ -2,7 +2,7 @@
  * Executes a flow JSON in headless Chromium, records the session and takes one screenshot per step.
  *
  * CLI: tsx harness/scripts/record_flow.ts <flow.json> <out_dir>
- * Outputs: <out_dir>/recording.webm, <out_dir>/shots/<step_id>.png, <out_dir>/timings.json
+ * Outputs: <out_dir>/recording.mp4, <out_dir>/shots/<step_id>.png, <out_dir>/timings.json
  * Exit code: 0 if at least one step succeeded, 2 otherwise.
  *
  * Polish (C17): eased cursor moves, human-speed typing, a hold after each action, and per step
@@ -11,7 +11,8 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium, type Page } from "playwright";
+import { chromium, type BrowserContext, type Page } from "playwright";
+import { ffmpeg } from "./ff";
 import { FlowSchema, type Flow, type Step } from "../schemas/flow";
 
 export type Box = { x: number; y: number; w: number; h: number };
@@ -46,6 +47,64 @@ export type RecordOptions = {
   readyTimeoutMs?: number;
 };
 
+
+/**
+ * Records the page with Chrome's screencast at device-pixel resolution. Playwright's recordVideo
+ * captures at CSS size whatever the deviceScaleFactor, which made zoomed scenes blurry.
+ * Frames arrive only when the page repaints; each one is held until the next.
+ */
+class ScreenRecorder {
+  private frames: { file: string; t: number }[] = [];
+  private writes: Promise<void>[] = [];
+  private cdp?: Awaited<ReturnType<BrowserContext["newCDPSession"]>>;
+  constructor(
+    private dir: string,
+    private t0: number,
+  ) {}
+
+  async start(context: BrowserContext, page: Page, size: { width: number; height: number }) {
+    const cdp = (this.cdp = await context.newCDPSession(page));
+    cdp.on("Page.screencastFrame", ({ data, sessionId }) => {
+      const file = path.join(this.dir, `f${String(this.frames.length).padStart(6, "0")}.jpg`);
+      this.frames.push({ file, t: Date.now() - this.t0 });
+      this.writes.push(fs.writeFile(file, Buffer.from(data, "base64")));
+      cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
+    });
+    await cdp.send("Page.startScreencast", {
+      format: "jpeg",
+      quality: 92,
+      maxWidth: size.width,
+      maxHeight: size.height,
+      everyNthFrame: 1,
+    });
+  }
+
+  /** Encodes the frames into a constant-30fps H.264 file whose t=0 is t0. Returns false if no frames. */
+  async stop(outFile: string, endMs: number, size: { width: number; height: number }) {
+    await this.cdp?.send("Page.stopScreencast").catch(() => {});
+    await Promise.all(this.writes);
+    if (!this.frames.length) return false;
+    const lines: string[] = [];
+    this.frames.forEach((f, i) => {
+      const from = i === 0 ? 0 : f.t;
+      const to = i + 1 < this.frames.length ? this.frames[i + 1].t : Math.max(endMs, f.t + 34);
+      lines.push(`file '${path.basename(f.file)}'`, `duration ${(Math.max(1, to - from) / 1000).toFixed(3)}`);
+    });
+    // The concat demuxer ignores the last duration unless the last file is listed again.
+    lines.push(`file '${path.basename(this.frames[this.frames.length - 1].file)}'`);
+    const list = path.join(this.dir, "frames.txt");
+    await fs.writeFile(list, lines.join("\n"));
+    const { width: w, height: h } = size;
+    await ffmpeg([
+      "-f", "concat", "-safe", "0", "-i", list,
+      "-vf", `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,fps=30,format=yuv420p`,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-an", outFile,
+    ]);
+    return true;
+  }
+}
+
+export const RECORD_SCALE = Number(process.env.RECORD_SCALE) || 1.5;
 const SETTLE_MS = 700;
 const TYPE_DELAY_MS: [number, number] = [60, 90];
 
@@ -210,12 +269,17 @@ export async function recordFlow(
 
   const browser = await chromium.launch({ headless: true });
   const timings: StepTiming[] = [];
-  let videoPath = path.join(outDir, "recording.webm");
+  let videoPath = path.join(outDir, "recording.mp4");
+  const pixelSize = {
+    width: Math.round(flow.viewport.width * RECORD_SCALE / 2) * 2,
+    height: Math.round(flow.viewport.height * RECORD_SCALE / 2) * 2,
+  };
   try {
     const context = await browser.newContext({
       viewport: flow.viewport,
-      deviceScaleFactor: 1,
-      recordVideo: { dir: rawDir, size: flow.viewport },
+      // Render at 1.5x pixel density (1920x1080 for a 1280x720 viewport) so zoomed scenes stay sharp.
+      // Layout, boxes and cursor stay in CSS px.
+      deviceScaleFactor: RECORD_SCALE,
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36 PitCrew/1.0",
     });
@@ -229,7 +293,10 @@ export async function recordFlow(
       });
     }
     const page = await context.newPage();
-    const rec = new Recorder(page, Date.now());
+    const t0 = Date.now();
+    const screen = new ScreenRecorder(rawDir, t0);
+    await screen.start(context, page, pixelSize);
+    const rec = new Recorder(page, t0);
     page.mouse.move(640, 360).catch(() => {});
 
     for (const step of flow.steps) {
@@ -267,13 +334,9 @@ export async function recordFlow(
       if (ok) log(`step ${step.id} ok${t.wait ? ` (waited ${t.wait.end_ms - t.wait.start_ms}ms for loading)` : ""}`);
     }
 
-    const video = page.video();
+    const recorded = await screen.stop(videoPath, rec.now(), pixelSize);
+    if (!recorded) videoPath = "";
     await context.close();
-    if (video) {
-      await fs.rename(await video.path(), videoPath);
-    } else {
-      videoPath = "";
-    }
   } finally {
     await browser.close();
     await fs.rm(rawDir, { recursive: true, force: true });

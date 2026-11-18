@@ -58,7 +58,7 @@ function Clip({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx: Ctx })
   return (
     <AbsoluteFill style={style}>
       <Sequence durationInFrames={clipFrames} layout="none">
-        <OffthreadVideo src={m.url} muted playbackRate={el.speed ?? 1} />
+        <OffthreadVideo src={m.url} muted playbackRate={el.speed ?? 1} style={{ width: "100%", height: "100%" }} />
       </Sequence>
       {/* Narration can outlast the clip: hold the step's final screenshot instead of going blank. */}
       {still && (

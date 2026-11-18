@@ -1,9 +1,9 @@
 /**
- * Cuts recording.webm into one clip per successful step and speeds up dead time.
+ * Cuts recording.mp4 into one clip per successful step and speeds up dead time.
  *
  * CLI: tsx harness/scripts/polish_footage.ts <out_dir>
- * Inputs: <out_dir>/recording.webm, <out_dir>/timings.json (from record_flow.ts)
- * Outputs: <out_dir>/clips/<step_id>.mp4 (1280x720, 30fps, H.264, no audio), <out_dir>/clips/manifest.json
+ * Inputs: <out_dir>/recording.mp4, <out_dir>/timings.json (from record_flow.ts)
+ * Outputs: <out_dir>/clips/<step_id>.mp4 (1920x1080, 30fps, H.264, no audio), <out_dir>/clips/manifest.json
  *
  * Dead time = a loading window the recorder saw in the DOM (spinner, progress bar, aria-busy,
  * skeleton) lasting over 1s. We don't use pixel stillness alone: the hold after each action is an
@@ -29,8 +29,8 @@ export type ClipInfo = {
   speedups: Speedup[];
 };
 
-const W = 1280;
-const H = 720;
+const W = 1920;
+const H = 1080;
 const FPS = 30;
 
 /** Splits a step window into normal and sped-up segments (seconds, relative to the window start). */
@@ -57,7 +57,7 @@ export async function polishFootage(outDir: string, log: (m: string) => void = (
 
   // Normalise Playwright's variable-frame-rate webm once so per-step seeks are exact.
   const cfr = path.join(clipsDir, ".rec.mp4");
-  await ffmpeg(["-i", path.join(outDir, "recording.webm"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-an", cfr]);
+  await ffmpeg(["-i", path.join(outDir, "recording.mp4"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-an", cfr]);
   const total = await probeDuration(cfr);
 
   const clips: ClipInfo[] = [];

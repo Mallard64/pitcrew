@@ -24,7 +24,7 @@ describe("renderVideo (Remotion)", () => {
     const streams = await probeStreams(path.join(out, "demo.mp4"));
     const v = streams.find((s) => s.codec_type === "video")!;
     const a = streams.find((s) => s.codec_type === "audio")!;
-    expect([v.codec_name, v.width, v.height]).toEqual(["h264", 1280, 720]);
+    expect([v.codec_name, v.width, v.height]).toEqual(["h264", 1920, 1080]);
     expect(a.codec_name).toBe("aac");
     const dur = await probeDuration(path.join(out, "demo.mp4"));
     expect(Math.abs(dur - 13)).toBeLessThanOrEqual(0.2); // 3+3+3+2+2
