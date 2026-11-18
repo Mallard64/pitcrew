@@ -261,8 +261,10 @@ export async function recordFlow(
 ): Promise<RecordResult> {
   const flow: Flow = FlowSchema.parse(flowInput);
   const log = opts.log ?? (() => {});
-  const timeout = opts.stepTimeoutMs ?? 10_000;
-  const readyTimeout = opts.readyTimeoutMs ?? 10_000;
+  // STEP_TIMEOUT_MS: slow hosts (small containers) need longer for page loads.
+  const envTimeout = Number(process.env.STEP_TIMEOUT_MS) || 0;
+  const timeout = opts.stepTimeoutMs ?? (envTimeout || 10_000);
+  const readyTimeout = opts.readyTimeoutMs ?? (envTimeout || 10_000);
   const shotsDir = path.join(outDir, "shots");
   const rawDir = path.join(outDir, ".raw-video");
   await fs.mkdir(shotsDir, { recursive: true });

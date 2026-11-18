@@ -121,6 +121,10 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       inputProps,
       // os.cpus() reports the host inside containers; RENDER_CONCURRENCY caps it to the plan's real size.
       concurrency: Number(process.env.RENDER_CONCURRENCY) || Math.max(1, Math.min(8, os.cpus().length - 1)),
+      // Small containers render a frame far slower than a laptop; Remotion's 30s default per frame is too tight.
+      timeoutInMilliseconds: Number(process.env.RENDER_FRAME_TIMEOUT_MS) || 30_000,
+      // The frame cache otherwise sizes itself from total memory; cap it where memory is tight.
+      ...(process.env.OFFTHREAD_CACHE_MB ? { offthreadVideoCacheSizeInBytes: Number(process.env.OFFTHREAD_CACHE_MB) * 1024 * 1024 } : {}),
       onProgress: ({ progress }) => {
         const pct = Math.floor(progress * 10) * 10;
         if (pct !== last) log(`rendering ${pct}%`);
