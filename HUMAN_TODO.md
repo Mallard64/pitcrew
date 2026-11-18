@@ -2,15 +2,16 @@
 
 Only a human can do these. Everything else runs in the repo. Deadline: **Nov 19, 11:59 AM PST**.
 
-## 1. Keys and Harness ID (unblocks Phase 0, about 20 min)
-- [ ] Claim TokenRouter credits and add the key to HarnessRouter (Profile → Bring Your Own Key → TokenRouter), following the "Claim Your TokenRouter Credits" PDF.
-- [ ] In HarnessRouter, create the harness:
-  - Base: **Claude Code** · Name: `pit-crew` · default model: your pick (Sonnet-class works)
-  - System prompt: paste `PLAN_INSTRUCTIONS` from `src/lib/harness/real.ts` (the app also sends it as `instructions` per task, so this is a safety net)
-  - Copy the **Harness ID** (`chrn_…`) and create an **API key**.
-- [ ] Put them in `.env`: `HARNESS_MODE=real`, `HARNESSROUTER_BASE_URL=…`, `HARNESSROUTER_API_KEY=…`, `HARNESS_ID=chrn_…`
-- [ ] Run `npx tsx --env-file=.env scripts/hr-smoke.ts` (should print "pit crew online") and `… scripts/hr-smoke.ts --probe`. Paste both outputs to Claude so it can record the Plan A/B decision.
-- [ ] Get a TTS key: OpenAI (`TTS_PROVIDER=openai`, `TTS_API_KEY=sk-…`) or ElevenLabs. Without one, videos are silent with captions.
+## 0. Tonight (Nov 17)
+- [ ] **Post the Discord concierge offer tonight** (`launch/discord-post.md`) in the Berkeley and Stanford Discords: free pitch videos, run semi-manually until the app is live. Forward requests to Claude/the operator.
+- [ ] **Create a Stripe payment link**: "Pit Crew HD: 1080p, no credit", $5. Put the URL in `.env` as `STRIPE_PAYMENT_LINK`.
+- [ ] **Pick/license a background music set (royalty-free)**: 1–3 tracks per mood (calm, upbeat, bold, playful). Put them in `assets/music/<mood>/` and note the license source in DECISIONS.md.
+- [ ] If research runs server-side (Phase 0 decides): get a search API key (e.g. Brave, Tavily or SerpAPI) → `.env` as `SEARCH_PROVIDER` + `SEARCH_API_KEY`.
+
+## 1. Keys and Harness ID
+- [x] HarnessRouter API key and Harness ID in `.env` (`HR_API_KEY`, `HARNESS_ID`). Base URL corrected to `https://api.harnessrouter.ai` (it pointed at TokenRouter).
+- [ ] Allow the live check: Claude needs permission to send one read-only request with the key to `api.harnessrouter.ai` (it was blocked by the auto-mode classifier). Then it runs `scripts/hr-smoke.ts` + `--probe` and writes `harnessrouter.json`.
+- [ ] Get a TTS key: ElevenLabs preferred (gives word timings for highlighted captions) or OpenAI (`TTS_PROVIDER`, `TTS_API_KEY`). Without one, videos are silent with captions.
 
 ## 2. Event page
 - [ ] Create/confirm the team: https://community.harnessrouter.ai/events/the-big-hack-game
@@ -25,11 +26,12 @@ Only a human can do these. Everything else runs in the repo. Deadline: **Nov 19,
 - [ ] Tell Claude the URL so it can update README, the launch drafts and run the eval against prod.
 
 ## 4. Launch (after deploy)
-- [ ] Post `launch/discord-post.md` in the Berkeley and Stanford Discords.
+- [ ] Post the updated `launch/discord-post.md` again once the app is live.
 - [ ] DM teams directly; offer to run it for them. Ask happy users for a one-line quote (the 👍 form has a consent checkbox).
 - [ ] Ask in Discord/office hours whether hosted sandboxes allow Chromium + ffmpeg + egress (decides Plan A vs. B): https://calendly.com/contact-harnessrouter/30min
 
 ## 5. Submission (by Nov 19, 11:59 AM PST)
-- [ ] Make our own demo with Pit Crew (dogfooding) → save as `launch/our-demo.mp4`.
+- [ ] After results, send Claude the official finalist list so `/admin` can mark which finalists used Pit Crew (never guessed).
+- [ ] Make our own pitch video with Pit Crew (dogfooding) → save as `launch/our-demo.mp4`.
 - [ ] Submit: live link, repo, `launch/our-demo.mp4`, Harness ID, text from `launch/submission.md` (fill the numbers from `/stats`).
 - [ ] Rehearse `launch/demo-day-script.md` for Nov 20.

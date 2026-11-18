@@ -19,3 +19,10 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Bug: every job ran twice. Restart recovery re-queued the brand-new job, then the submit handler queued it again, and both runs wrote to the same folder (`moov atom not found`). Fixed by deduping queued/running jobs, plus a follow-up fix so the deduped path still starts the queue.
 - Bug: the standalone build couldn't find `playwright-core/browsers.json` (file tracing misses runtime data files) and resolved `./data` inside `.next/standalone`. Fixed with explicit tracing includes and a small start wrapper.
 - Baseline eval, offline planner, no TTS: 2/6 public sites pass every automated check (Tailwind CSS 60s, Bun 86s). The 4 misses are app-style sites with little copy (24–35s videos). That's the job for the HarnessRouter agent, which isn't connected yet (no key).
+
+## Nov 17 (evening): repositioning
+- Competitor scan: URL-to-demo-video already exists (MakeMyDemo, DemoMotion AI, Slideshot, ClickCast, DemoFlow AI, Replix, Spotlight, plus hackathon projects DemoPilot and DemoMaster), and so do auto-updating videos (Clueso, ScreenCI, Specreel, DemoGenie). So we're not "first", and a click-through recording isn't enough.
+- New angle: "Others record a walkthrough. Pit Crew makes your pitch." Problem → solution → demo → what's next, plus build log and submission text from one run.
+- Plan: move rendering from ffmpeg to Remotion with an agent-directed video plan (style kits, layouts, transitions, seeded variation) and a validator. Statistics only with a fetched source and an exact number match in code.
+- Found and fixed a config bug: the HarnessRouter base URL in `.env` pointed at TokenRouter.
+- Docs and task lists updated; nothing built for this yet.

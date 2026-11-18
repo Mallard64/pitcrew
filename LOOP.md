@@ -7,6 +7,8 @@ Run this loop until the **Stop conditions** are met. Do not wait for a human bet
 2. **Pick** the first unchecked task in the earliest unfinished phase that isn't blocked.
    - Phase 0 is a gate: do not start Phase 1 until the Plan A/B decision is recorded.
    - After feature freeze (Nov 18, 11:59 PM PST), only pick bug fixes, Phase 4–5 tasks and P0 quality fixes.
+   - Your list: Claude Code → `TASKS.md`; Codex → `CODEX_TASKS.md` (follow its Order line). Don't take tasks from the other list.
+   - Within a phase, follow the **build-order priority**: reliable demo recording + zoom → problem/solution/end scenes with 2 style kits → diagram engine → more kits/layouts/transitions → self-review pass.
 3. **Plan** in 3–6 bullets inside `STATUS.md` under "Current task".
 4. **Do** the task. Keep changes small and focused.
 5. **Verify** the task's **Check** for real: run it, open the output, play the video, hit the URL. Never mark done on assumption.
@@ -25,7 +27,8 @@ Run this loop until the **Stop conditions** are met. Do not wait for a human bet
 - Missing info → make the most reasonable choice, record it in DECISIONS.md, move on. Don't ask questions.
 
 ## Quality bar
-- Prefer reliable over impressive. A 50s slideshow that always works beats a recording that fails 40% of the time.
+- Prefer reliable over impressive. **A simpler video that always renders beats a fancy one that sometimes breaks.** Keep the fallback chain working at every commit: Remotion render → ffmpeg slideshow.
+- Never claim "first" (see COMPETITORS.md). Never show a statistic that our verifier hasn't matched in its fetched source page.
 - Every number shown publicly (`/stats`, submission, Discord posts) must come from the database or eval logs.
 - Never claim features the product doesn't have.
 

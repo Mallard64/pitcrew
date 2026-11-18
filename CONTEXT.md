@@ -25,9 +25,17 @@
 No formal rubric is published. Inferred weights: real users 30, distribution 25, product/demo 25, build log 10, HarnessRouter fit 10.
 
 ## Why this idea wins
-Every team in the hackathon must submit a demo video by the same deadline. Pit Crew solves that,
-and our users are our own competitors, reachable today through the event Discords.
-The longer-term pitch: software teams whose demo and docs videos go stale every release; Pit Crew regenerates them from the product itself.
+Every team in the hackathon must submit a demo video by the same deadline. Our users are our own competitors, reachable today through the event Discords.
+
+URL-to-demo-video tools already exist (see `COMPETITORS.md`). **Never claim "first".** Our angle:
+**"Others record a walkthrough. Pit Crew makes your pitch."**
+- (a) A narrative pitch, problem → solution → demo → what's next, built from the live site, README, commits and issues. It explains *why*, not just clicks.
+- (b) A complete hackathon submission kit from one run: pitch video + build log + submission text.
+- (c) Agent-directed editing, so every video has its own style (style kits, layouts, motion, transitions, seeded variation, with a validator as guardrail).
+- (d) Runs on HarnessRouter with multi-harness cost routing.
+
+Expansion story: **pitch videos for every launch: hackathons, Product Hunt, YC demo days, investor updates.**
+Auto-updating videos on every release (a GitHub Action) is a P2 nice-to-have, not the story; that space has existing players (Clueso, ScreenCI, Specreel, DemoGenie).
 
 ## Links
 - HarnessRouter docs: https://harnessrouter.ai/docs
@@ -39,6 +47,8 @@ The longer-term pitch: software teams whose demo and docs videos go stale every 
 - Stanford Discord: https://discord.com/invite/AG8QX3zTf
 - HarnessRouter office hours: https://calendly.com/contact-harnessrouter/30min
 - Playwright video recording: https://playwright.dev/docs/videos
+- Remotion (React → video): https://www.remotion.dev/docs · license: https://www.remotion.dev/license
+- Graph auto-layout: elkjs https://github.com/kieler/elkjs · dagre https://github.com/dagrejs/dagre
 - FFmpeg docs: https://ffmpeg.org/documentation.html
 - Piper (offline TTS fallback): https://github.com/rhasspy/piper
 

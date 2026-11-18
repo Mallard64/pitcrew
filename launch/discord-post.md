@@ -1,9 +1,9 @@
-# Discord post (draft, a human posts it)
+# Discord post: concierge offer (draft; a human posts it tonight)
 
-**Need a demo video before Wednesday 11:59 AM? Pit Crew makes one from your live link.**
+**Need a pitch video before Wednesday 11:59 AM? Send us your link, and Pit Crew makes your pitch.**
 
-Paste your project URL (and repo, if you want a Build Log draft). It tours your app in a browser, records it, narrates it, and gives you `demo.mp4` + captions in a few minutes. Free for Big Hack Game teams. Built on HarnessRouter.
+Not just a screen recording: a 60–90s video that goes problem → solution → live demo → what's next, with captions, plus a Build Log draft and submission text. Built on HarnessRouter. Free for Big Hack Game teams.
 
-→ <LIVE_URL>
+Reply here or DM with: project name, live URL, repo (optional), and one line on the problem it solves. We'll send your video back. The self-serve app is going live shortly: <LIVE_URL>.
 
-It only visits public pages, never logs in, and you can ask for changes ("shorter", "focus on the dashboard"). If it doesn't work on your site, reply here and we'll fix it.
+We only visit public pages and never log in. Any statistic in your video links to its source, and you can ask for changes.

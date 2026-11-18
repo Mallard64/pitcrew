@@ -2,6 +2,8 @@
 
 Paste your project's live link and get a narrated demo video (`demo.mp4`), captions, and a Build Log draft in a few minutes.
 
+> **Direction (in progress, see [SPEC.md](SPEC.md)):** "Others record a walkthrough. Pit Crew makes your pitch." Next version: a 60–90s pitch video (problem → solution → demo → what's next) directed by the agent and rendered with Remotion, plus submission text and verified sources. What's described below is what runs **today**.
+
 Built for The Big Hack Game (HarnessRouter, Stanford vs. Berkeley), where every team has to submit a demo video by the same deadline.
 
 **Live demo:** _not deployed yet (see [HUMAN_TODO.md](HUMAN_TODO.md))_ · **Harness ID:** _pending_
@@ -105,8 +107,25 @@ tests/                vitest suites + fixture site
 - Bundlers rewrite functions you pass to `page.evaluate` (esbuild's `__name` helper), so browser-side code should be a string.
 - `new URL()` normalises `[::ffff:127.0.0.1]` to `[::ffff:7f00:1]`. An SSRF check has to handle the normalised form.
 
+## Docs (handoff pack)
+
+| File | Purpose |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) / [AGENTS.md](AGENTS.md) | Entry points for Claude Code / Codex (ownership split) |
+| [CONTEXT.md](CONTEXT.md) | Event, deadlines, judging, positioning, links |
+| [COMPETITORS.md](COMPETITORS.md) | Existing URL-to-video and auto-update tools; how we differ |
+| [SPEC.md](SPEC.md) | Product, video structure, Remotion rendering, statistics rules, acceptance criteria |
+| [HARNESS.md](HARNESS.md) | HarnessRouter harness: pipeline, instructions, video-plan output contract |
+| [TASKS.md](TASKS.md) | Claude Code's phased tasks + build-order priority |
+| [CODEX_TASKS.md](CODEX_TASKS.md) | Codex's rendering tasks (C0–C19) with interfaces and acceptance tests |
+| [LOOP.md](LOOP.md) | Autonomous work loop and stop conditions |
+| [STATUS.md](STATUS.md) / [DECISIONS.md](DECISIONS.md) / [BUILD_LOG.md](BUILD_LOG.md) | State, decisions, public build log |
+| [HUMAN_TODO.md](HUMAN_TODO.md) | What only a human can do |
+| [HANDOFF.md](HANDOFF.md) | How to start the loop (`run-loop.sh`) |
+
 ## Future improvements
 
 - Run the eval on real Big Hack Game projects with the HarnessRouter planner and fix the top failure causes
 - Let the agent repair a failed selector once before a step is dropped
-- Regenerate demo videos automatically on each release (the post-hackathon use case)
+- Pitch videos for every launch: hackathons, Product Hunt, YC demo days, investor updates
+- P2: regenerate videos automatically on each release (GitHub Action)
