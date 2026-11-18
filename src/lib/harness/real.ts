@@ -159,7 +159,11 @@ export class HarnessRouterPlanner implements Planner {
       video_plan?: unknown;
       build_log_md?: string | null;
       submission_md?: string | null;
+      research_queries?: unknown;
     };
+    const researchQueries = Array.isArray(parsed.research_queries)
+      ? parsed.research_queries.filter((q): q is string => typeof q === "string" && q.trim().length > 3).map((q) => q.slice(0, 200)).slice(0, 3)
+      : undefined;
     if (parsed.video_plan !== undefined) {
       const vp = VideoPlanSchema.safeParse(parsed.video_plan);
       if (!vp.success) {
@@ -185,6 +189,7 @@ export class HarnessRouterPlanner implements Planner {
         submission: parsed.submission_md ?? undefined,
         sessionId: final.id,
         hrSessionId: hrSession,
+        researchQueries,
         source: "harness",
       };
       return;
@@ -195,6 +200,10 @@ export class HarnessRouterPlanner implements Planner {
 
   plan(req: PlanRequest) {
     return this.call({ input: buildPlanPrompt(req), ...(req.user ? { user: req.user } : {}) });
+  }
+
+  research(req: { sessionId: string; prompt: string; user?: string }) {
+    return this.call({ input: req.prompt, previous_response_id: req.sessionId, ...(req.user ? { user: req.user } : {}) });
   }
 
   revise(req: PlanRequest & { sessionId?: string; previous: unknown; request: string }) {

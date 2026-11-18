@@ -29,6 +29,8 @@ export type PlannerEvent =
       submission?: string;
       sessionId?: string;
       hrSessionId?: string;
+      /** Web-search queries for statistics about the problem (the server runs them, C19). */
+      researchQueries?: string[];
       source: "harness" | "local";
     };
 
@@ -40,4 +42,6 @@ export interface Planner {
   readonly name: string;
   plan(req: PlanRequest): AsyncIterable<PlannerEvent>;
   revise(req: PlanRequest & { sessionId?: string; previous: Flow; request: string }): AsyncIterable<PlannerEvent>;
+  /** Follow-up in the same agent session with server-found research candidates. Optional. */
+  research?(req: { sessionId: string; prompt: string; user?: string }): AsyncIterable<PlannerEvent>;
 }

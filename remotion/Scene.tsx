@@ -79,7 +79,7 @@ function Stat({
     ? ""
     : src.kind === "team-provided"
       ? "Source: the team"
-      : `Source: ${src.source_name}, ${src.year}`;
+      : `Source: ${src.source_name}${src.year ? `, ${src.year}` : ""}`;
   return (
     <div style={{ textAlign: "center", ...fadeUp(frame, delay) }}>
       <div

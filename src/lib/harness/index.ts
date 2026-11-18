@@ -37,6 +37,11 @@ class FallbackPlanner implements Planner {
   revise(req: Parameters<Planner["revise"]>[0]) {
     return this.wrap(() => this.primary.revise(req), () => this.fallback.revise(req));
   }
+  // No offline fallback: if the research turn fails, the plan simply keeps its problem scene without stats.
+  research(req: { sessionId: string; prompt: string; user?: string }) {
+    if (!this.primary.research) throw new Error("planner has no research step");
+    return this.primary.research(req);
+  }
 }
 
 export function getPlanner(env: Record<string, string | undefined> = process.env): Planner {

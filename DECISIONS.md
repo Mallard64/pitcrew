@@ -53,3 +53,10 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Problem section is now always attempted. The old rule (only when the team stated the problem) left most videos without one. The agent grounds the problem in team, README or site copy, or infers the obvious pain without market claims.
 - Research statistics: the agent opens a reputable page that states the number (it has page fetch, no search) and returns url + quote. `src/lib/research/verify.ts` re-fetches the url (SSRF-checked on every redirect, HTML/text only, 3MB cap) and keeps the stat only if the exact value and unit appear in the page text, e.g. 64% matches "64%" or "64 percent" but never 164%. On failure, the stat, its source and every problem-scene sentence or text element that states an unbacked number are removed; an empty problem scene is dropped. `sources.md` lists every shown stat with the page excerpt we actually matched.
 - TTS: ElevenLabs falls back to `ELEVENLABS_API_KEY`. The default voice changed from Rachel to Brian, because free-tier API keys can't use library voices (HTTP 402). Model is `eleven_multilingual_v2`.
+
+## 2026-11-17: Brave search for problem statistics
+- The agent's first reply includes `research_queries` and a problem scene with no stats. While the demo records, the server runs the queries on Brave (`src/lib/research/search.ts`), fetches the top 4 results per query (SSRF-guarded, no social sites or PDFs), and pulls out sentences that state a number. A follow-up turn in the same agent session (`previous_response_id`) picks at most 2. Only the problem scene and sources are merged back, so the recorded flow can't change. `verifyResearch` then re-checks each number on its page.
+- Only the query text goes to Brave; there are no user identifiers.
+- Cost: one more agent turn. No extra wall time as long as research finishes before recording does.
+- Sentence splitting protects decimals (23.4%) and skips Title Case nav or headline soup.
+- Source year: kept only if it appears within ~1500 chars of the matched number (news pages print the current year in sidebars); otherwise the citation omits the year (year = 0).

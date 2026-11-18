@@ -21,6 +21,7 @@ import { exploreSite, type SiteDigest } from "./explore";
 import { checkPublicUrl, makeRequestGuard } from "./ssrf";
 import { fetchRepoFacts, type Commit } from "./buildlog";
 import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
+import { braveSearch, findCandidates, researchPrompt } from "./research/search";
 import type { Planner, PlannerEvent, PlanRequest } from "./harness";
 
 export const STAGES = ["opening", "planning", "recording", "narrating", "voicing", "assembling"] as const;
@@ -95,6 +96,12 @@ export async function runPipeline(
   await fs.writeFile(path.join(outDir, "flow.json"), JSON.stringify(flow, null, 2));
   log(`Plan: ${videoPlan.scenes.length} scenes, ${flow.steps.length} demo steps (${plan.source} planner, seed ${videoPlan.seed})`);
 
+  // 2b. Research (C19) runs while the demo records: search, collect candidate stats, let the agent pick.
+  const research = researchProblemStats(planner, plan, input, log).catch((e) => {
+    log(`Research skipped: ${(e as Error).message.slice(0, 160)}`);
+    return null;
+  });
+
   // 3. Record the demo, then cut one polished clip per step.
   progress("recording", `Recording ${flow.steps.length} demo steps in Chromium`);
   const rec = await recordFlow(flow, outDir, { allowRequest: guard, log });
@@ -105,6 +112,19 @@ export async function runPipeline(
     clipIds = new Set((await polishFootage(outDir, log)).map((c) => c.step_id));
   } catch (e) {
     log(`Clip polish failed (${(e as Error).message.slice(0, 120)}); demo scenes will use screenshots`);
+  }
+
+  // Merge research: only the problem scene(s) and sources may change; the recorded flow stays as is.
+  const researched = await research;
+  if (researched) {
+    const newProblem = researched.videoPlan.scenes.filter((sc) => sc.section === "problem");
+    if (newProblem.length) {
+      const rest = videoPlan.scenes.filter((sc) => sc.section !== "problem");
+      videoPlan.scenes = [...newProblem, ...rest];
+      videoPlan.sources = researched.videoPlan.sources;
+      if (researched.sessionId) plan.sessionId = researched.sessionId;
+      log(`Research: the agent proposed ${videoPlan.sources.filter((s) => s.kind === "research").length} statistic(s)`);
+    }
   }
 
   // 4. Narrate: clean the plan so it only shows what we actually have and can stand behind.
@@ -215,4 +235,31 @@ async function legacyAssemble(input: JobInput, flow: Flow, rec: RecordResult, ou
   for (const f of ["demo.mp4", "captions.srt", "thumb.jpg"]) await fs.rename(path.join(dir, f), path.join(outDir, f)).catch(() => {});
   await fs.rm(dir, { recursive: true, force: true });
   return contract;
+}
+
+/**
+ * C19: runs the agent's research_queries on Brave, collects sentences with numbers from the top pages,
+ * and asks the agent (same session) to pick at most 2. Returns the updated plan, or null if skipped.
+ * verifyResearch still re-checks every number on its page afterwards.
+ */
+async function researchProblemStats(
+  planner: Planner,
+  plan: Extract<PlannerEvent, { type: "plan" }>,
+  input: JobInput,
+  log: (m: string) => void,
+): Promise<{ videoPlan: VideoPlan; sessionId?: string } | null> {
+  const key = process.env.BRAVE_API_KEY;
+  const queries = plan.researchQueries ?? [];
+  if (!key || !queries.length || !plan.sessionId || !planner.research || !plan.videoPlan) return null;
+  if (!plan.videoPlan.scenes.some((sc) => sc.section === "problem")) return null;
+  log(`Research: searching for "${queries.join('", "')}"`);
+  const candidates = await findCandidates(queries, { search: braveSearch(key), log });
+  log(`Research: ${candidates.length} candidate statistics from ${new Set(candidates.map((c) => c.url)).size} pages`);
+  if (!candidates.length) return null;
+  let updated: Extract<PlannerEvent, { type: "plan" }> | undefined;
+  for await (const ev of planner.research({ sessionId: plan.sessionId, prompt: researchPrompt(candidates), user: input.user })) {
+    if (ev.type === "log") log(ev.message);
+    else updated = ev;
+  }
+  return updated?.videoPlan ? { videoPlan: updated.videoPlan, sessionId: updated.sessionId } : null;
 }

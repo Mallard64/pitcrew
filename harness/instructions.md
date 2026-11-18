@@ -5,7 +5,7 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 
 ## Steps
 1. Understand: read the digest and open the live URL in your browser (max 8 page loads for the product). Who is it for, what problem, what is the wow moment?
-1b. Research the problem (max 4 more page loads): find 1–2 statistics that show the problem is real and large. See Statistics below.
+1b. Research: write 2–3 web-search queries that would find statistics showing the problem is real (who is affected, how often, what it costs), e.g. "percentage of students who miss assignment deadlines survey". Our server runs them and sends you the sentences it finds in a follow-up message. Don't spend page loads hunting for stats yourself.
 2. Write the pitch story in sections, in this order:
    - problem (10–15s): who hurts and why, one concrete example, backed by a statistic. Always include it. Ground the problem in the team's problem field, the README or the site's own copy; if none states it, infer the obvious problem the product solves from what it does, and phrase it as the user's pain, not as a claim about the market. Layout stat-reveal when you have a stat, else big-statement.
    - solution (10–15s): what it is in one sentence.
@@ -21,8 +21,9 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 - Statistics: put each number in its own sentence, written exactly as the source page prints it (e.g. "64%"). Never state a number in the problem scene without a stat element and a source for it.
 
 ## Statistics (problem scene)
-- Use your browser to open a page that states the number: government statistics, peer-reviewed papers, or major published surveys and reports (Pew, Gallup, OECD, BLS, Stack Overflow survey, McKinsey, etc.). Not blogs that repeat other people's numbers, not the project's own site, not Wikipedia.
-- You have no search tool: open pages you know exist, then confirm the number on the page yourself. If you can't find a page that shows the number, use no stat. A problem scene without a stat is fine; a wrong stat is not.
+- First reply: write the problem scene WITHOUT stat elements (it must read well on its own) and give "research_queries". In the follow-up we send candidate sentences found on real pages; then add at most 2 stats picked from those candidates only.
+- Good sources: government statistics, peer-reviewed papers, major published surveys and reports (Pew, Gallup, OECD, BLS, Stack Overflow survey, etc.). Not vendor marketing, not blogs that repeat other people's numbers, not the project's own site.
+- A problem scene without a stat is fine; a wrong or off-topic stat is not.
 - For each stat add a source: {"id":"src1","stat":"64%","claim_text":"one sentence as it appears in the video","source_name":"Publisher – report title","url":"the exact page URL that contains the number (not a homepage)","year":2024,"quote":"verbatim sentence from the page containing the number","verified":false,"kind":"research"}, and a stat element {"type":"stat","source_id":"src1","value":64,"unit":"%","label":"≤ 8 words"}.
 - Our server re-fetches every url as plain HTML (no JavaScript, no login, no PDF) and keeps the stat only if the exact value and unit appear in the page text. Failed stats, their sentences and their scene text are removed automatically, so prefer static pages, and make the scene still read well without the stat.
 - The team's own numbers (from their fields/README/site) use kind "team-provided" with url = the live URL and quote = their text.
@@ -47,13 +48,14 @@ Reply with ONE fenced json block and nothing else:
  "video_plan": {
    "version": 1, "seed": <any integer>, "style_kit": "default", "brand": {"primary": "#RRGGBB from the site's main accent color"},
    "size": {"width": 1280, "height": 720}, "fps": 30, "music": null, "credit": true,
-   "scenes": [{"id": "problem", "section": "problem", "layout": "stat-reveal", "duration_s": 12, "narration": "...", "transition_in": "fade",
-               "elements": [{"type": "kinetic_headline", "text": "..."}, {"type": "stat", "source_id": "src1", "value": 64, "unit": "%", "label": "..."}]}],
+   "scenes": [{"id": "problem", "section": "problem", "layout": "big-statement", "duration_s": 12, "narration": "...", "transition_in": "fade",
+               "elements": [{"type": "kinetic_headline", "text": "..."}]}],
    "flow": {"project_name": "...", "url": "...", "viewport": {"width": 1280, "height": 720},
             "steps": [{"id": "s1", "action": "goto", "url": "...", "hold_ms": 4000, "say": "..."}]},
-   "sources": [{"id": "src1", "stat": "64%", "claim_text": "...", "source_name": "...", "url": "https://...", "year": 2024, "quote": "...", "verified": false, "kind": "research"}]},
+   "sources": []},
  "build_log_md": "markdown from the commits (dated sections, built/decided/struggled/next, ≤600 words, facts only) or null if no commits",
- "submission_md": "hackathon submission text: what it is, problem, how it works, what's next; only facts from the inputs"}
+ "submission_md": "hackathon submission text: what it is, problem, how it works, what's next; only facts from the inputs",
+ "research_queries": ["2–3 web-search queries for statistics about the problem"]}
 ```
 If we send back validation errors, fix exactly those and resend the full JSON block. If we send a revision request, change only what's needed and resend the full JSON block.
 Never include secrets, localhost, file:// or absolute file paths in anything you write.

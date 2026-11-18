@@ -92,7 +92,7 @@ export function statPattern(value: number, unit?: string): RegExp {
   return new RegExp(`(?<![\\d.,])${num}(?![\\d]|[.,]\\d)${unitRe}`, "i");
 }
 
-export type StatCheck = { ok: true; excerpt: string } | { ok: false; reason: string };
+export type StatCheck = { ok: true; excerpt: string; index: number } | { ok: false; reason: string };
 
 export function checkStatInText(text: string, value: number, unit?: string): StatCheck {
   const m = statPattern(value, unit).exec(text);
@@ -105,6 +105,7 @@ export function checkStatInText(text: string, value: number, unit?: string): Sta
   const to = text.indexOf(" ", Math.min(text.length, m.index + m[0].length + 160));
   return {
     ok: true,
+    index: m.index,
     excerpt: `${from > 0 ? "…" : ""}${text.slice(from, to < 0 ? undefined : to).trim()}${to > 0 ? "…" : ""}`,
   };
 }
@@ -137,6 +138,14 @@ export async function verifyResearch(
         continue;
       }
       src.verified = true;
+      // The year is part of the on-screen citation: keep it only if the page states it; 0 = unknown.
+      // Near the number, not anywhere: news sites print the current year in sidebars and footers.
+      const first = results[0];
+      const near = first.ok ? text.slice(Math.max(0, first.index - 1500), first.index + 1500) : "";
+      if (!new RegExp(`(?<!\\d)${src.year}(?!\\d)`).test(near)) {
+        notes.push(`Year ${src.year} for ${src.source_name} isn't on the page; citing without a year`);
+        src.year = 0;
+      }
       src.quote = results.map((r) => (r.ok ? r.excerpt : "")).join(" … ");
       notes.push(`Verified stat "${src.stat}" on ${src.url}`);
     } catch (e) {
@@ -199,7 +208,7 @@ export function sourcesMarkdown(
       .map((s) =>
         s.kind === "team-provided"
           ? `- **${s.stat}**: ${s.claim_text} (source: the team)`
-          : `- **${s.stat}**: ${s.claim_text}\n  - ${s.source_name}, ${s.year}: <${s.url}>\n  - Page text: "${s.quote}"`,
+          : `- **${s.stat}**: ${s.claim_text}\n  - ${s.source_name}${s.year ? `, ${s.year}` : ""}: <${s.url}>\n  - Page text: "${s.quote}"`,
       )
       .join("\n") +
     "\n"

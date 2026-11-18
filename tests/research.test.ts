@@ -149,3 +149,48 @@ describe("verifyResearch + sanitizePlan", () => {
     expect(p.scenes[1].narration).toBe("Over 50 integrations.");
   });
 });
+
+describe("research search candidates", async () => {
+  const { statSentences, findCandidates, researchPrompt } = await import("../src/lib/research/search");
+  it("keeps whole sentences with decimals and skips headline soup", () => {
+    const text =
+      "Intro text here. The survey of 476 companies found that 21.6% of respondents used whiteboard apps, while 23.3% plan to deploy them. " +
+      "Latest News From The Team About Our 2027 Roadmap And 45% More Features Today For You. We like cookies and 50% of them.";
+    const s = statSentences(text);
+    expect(s[0]).toBe("The survey of 476 companies found that 21.6% of respondents used whiteboard apps, while 23.3% plan to deploy them.");
+    expect(s.join(" ")).not.toMatch(/Roadmap|cookies/);
+  });
+  it("searches, skips social sites and PDFs, and numbers the candidates", async () => {
+    const search = async () => [
+      { url: "https://www.reddit.com/r/x", title: "r" },
+      { url: "https://stats.example.org/report.pdf", title: "pdf" },
+      { url: "https://stats.example.org/report", title: "Report" },
+    ];
+    const fetched: string[] = [];
+    const c = await findCandidates(["q1", "q2"], {
+      search,
+      fetchText: async (u) => {
+        fetched.push(u);
+        return "A national survey found that 64 percent of students miss at least one deadline per term.";
+      },
+    });
+    expect(fetched).toEqual(["https://stats.example.org/report"]); // deduped across queries
+    expect(c).toHaveLength(1);
+    expect(c[0]).toMatchObject({ id: "c1", url: "https://stats.example.org/report" });
+    expect(researchPrompt(c)).toContain("[c1]");
+  });
+});
+
+describe("source year", () => {
+  it("keeps the year only when the page states it near the number", async () => {
+    const p = plan();
+    await verifyResearch(p, async () => PAGE); // PAGE says "A 2023 survey found that 64 percent..."
+    expect(p.sources[0].year).toBe(2023);
+    const q = plan();
+    q.sources[0].year = 2026;
+    const notes = await verifyResearch(q, async () => PAGE + " " + "filler ".repeat(400) + "© 2026");
+    expect(q.sources[0].year).toBe(0);
+    expect(notes.join()).toMatch(/citing without a year/);
+    expect(sourcesMarkdown("P", q.sources)).toContain("- Example Survey: <https://stats.example.org/report>");
+  });
+});
