@@ -4,13 +4,17 @@ import net from "node:net";
 
 export type Resolver = (host: string) => Promise<string[]>;
 
-const defaultResolver: Resolver = async (host) => (await dns.lookup(host, { all: true })).map((a) => a.address);
+const defaultResolver: Resolver = async (host) =>
+  (await dns.lookup(host, { all: true })).map((a) => a.address);
 
 export function isPrivateIp(ip: string): boolean {
   if (net.isIPv4(ip)) {
     const [a, b] = ip.split(".").map(Number);
     return (
-      a === 0 || a === 10 || a === 127 || a >= 224 ||
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      a >= 224 ||
       (a === 100 && b >= 64 && b <= 127) || // CGNAT
       (a === 169 && b === 254) || // link-local + cloud metadata
       (a === 172 && b >= 16 && b <= 31) ||
@@ -39,9 +43,13 @@ export function isPrivateIp(ip: string): boolean {
 export type UrlCheck = { ok: true; url: URL } | { ok: false; reason: string };
 
 // Integration tests serve a fixture site on 127.0.0.1; only honoured under vitest (NODE_ENV=test).
-const allowLocalForTests = () => process.env.NODE_ENV === "test" && process.env.PITCREW_TEST_ALLOW_LOCAL === "1";
+const allowLocalForTests = () =>
+  process.env.NODE_ENV === "test" && process.env.PITCREW_TEST_ALLOW_LOCAL === "1";
 
-export async function checkPublicUrl(raw: string, resolve: Resolver = defaultResolver): Promise<UrlCheck> {
+export async function checkPublicUrl(
+  raw: string,
+  resolve: Resolver = defaultResolver,
+): Promise<UrlCheck> {
   if (allowLocalForTests()) return { ok: true, url: new URL(raw) };
   let url: URL;
   try {
@@ -49,11 +57,19 @@ export async function checkPublicUrl(raw: string, resolve: Resolver = defaultRes
   } catch {
     return { ok: false, reason: "not a valid URL" };
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") return { ok: false, reason: "only http(s) URLs are allowed" };
-  if (url.username || url.password) return { ok: false, reason: "URLs with credentials are not allowed" };
-  if (url.port && url.port !== "80" && url.port !== "443") return { ok: false, reason: "only ports 80 and 443 are allowed" };
+  if (url.protocol !== "http:" && url.protocol !== "https:")
+    return { ok: false, reason: "only http(s) URLs are allowed" };
+  if (url.username || url.password)
+    return { ok: false, reason: "URLs with credentials are not allowed" };
+  if (url.port && url.port !== "80" && url.port !== "443")
+    return { ok: false, reason: "only ports 80 and 443 are allowed" };
   const host = url.hostname.replace(/^\[|\]$/g, "");
-  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host.endsWith(".local"))
+  if (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host.endsWith(".internal") ||
+    host.endsWith(".local")
+  )
     return { ok: false, reason: "private hosts are not allowed" };
   let ips: string[];
   if (net.isIP(host)) ips = [host];
@@ -64,7 +80,8 @@ export async function checkPublicUrl(raw: string, resolve: Resolver = defaultRes
       return { ok: false, reason: "could not resolve host" };
     }
   }
-  if (!ips.length || ips.some(isPrivateIp)) return { ok: false, reason: "this address points to a private network" };
+  if (!ips.length || ips.some(isPrivateIp))
+    return { ok: false, reason: "this address points to a private network" };
   return { ok: true, url };
 }
 
@@ -78,9 +95,14 @@ export function makeRequestGuard(resolve: Resolver = defaultResolver) {
     } catch {
       return Promise.resolve(false);
     }
-    if (u.protocol !== "http:" && u.protocol !== "https:") return Promise.resolve(u.protocol === "data:" || u.protocol === "blob:");
+    if (u.protocol !== "http:" && u.protocol !== "https:")
+      return Promise.resolve(u.protocol === "data:" || u.protocol === "blob:");
     const key = `${u.protocol}//${u.host}`;
-    if (!cache.has(key)) cache.set(key, checkPublicUrl(key, resolve).then((r) => r.ok));
+    if (!cache.has(key))
+      cache.set(
+        key,
+        checkPublicUrl(key, resolve).then((r) => r.ok),
+      );
     return cache.get(key)!;
   };
 }

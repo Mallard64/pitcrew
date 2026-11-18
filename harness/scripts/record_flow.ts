@@ -92,7 +92,10 @@ async function runStep(page: Page, step: Step, timeout: number) {
     case "type": {
       const loc = await moveCursorTo(page, step.selector!, timeout);
       await loc.click({ timeout });
-      await loc.pressSequentially(step.text ?? "", { delay: 60, timeout: Math.max(timeout, 20000) });
+      await loc.pressSequentially(step.text ?? "", {
+        delay: 60,
+        timeout: Math.max(timeout, 20000),
+      });
       break;
     }
     case "scroll":

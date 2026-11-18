@@ -17,8 +17,10 @@ export type PageDigest = {
 };
 export type SiteDigest = { home: PageDigest; pages: PageDigest[]; finalUrl: string };
 
-const SKIP_LINK = /(log ?in|sign ?in|sign ?up|register|logout|privacy|terms|cookie|legal|careers|jobs|status|twitter|github|discord|linkedin|mailto:|tel:)/i;
-const GOOD_LINK = /(feature|product|demo|how|pricing|docs|about|tour|example|gallery|explore|dashboard|app|try|play|showcase)/i;
+const SKIP_LINK =
+  /(log ?in|sign ?in|sign ?up|register|logout|privacy|terms|cookie|legal|careers|jobs|status|twitter|github|discord|linkedin|mailto:|tel:)/i;
+const GOOD_LINK =
+  /(feature|product|demo|how|pricing|docs|about|tour|example|gallery|explore|dashboard|app|try|play|showcase)/i;
 
 // Plain JS string (not a function) so bundlers can't inject helpers like __name into browser code.
 const DIGEST_JS = `(() => {
@@ -86,7 +88,11 @@ const digestPage = (page: Page) => page.evaluate(DIGEST_JS) as Promise<PageDiges
 
 export async function exploreSite(
   url: string,
-  opts: { allowRequest?: (u: string) => Promise<boolean>; maxPages?: number; log?: (m: string) => void } = {},
+  opts: {
+    allowRequest?: (u: string) => Promise<boolean>;
+    maxPages?: number;
+    log?: (m: string) => void;
+  } = {},
 ): Promise<SiteDigest> {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -105,7 +111,9 @@ export async function exploreSite(
 
     const candidates = home.links
       .filter((l) => !SKIP_LINK.test(l.text + " " + l.href))
-      .sort((a, b) => Number(GOOD_LINK.test(b.text + b.href)) - Number(GOOD_LINK.test(a.text + a.href)));
+      .sort(
+        (a, b) => Number(GOOD_LINK.test(b.text + b.href)) - Number(GOOD_LINK.test(a.text + a.href)),
+      );
     const pages: PageDigest[] = [];
     for (const l of candidates.slice(0, opts.maxPages ?? 3)) {
       try {

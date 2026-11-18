@@ -35,7 +35,18 @@ const AUDIO_LEAD_S = 0.3; // narration starts just after the step's action begin
 const AUDIO_TAIL_S = 0.4; // breathing room before the next step
 const MAX_CAPTION_WORDS = 9;
 
-const VIDEO_ENC = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p", "-r", String(FPS)];
+const VIDEO_ENC = [
+  "-c:v",
+  "libx264",
+  "-preset",
+  "veryfast",
+  "-crf",
+  "23",
+  "-pix_fmt",
+  "yuv420p",
+  "-r",
+  String(FPS),
+];
 const AUDIO_ENC = ["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-ac", "2"];
 
 type Chunk = { text: string; start: number; end: number };
@@ -84,10 +95,23 @@ export function toSrt(chunks: Chunk[]) {
 
 async function cardClip(png: string, out: string) {
   await ffmpeg([
-    "-loop", "1", "-framerate", String(FPS), "-i", png,
-    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
-    "-vf", `scale=${W}:${H},setsar=1,fade=t=in:st=0:d=0.4,fade=t=out:st=${CARD_S - 0.4}:d=0.4`,
-    "-t", String(CARD_S), ...VIDEO_ENC, ...AUDIO_ENC, out,
+    "-loop",
+    "1",
+    "-framerate",
+    String(FPS),
+    "-i",
+    png,
+    "-f",
+    "lavfi",
+    "-i",
+    "anullsrc=r=44100:cl=stereo",
+    "-vf",
+    `scale=${W}:${H},setsar=1,fade=t=in:st=0:d=0.4,fade=t=out:st=${CARD_S - 0.4}:d=0.4`,
+    "-t",
+    String(CARD_S),
+    ...VIDEO_ENC,
+    ...AUDIO_ENC,
+    out,
   ]);
 }
 
@@ -105,7 +129,14 @@ async function stepClip(spec: ClipSpec) {
   const args: string[] = [];
   let base: string;
   if (spec.source.kind === "recording") {
-    args.push("-ss", spec.source.start.toFixed(3), "-t", spec.source.windowLen.toFixed(3), "-i", spec.source.file);
+    args.push(
+      "-ss",
+      spec.source.start.toFixed(3),
+      "-t",
+      spec.source.windowLen.toFixed(3),
+      "-i",
+      spec.source.file,
+    );
     const extra = Math.max(0, spec.length - spec.source.windowLen + 0.1);
     base =
       `[0:v]fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2,setsar=1,` +
@@ -125,17 +156,29 @@ async function stepClip(spec: ClipSpec) {
   let last = "v0";
   spec.captions.forEach((c, i) => {
     const label = `v${i + 1}`;
-    filters.push(`[${last}][${i + 2}:v]overlay=0:0:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'[${label}]`);
+    filters.push(
+      `[${last}][${i + 2}:v]overlay=0:0:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'[${label}]`,
+    );
     last = label;
   });
   const delayMs = Math.round(AUDIO_LEAD_S * 1000);
-  filters.push(`[1:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${delayMs}|${delayMs},apad[a]`);
+  filters.push(
+    `[1:a]aresample=44100,aformat=channel_layouts=stereo,adelay=${delayMs}|${delayMs},apad[a]`,
+  );
 
   await ffmpeg([
     ...args,
-    "-filter_complex", filters.join(";"),
-    "-map", `[${last}]`, "-map", "[a]",
-    "-t", spec.length.toFixed(3), ...VIDEO_ENC, ...AUDIO_ENC, spec.out,
+    "-filter_complex",
+    filters.join(";"),
+    "-map",
+    `[${last}]`,
+    "-map",
+    "[a]",
+    "-t",
+    spec.length.toFixed(3),
+    ...VIDEO_ENC,
+    ...AUDIO_ENC,
+    spec.out,
   ]);
 }
 
@@ -147,9 +190,12 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
   await fs.rm(work, { recursive: true, force: true });
   await fs.mkdir(work, { recursive: true });
 
-  const readJson = async <T>(f: string): Promise<T> => JSON.parse(await fs.readFile(path.join(outDir, f), "utf8"));
+  const readJson = async <T>(f: string): Promise<T> =>
+    JSON.parse(await fs.readFile(path.join(outDir, f), "utf8"));
   const script = ScriptSchema.parse(await readJson("script.json"));
-  const timings = existsSync(path.join(outDir, "timings.json")) ? await readJson<StepTiming[]>("timings.json") : [];
+  const timings = existsSync(path.join(outDir, "timings.json"))
+    ? await readJson<StepTiming[]>("timings.json")
+    : [];
   const durations = await readJson<SegmentAudio[]>("audio/durations.json");
   const durationOf = new Map(durations.map((d) => [d.step_id, d.duration_s]));
   const timingOf = new Map(timings.map((t) => [t.step_id, t]));
@@ -163,7 +209,14 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
   });
   const stepsTotal = script.segments.length;
   if (!usable.length) {
-    return { status: "failed", render_mode: mode, duration_s: 0, steps_ok: 0, steps_total: stepsTotal, notes: "no usable steps to assemble" };
+    return {
+      status: "failed",
+      render_mode: mode,
+      duration_s: 0,
+      steps_ok: 0,
+      steps_total: stepsTotal,
+      notes: "no usable steps to assemble",
+    };
   }
 
   let recording = "";
@@ -172,7 +225,20 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
     if (!existsSync(webm)) throw new Error("recording.webm missing");
     // Normalise Playwright's variable-frame-rate webm once so per-step seeks are exact.
     recording = path.join(work, "rec.mp4");
-    await ffmpeg(["-i", webm, "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-an", recording]);
+    await ffmpeg([
+      "-i",
+      webm,
+      "-vf",
+      `fps=${FPS}`,
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "18",
+      "-an",
+      recording,
+    ]);
   }
 
   // Plan every clip and caption before rendering anything.
@@ -185,7 +251,10 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
   })();
   const pngJobs: PngJob[] = [
     { html: cardHtml("title", title, host), out: path.join(work, "title.png") },
-    { html: cardHtml("end", title, url.replace(/^https?:\/\//, "").replace(/\/$/, "")), out: path.join(work, "end.png") },
+    {
+      html: cardHtml("end", title, url.replace(/^https?:\/\//, "").replace(/\/$/, "")),
+      out: path.join(work, "end.png"),
+    },
   ];
   const clips: ClipSpec[] = [];
   const srtChunks: Chunk[] = [];
@@ -211,7 +280,13 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
       srtChunks.push({ text: c.text, start: timeline + c.start, end: timeline + c.end });
       return { png, start: c.start, end: c.end };
     });
-    clips.push({ out: path.join(work, `clip_${i}.mp4`), length, audio: path.join(outDir, "audio", `${seg.step_id}.mp3`), captions, source });
+    clips.push({
+      out: path.join(work, `clip_${i}.mp4`),
+      length,
+      audio: path.join(outDir, "audio", `${seg.step_id}.mp3`),
+      captions,
+      source,
+    });
     timeline += length;
   });
 
@@ -227,19 +302,48 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
     await stepClip(c);
   }
 
-  const list = [titleClip, ...clips.map((c) => c.out), endClip].map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n");
+  const list = [titleClip, ...clips.map((c) => c.out), endClip]
+    .map((f) => `file '${f.replace(/'/g, "'\\''")}'`)
+    .join("\n");
   await fs.writeFile(path.join(work, "list.txt"), list);
   const concat = path.join(work, "concat.mp4");
-  await ffmpeg(["-f", "concat", "-safe", "0", "-i", path.join(work, "list.txt"), "-c", "copy", concat]);
+  await ffmpeg([
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    path.join(work, "list.txt"),
+    "-c",
+    "copy",
+    concat,
+  ]);
 
   const demo = path.join(outDir, "demo.mp4");
   await ffmpeg([
-    "-i", concat, "-c:v", "copy",
-    "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", ...AUDIO_ENC,
-    "-movflags", "+faststart", demo,
+    "-i",
+    concat,
+    "-c:v",
+    "copy",
+    "-af",
+    "loudnorm=I=-16:TP=-1.5:LRA=11",
+    ...AUDIO_ENC,
+    "-movflags",
+    "+faststart",
+    demo,
   ]);
   await fs.writeFile(path.join(outDir, "captions.srt"), toSrt(srtChunks));
-  await ffmpeg(["-ss", "3", "-i", demo, "-frames:v", "1", "-q:v", "3", path.join(outDir, "thumb.jpg")]);
+  await ffmpeg([
+    "-ss",
+    "3",
+    "-i",
+    demo,
+    "-frames:v",
+    "1",
+    "-q:v",
+    "3",
+    path.join(outDir, "thumb.jpg"),
+  ]);
   await fs.rm(work, { recursive: true, force: true });
 
   const duration_s = Math.round((await probeDuration(demo)) * 10) / 10;
@@ -248,7 +352,14 @@ export async function assembleVideo(opts: AssembleOptions): Promise<Contract> {
   if (stepsOk < stepsTotal) notes.push(`${stepsTotal - stepsOk} of ${stepsTotal} steps dropped`);
   if (duration_s < 45 || duration_s > 90) notes.push(`duration ${duration_s}s is outside 45-90s`);
   const status: Contract["status"] = stepsOk >= 3 && notes.length === 0 ? "ok" : "partial";
-  return { status, render_mode: mode, duration_s, steps_ok: stepsOk, steps_total: stepsTotal, notes: notes.join("; ") };
+  return {
+    status,
+    render_mode: mode,
+    duration_s,
+    steps_ok: stepsOk,
+    steps_total: stepsTotal,
+    notes: notes.join("; "),
+  };
 }
 
 export function parseCliArgs(argv: string[]) {
@@ -257,16 +368,29 @@ export function parseCliArgs(argv: string[]) {
     const i = argv.indexOf(flag);
     return i >= 0 ? argv[i + 1] : undefined;
   };
-  return { outDir, title: get("--title") ?? "Demo", url: get("--url") ?? "", slideshow: argv.includes("--slideshow") };
+  return {
+    outDir,
+    title: get("--title") ?? "Demo",
+    url: get("--url") ?? "",
+    slideshow: argv.includes("--slideshow"),
+  };
 }
 
 async function main() {
   const a = parseCliArgs(process.argv.slice(2));
   if (!a.outDir) {
-    console.error('usage: tsx harness/scripts/assemble.ts <out_dir> --title "<name>" --url "<url>" [--slideshow]');
+    console.error(
+      'usage: tsx harness/scripts/assemble.ts <out_dir> --title "<name>" --url "<url>" [--slideshow]',
+    );
     process.exit(1);
   }
-  const contract = await assembleVideo({ outDir: a.outDir, title: a.title, url: a.url, mode: a.slideshow ? "slideshow" : "recording", log: console.error });
+  const contract = await assembleVideo({
+    outDir: a.outDir,
+    title: a.title,
+    url: a.url,
+    mode: a.slideshow ? "slideshow" : "recording",
+    log: console.error,
+  });
   console.log(JSON.stringify(contract));
 }
 
