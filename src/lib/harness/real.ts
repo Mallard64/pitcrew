@@ -78,7 +78,8 @@ export function modePrompt(req: PlanRequest) {
   const target = req.liveUrl || req.repoUrl || "";
   const noRecord = `Set video_plan.flow to {"project_name": ..., "url": "${target}", "viewport": {"width":1280,"height":720}, "steps": [...]} with one goto step per demo scene to "${target}" (id = that scene's clip id or s1, s2…, say = its narration, hold_ms 3000): we do not record it.`;
   if (mode === "footage") {
-    const clips = (req.footageClips ?? []).map((c) => `${c.id} (${c.duration_s.toFixed(1)} s)`).join(", ");
+    // Narration longer than its clip makes the video hold a frozen last frame: cap words per clip.
+    const clips = (req.footageClips ?? []).map((c) => `${c.id} (${c.duration_s.toFixed(1)} s, narration at most ${Math.max(4, Math.floor(c.duration_s * 2.5))} words)`).join(", ");
     const frames = req.footageFrames?.map((f) => f.name).join(", ");
     const imgs = (req.repoImages ?? []).map((i) => `${i.src} (${i.path}${i.alt ? `, "${i.alt}"` : ""})`).join("; ");
     return [

@@ -26,11 +26,11 @@ type Cut = { id: string; src: string; from: number; to: number };
 
 /** GitHub-only projects: show the original pitch video (from its demo section) after a short look at its job page. */
 const PAGE_INTRO_S = 2.5;
-export const PITCH: Record<string, { file: string; seek: number; crop?: string }> = {
+export const PITCH: Record<string, { file: string; seek: number; crop?: string; maxPlay?: number }> = {
   c_omnistem: { file: "eval/github-only/omnistem/demo.mp4", seek: 24, crop: "crop=1500:844:210:78," },
   c_devpad: { file: "eval/github-only/devpad/demo.mp4", seek: 17.5, crop: "crop=1500:844:210:78," },
   // Footage videos already sit in their own "Team footage" window: crop to its content so windows don't nest.
-  c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1, crop: "crop=1500:844:210:78," },
+  c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1, crop: "crop=1500:844:210:78,", maxPlay: 7.6 },
 };
 
 async function main() {
@@ -240,7 +240,7 @@ async function main() {
     demo_c_done: 10,
     demo_c_omnistem: 4,
     demo_c_devpad: 4,
-    demo_c_wumpus: 4,
+    demo_c_wumpus: 0,
   };
   for (const sc of scenes)
     if (extra[sc.id]) sc.duration_s = Math.round((sc.duration_s + extra[sc.id]) * 10) / 10;
@@ -256,6 +256,8 @@ async function main() {
     const factor = Math.max(1, raw / sc.duration_s);
     const file = path.join(OUT, "clips", `${c.id}.mp4`);
     const pitch = PITCH[c.id];
+    // Never play past the pitch video's moving footage (Wumpus' first clip is 8.4 s long).
+    if (pitch?.maxPlay && sc.duration_s - PAGE_INTRO_S > pitch.maxPlay) sc.duration_s = Math.round((PAGE_INTRO_S + pitch.maxPlay) * 10) / 10;
     if (pitch) {
       // The job page for a moment (its demo-mode badge), then the original 1080p60 pitch video itself.
       await ffmpeg([
