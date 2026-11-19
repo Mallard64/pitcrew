@@ -31,7 +31,7 @@ const BaseElements = [
   z.object({ type: z.literal("icon"), name: z.string().min(1) }),
   z.object({ type: z.literal("shape"), shape: z.enum(["circle", "rect", "blob"]) }),
   z.object({ type: z.literal("image"), src: z.string().min(1), fit: z.enum(["cover", "contain"]).default("contain") }),
-  z.object({ type: z.literal("clip"), step_id: z.string().min(1), zoom: z.enum(["none", "target", "follow"]).default("target"), speed: z.number().positive().optional() }),
+  z.object({ type: z.literal("clip"), step_id: z.string().min(1), zoom: z.enum(["none", "target", "follow", "inspect"]).default("target"), speed: z.number().positive().optional() }),
   z.object({ type: z.literal("arrow"), from: z.string().min(1), to: z.string().min(1) }),
   z.object({ type: z.literal("node"), id: z.string().min(1), label: z.string().min(1), icon: z.string().optional() }),
   z.object({ type: z.literal("bullets"), items: z.array(z.string().min(1)).min(1).max(5), animation: TextAnimSchema.default("slide-up") }),
@@ -76,6 +76,8 @@ export const VideoPlanSchema = z.object({
   fps: z.union([z.literal(30), z.literal(60)]),
   music: z.object({ track: z.string(), duck_db: z.number() }).nullable().optional(),
   credit: z.boolean().default(true),
+  /** Set by the server when the team picked a length (seconds); absent means the default 60–90s. */
+  target_s: z.number().int().min(30).max(180).optional(),
   scenes: z.array(SceneSchema).min(1).max(20),
   flow: FlowSchema,
   sources: z.array(SourceSchema).default([]),

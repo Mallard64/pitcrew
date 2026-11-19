@@ -13,6 +13,8 @@ export type PlanRequest = {
   digest: SiteDigest;
   commits?: Commit[];
   readme?: string;
+  /** Team-chosen target length in seconds (30–180); undefined = the default 60–90s. */
+  lengthS?: number;
   /** Opaque per-visitor id sent as UHP `user` (never anything the person typed). */
   user?: string;
 };

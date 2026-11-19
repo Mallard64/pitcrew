@@ -33,6 +33,8 @@ export type Job = {
   voice: string | null;
   look: string | null;
   review_script: number;
+  length_s: number | null;
+  closeups: number;
 };
 export type JobEvent = { id: number; job_id: string; ts: number; kind: "progress" | "log" | "status"; step: string | null; message: string };
 export type Artifact = { job_id: string; version: number; name: string; path: string; bytes: number };
@@ -70,6 +72,9 @@ const MIGRATIONS = [
   `ALTER TABLE jobs ADD COLUMN voice TEXT;
    ALTER TABLE jobs ADD COLUMN look TEXT;
    ALTER TABLE jobs ADD COLUMN review_script INTEGER NOT NULL DEFAULT 0;`,
+  // Target video length (seconds, 30–180; null = the default 60–90s) and magnified UI close-ups.
+  `ALTER TABLE jobs ADD COLUMN length_s INTEGER;
+   ALTER TABLE jobs ADD COLUMN closeups INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 export function openDb(file?: string) {
@@ -98,15 +103,15 @@ export function setDb(d: Database.Database) {
 
 export function createJob(input: {
   project_name: string; live_url: string; repo_url?: string; blurb?: string; problem?: string; whats_next?: string; contact?: string; client_key: string;
-  voice?: string; look?: string; review_script?: boolean;
+  voice?: string; look?: string; review_script?: boolean; length_s?: number; closeups?: boolean;
 }): Job {
   const id = crypto.randomBytes(6).toString("base64url");
   db()
     .prepare(
-      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)`,
+      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script, length_s, closeups)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?)`,
     )
-    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0);
+    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0, input.length_s ?? null, input.closeups ? 1 : 0);
   return getJob(id)!;
 }
 
@@ -215,6 +220,6 @@ export function publicJob(j: Job) {
   return {
     id: j.id, created_at: j.created_at, project_name: j.project_name, live_url: j.live_url, status: j.status, version: j.version, error: j.error,
     duration_ms: j.duration_ms, render_mode: j.render_mode, contract_json: j.contract_json, plan_source: j.plan_source,
-    style_kit: j.style_kit, seed: j.seed, voice: j.voice, review_script: !!j.review_script,
+    style_kit: j.style_kit, seed: j.seed, voice: j.voice, review_script: !!j.review_script, length_s: j.length_s, closeups: !!j.closeups,
   };
 }

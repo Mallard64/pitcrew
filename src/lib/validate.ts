@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LOOK_IDS, VOICE_KEYS } from "./voices";
+import { MAX_TARGET_S, MIN_TARGET_S } from "./pacing";
 
 const optionalText = (max: number) =>
   z
@@ -30,6 +31,14 @@ export const JobFormSchema = z.object({
   look: z.string().optional().transform((v) => (v && LOOK_IDS.includes(v) ? v : undefined)),
   // Checkbox: "on" from a form post, true from JSON.
   review_script: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
+  // Target length in seconds, snapped to 15s steps; empty or "auto" keeps the default 60–90s.
+  length_s: z
+    .union([z.number(), z.string()])
+    .optional()
+    .transform((v) => (v === undefined || v === "" || v === "auto" ? undefined : Number(v)))
+    .refine((v) => v === undefined || (Number.isFinite(v) && v >= MIN_TARGET_S && v <= MAX_TARGET_S), `Length must be between ${MIN_TARGET_S} seconds and ${MAX_TARGET_S / 60} minutes`)
+    .transform((v) => (v === undefined ? undefined : Math.round(v / 15) * 15)),
+  closeups: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
 });
 export type JobForm = z.infer<typeof JobFormSchema>;
 

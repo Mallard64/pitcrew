@@ -34,8 +34,8 @@ const KITS = [
 
 const GETS = [
   {
-    t: "A 60–90s pitch video",
-    d: "Problem → solution → live demo → what's next. Narrated, captioned, 1080p60, with zooms on every click.",
+    t: "A pitch video, 30s to 3 min",
+    d: "Problem → solution → live demo → what's next. 60–90s by default, or the length you pick. Narrated, captioned, 1080p60, with zooms and magnified close-ups of your UI.",
   },
   {
     t: "Submission text",
@@ -66,7 +66,7 @@ const HOW = [
   },
   {
     t: "Voiced, styled, rendered",
-    d: "Narration is voiced at a pace that fits 60–90s, the agent picks a look that suits your product, and Remotion renders it.",
+    d: "Narration is voiced at a pace that fits your length, the agent picks a look that suits your product, and Remotion renders it.",
   },
 ];
 

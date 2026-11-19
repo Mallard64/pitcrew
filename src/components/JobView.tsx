@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { VOICES, VOICE_KEYS } from "@/lib/voices";
+import { formatSeconds } from "@/lib/pacing";
 
 type Ev = { id: number; kind: "progress" | "log" | "status"; step: string | null; message: string; ts: number };
 type Artifact = { name: string; bytes: number; version: number };
@@ -22,6 +23,8 @@ type JobInfo = {
   seed?: number | null;
   voice?: string | null;
   review_script?: boolean;
+  length_s?: number | null;
+  closeups?: boolean;
 };
 type Check = { id: string; label: string; ok: boolean; detail: string };
 type Report = { score: number; total: number; checks: Check[]; judge?: { notes: string[]; rewritten: boolean } };
@@ -203,6 +206,8 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
               <p className="text-sm text-slate-500">
                 {contract.duration_s}s · {contract.steps_ok}/{contract.steps_total} demo steps · {job.render_mode === "remotion" ? "pitch video" : job.render_mode === "slideshow" ? "slideshow fallback" : "fallback editor"}
                 {job.style_kit && KIT_LABEL[job.style_kit] ? ` · ${KIT_LABEL[job.style_kit]} look` : ""}
+                {job.length_s ? ` · aimed for ${formatSeconds(job.length_s)}` : ""}
+                {job.closeups ? " · UI close-ups" : ""}
                 {job.duration_ms ? ` · made in ${mmss(job.duration_ms)}` : ""}
                 {job.version > 1 ? ` · version ${job.version}` : ""}
                 {job.status === "partial" && contract.notes ? <span className="block text-amber-300">Heads up: {contract.notes}</span> : null}

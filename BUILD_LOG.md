@@ -59,3 +59,7 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Bug caught in a screenshot: the first poster still had captions, because Remotion renders the props from `selectComposition`, not the ones passed to `renderStill`. Fixed with a separate selection.
 - Live on Railway: JSON Crack with Sarah's voice and the script review: paused for review at 4:42, approved right away, `ok` in 8:06 end to end, 73.7s at 1080p60, 7/7 steps. The agent picked blueprint and used zoom/push/whip/iris itself. Pitch check 8/8 and the judge pass was applied. The public log has no ids. 79 tests passing.
 - Raised MAX_JOBS_PER_USER_PER_DAY to 10 on Railway: our own testing hit the limit of 5, and teams also revise.
+
+## 2026-11-18 (late): length slider + UI close-ups
+- Teams pick a length from 30s to 3 min. The agent gets a section budget for that length, the voice pace aims for it, and the pitch check judges against it.
+- New "inspect" camera: instead of only zooming in (and losing the rest of the screen), the demo spotlights the panel and pops out a magnified, live copy of it beside the panel. Checked on rendered tldraw frames: it stays on screen and never covers what it magnifies.

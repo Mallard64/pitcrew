@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { FlowSchema } from "../../../harness/schemas/flow";
 import { VideoPlanSchema } from "../../../harness/schemas/video_plan";
 import type { PlanRequest, Planner, PlannerEvent } from "./types";
+import { formatSeconds, lengthBudget, lengthWindow } from "../pacing";
 
 export type HarnessConfig = { baseUrl?: string; apiKey: string; harnessId: string; model?: string; fetchImpl?: typeof fetch };
 
@@ -28,6 +29,7 @@ export function buildPlanPrompt(req: PlanRequest) {
     req.whatsNext ? `What's next (from the team): ${req.whatsNext}` : "No roadmap from the team: omit the next section unless the README or issues state one.",
     `Site digest we collected (verified headings, links and inputs; y = pixel offset from top):\n${JSON.stringify(digest)}`,
     "You may also open the live URL in your browser to verify selectors (max 8 page loads).",
+    req.lengthS ? lengthLine(req.lengthS) : "",
   ];
   if (req.commits?.length) {
     const commits = req.commits.slice(0, 200).map((c) => `${c.date.slice(0, 10)} ${c.sha} ${c.message.split("\n")[0].slice(0, 120)}`);
@@ -35,6 +37,23 @@ export function buildPlanPrompt(req: PlanRequest) {
     if (req.readme) parts.push(`README (truncated):\n${req.readme.slice(0, 4000)}`);
   } else parts.push("No repo given: set build_log_md to null.");
   return parts.filter(Boolean).join("\n\n");
+}
+
+/** The team's length choice replaces the 60–90s rule; the budget keeps sections in proportion. */
+export function lengthLine(target: number) {
+  const w = lengthWindow(target);
+  const b = lengthBudget(target);
+  return [
+    `Target length (chosen by the team): about ${formatSeconds(w.target)}, so the scene durations must total ${w.min}–${w.max}s. This replaces the 60–90s rule and the demo step counts in your instructions.`,
+    `Rough budget: problem ~${b.problem}s, solution ~${b.solution}s, demo ~${b.demo}s in about ${b.demoSteps} steps (one scene each), next ~${b.next}s if you have a roadmap, end 3s.`,
+    target >= 120
+      ? "For a longer video, show more of the product (more steps, more screens), and use two problem scenes if the story needs it. Never pad with filler."
+      : target <= 45
+        ? "For a short video: one problem scene, one solution sentence, the 3 strongest demo steps, no next section."
+        : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /** Extracts the last JSON object from a fenced block (or the whole text). */

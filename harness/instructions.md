@@ -14,7 +14,7 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
    - end (3s): no elements needed; the renderer shows the URL and credit.
 3. Plan the demo flow (rules below), verifying every selector in your browser.
 4. Direct: give every scene a layout name, a transition_in, and elements. Vary transitions; never the same one 3 times in a row.
-5. Length: the total of all scene duration_s must be 60–90s. If you omitted next, make up the time with more demo steps (up to 8) and fuller narration. Never pad with filler or invented claims.
+5. Length: the total of all scene duration_s must be 60–90s, unless the request gives a "Target length" chosen by the team (30s to 3 min): then hit that window and follow its budget instead of the section times and step counts above. If you omitted next, make up the time with more demo steps (up to 8) and fuller narration. Never pad with filler or invented claims.
 
 ## Narration
 - Plain, specific, present tense, about 3 words per second of scene (our voice speaks ~3 words/s; we cut each scene to its narration plus a short beat, so a scene's length comes from its words: write enough narration to reach 60–90s in total). No hype ("revolutionary", "game-changing"). Never claim a feature you didn't see on the site or in the README.
@@ -32,11 +32,12 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 - 4–8 steps; actions: goto {url} | click {selector} | type {selector, text} | scroll {y} | wait. The first step is a goto to the live URL.
 - Only selectors you verified on the live page (Playwright syntax: text=Get started, #id, a[href="/pricing"]). Prefer goto when unsure.
 - Never log in, sign up, pay, or enter personal data. Fake demo inputs only.
-- Each say ≤ 25 words; hold_ms 2500–8000 and ≥ (words / 2.5) s + 0.8 s. Optional "zoom": the selector to zoom into (defaults to the clicked/typed element).
-- Each demo scene shows exactly one step: elements [{"type":"clip","step_id":"<step id>","zoom":"target"|"none"}], narration = that step's say.
+- Each say ≤ 25 words; hold_ms 2500–8000 and ≥ (words / 2.5) s + 0.8 s. Optional "zoom": the selector to zoom into (defaults to the clicked/typed element). For a step whose result is a dense panel (a graph, a table, a sidebar, a results list), set "zoom" to that panel's selector so viewers can read it.
+- Each demo scene shows exactly one step: elements [{"type":"clip","step_id":"<step id>","zoom":"target"|"inspect"|"none"}], narration = that step's say.
+- Clip zoom: "target" pushes the camera in on the zoom box. "inspect" keeps the whole screen in view, spotlights the panel and pops out a magnified live close-up of it beside the panel: use it when the point of the step is what changes inside one panel (2–3 times per video, not every step). "none" for wide pages and scrolls.
 
 ## Vocabulary the renderer supports today
-- Elements: {"type":"kinetic_headline","text":"..."} · {"type":"text","text":"...","role":"title"|"body"|"label"} · {"type":"bullets","items":["..."]} · {"type":"clip","step_id":"s1","zoom":"target"} · {"type":"image","src":"shots/<step_id>.png","fit":"contain"} · {"type":"stat","source_id":"src1","value":42,"unit":"%","label":"..."} (needs a source entry).
+- Elements: {"type":"kinetic_headline","text":"..."} · {"type":"text","text":"...","role":"title"|"body"|"label"} · {"type":"bullets","items":["..."]} · {"type":"clip","step_id":"s1","zoom":"target"|"inspect"|"none"} · {"type":"image","src":"shots/<step_id>.png","fit":"contain"} · {"type":"stat","source_id":"src1","value":42,"unit":"%","label":"..."} (needs a source entry).
 - Layouts (names): problem: big-statement | stat-reveal · solution: big-statement | before-after · demo: full-frame | framed-zoom · next: bullet-reveal · end: end-card.
 - Transitions: fade | slide | wipe | zoom | whip | push | iris | flip. Our renderer marks section changes itself (zoom into the solution, push into the demo, iris to the end) unless you name zoom/whip/push/iris/flip there; between demo steps use slide, whip or wipe.
 - style_kit (the whole look; pick the one that fits THIS product and its audience, don't default to midnight):

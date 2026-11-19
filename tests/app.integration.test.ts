@@ -86,7 +86,7 @@ describe("API", () => {
     const res = await createJob(new Request("http://t/api/jobs", {
       method: "POST",
       headers: { "content-type": "application/json", "x-forwarded-for": "5.6.7.8" },
-      body: JSON.stringify({ project_name: "Fixture App", live_url: `${site.url}/index.html`, look: "studio", voice: "george", review_script: true }),
+      body: JSON.stringify({ project_name: "Fixture App", live_url: `${site.url}/index.html`, look: "studio", voice: "george", review_script: true, length_s: 120, closeups: true }),
     }));
     expect(res.status).toBe(201);
     const { id } = await res.json();
@@ -118,5 +118,13 @@ describe("API", () => {
     expect(job.artifacts.map((a: { name: string }) => a.name)).toEqual(expect.arrayContaining(["pitch_check.json", "pitch_check.md"]));
     const script = await (await file(new Request(`http://t/x`), ctx({ id, name: "script.md" }))).text();
     expect(script).toContain("Fixture App turns a messy test page into a clear story.");
+    // Length and close-ups are the team's call: stored on the job and carried into the rendered plan.
+    expect(job.job.length_s).toBe(120);
+    expect(job.job.closeups).toBe(true);
+    const vp = await (await file(new Request(`http://t/x`), ctx({ id, name: "video_plan.json" }))).json();
+    expect(vp.target_s).toBe(120);
+    const clips = vp.scenes.flatMap((s: { elements: { type: string; zoom?: string }[] }) => s.elements).filter((e: { type: string }) => e.type === "clip");
+    expect(clips.length).toBeGreaterThan(0);
+    expect(clips.every((c: { zoom?: string }) => c.zoom === "inspect")).toBe(true);
   }, 300_000);
 });

@@ -170,6 +170,92 @@ function Stat({
   );
 }
 
+/** The recorded step at native viewport size: the clip, then its final screenshot if narration runs longer. */
+function Recording({ url, still, clipFrames, speed }: { url: string; still?: string; clipFrames: number; speed?: number }) {
+  return (
+    <>
+      <Sequence durationInFrames={clipFrames} layout="none">
+        <OffthreadVideo
+          src={url}
+          muted
+          playbackRate={speed ?? 1}
+          style={{ position: "absolute", width: VIEW_W, height: VIEW_H }}
+        />
+      </Sequence>
+      {/* Narration can outlast the clip: hold the step's final screenshot instead of going blank. */}
+      {still && (
+        <Sequence from={clipFrames} layout="none">
+          <Img src={still} style={{ position: "absolute", width: VIEW_W, height: VIEW_H }} />
+        </Sequence>
+      )}
+    </>
+  );
+}
+
+/** Ring drawn around the zoom target, styled per kit. */
+function ringStyle(kit: Kit): React.CSSProperties {
+  return kit.window === "brutal"
+    ? { border: "4px solid #000", background: brandTint(kit.accent, 55, 0.18), boxShadow: "6px 6px 0 #000" }
+    : kit.window === "terminal"
+      ? { border: `2px dashed ${accentOn(kit)}`, boxShadow: `0 0 18px ${accentOn(kit, 0.6)}` }
+      : {
+          border: `3px solid ${accentOn(kit)}`,
+          boxShadow: `0 0 0 6px ${accentOn(kit, 0.2)}, 0 0 28px ${accentOn(kit, 0.9)}`,
+        };
+}
+
+type Box = { x: number; y: number; w: number; h: number };
+
+/** Smallest area a close-up shows: a lone button is magnified together with the UI around it. */
+const PANEL_MIN_W = 250;
+const PANEL_MIN_H = 160;
+
+/** Pads the target, grows it to the minimum area around its centre, and keeps it inside the viewport. */
+export function panelBox(b: Box, pad = 10): Box {
+  const w = Math.min(VIEW_W, Math.max(PANEL_MIN_W, b.w + pad * 2));
+  const h = Math.min(VIEW_H, Math.max(PANEL_MIN_H, b.h + pad * 2));
+  const x = Math.min(VIEW_W - w, Math.max(0, b.x + b.w / 2 - w / 2));
+  const y = Math.min(VIEW_H - h, Math.max(0, b.y + b.h / 2 - h / 2));
+  return { x, y, w, h };
+}
+
+/** Largest close-up of a panel, in viewport px, before it would cover too much of the window. */
+const LOUPE_MAX_W = 640;
+const LOUPE_MAX_H = 420;
+const LOUPE_MAX_MAG = 2.6;
+
+export type LoupeLayout = { mag: number; left: number; top: number; w: number; h: number };
+
+const overlaps = (a: Box, b: Box, gap: number) =>
+  a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
+
+/**
+ * Where the magnified close-up goes: beside the panel (right, left, below, above, in that order) without
+ * covering it. Shrinks the magnification until one fits; null when even 1.35x doesn't, or the panel is
+ * already large on screen (then a camera zoom reads better).
+ */
+export function loupeLayout(panel: Box): LoupeLayout | null {
+  const margin = 24;
+  const gap = 20;
+  for (let mag = Math.min(LOUPE_MAX_MAG, LOUPE_MAX_W / panel.w, LOUPE_MAX_H / panel.h); mag >= 1.35; mag *= 0.9) {
+    const w = panel.w * mag;
+    const h = panel.h * mag;
+    const midY = Math.min(VIEW_H - h - margin, Math.max(margin, panel.y + panel.h / 2 - h / 2));
+    const midX = Math.min(VIEW_W - w - margin, Math.max(margin, panel.x + panel.w / 2 - w / 2));
+    const spots = [
+      { left: VIEW_W - w - margin, top: midY },
+      { left: margin, top: midY },
+      { left: midX, top: VIEW_H - h - margin },
+      { left: midX, top: margin },
+    ];
+    for (const sp of spots) {
+      const fits = sp.left >= margin - 0.5 && sp.top >= margin - 0.5 && sp.left + w <= VIEW_W - margin + 0.5 && sp.top + h <= VIEW_H - margin + 0.5;
+      if (fits && !overlaps({ x: sp.left, y: sp.top, w, h }, panel, gap)) return { mag, w, h, ...sp };
+    }
+  }
+  return null;
+}
+
 /** The recording at native viewport size; zoom/pan and the target highlight are applied in viewport px. */
 function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx: Ctx }) {
   const frame = useDesignFrame();
@@ -181,13 +267,102 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
   if (!m) return null;
   const clipFrames = Math.max(1, Math.floor(m.duration_s * realFps) - 1);
   const still = ctx.media.images[`shots/${el.step_id}.png`];
+  const rec = <Recording url={m.url} still={still} clipFrames={clipFrames} speed={el.speed} />;
+  const pulse = 0.75 + 0.25 * Math.sin(frame / 7);
+  const panel = m.box ? panelBox(m.box) : null;
+  const at = el.zoom === "inspect" && panel ? loupeLayout(panel) : null;
+
+  if (panel && at) {
+    // Inspect: the whole UI stays in view (so viewers see what changed where), the panel is spotlit,
+    // and a magnified live copy of it pops out on the other side of the window.
+    const mag = at.mag;
+    const k = spring({ frame: frame - 14, fps, config: { damping: 18, mass: 0.7 }, durationInFrames: 26 });
+    const out = interpolate(frame, [durationInFrames - 14, durationInFrames - 2], [1, 0], clamp);
+    const show = Math.min(k, out);
+    const dim = interpolate(frame, [8, 22], [0, 0.42], clamp) * out;
+    // The close-up grows out of the panel toward its spot.
+    const gx = (panel.x + panel.w / 2 - (at.left + at.w / 2)) * (1 - show);
+    const gy = (panel.y + panel.h / 2 - (at.top + at.h / 2)) * (1 - show);
+    const sc = 0.35 + 0.65 * show;
+    return (
+      <div style={{ position: "absolute", width: VIEW_W, height: VIEW_H, overflow: "hidden" }}>
+        <div
+          style={{
+            position: "absolute",
+            width: VIEW_W,
+            height: VIEW_H,
+            transform: `scale(${interpolate(frame, [0, durationInFrames], [1, 1.03], clamp)})`,
+          }}
+        >
+          {rec}
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: panel.x,
+            top: panel.y,
+            width: panel.w,
+            height: panel.h,
+            borderRadius: Math.min(10, kit.radius),
+            boxShadow: `0 0 0 4000px rgba(0,0,0,${dim})`,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: panel.x - 4,
+            top: panel.y - 4,
+            width: panel.w + 8,
+            height: panel.h + 8,
+            borderRadius: Math.min(12, kit.radius + 2),
+            opacity: (dim / 0.42) * (kit.window === "brutal" ? 1 : pulse),
+            ...ringStyle(kit),
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: at.left,
+            top: at.top,
+            width: at.w,
+            height: at.h,
+            overflow: "hidden",
+            borderRadius: Math.min(14, kit.radius + 4),
+            opacity: show > 0.02 ? 1 : 0,
+            transform: `translate(${gx}px, ${gy}px) scale(${sc})`,
+            background: "#fff",
+            border: kit.window === "brutal" ? "4px solid #000" : `3px solid ${accentOn(kit)}`,
+            boxShadow:
+              kit.window === "brutal"
+                ? "10px 10px 0 #000"
+                : `0 24px 60px rgba(0,0,0,0.55), 0 0 0 6px ${accentOn(kit, 0.18)}`,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              width: VIEW_W,
+              height: VIEW_H,
+              transformOrigin: "0 0",
+              transform: `translate(${-panel.x * mag}px, ${-panel.y * mag}px) scale(${mag})`,
+            }}
+          >
+            {rec}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   let transform = "";
   let highlight: React.ReactNode = null;
-  if (el.zoom === "target" && m.box) {
+  const zoomed = (el.zoom === "target" || el.zoom === "inspect") && m.box;
+  if (zoomed && m.box) {
     // Spring zoom that also pans the target toward the centre; clamped so no edge of the video shows.
+    // Inspect on a panel too large for a close-up gets a deeper camera zoom instead.
     const scale = Math.min(
-      1.8,
-      Math.max(1, Math.min(VIEW_W / (m.box.w * 2.2), VIEW_H / (m.box.h * 3))),
+      el.zoom === "inspect" ? 2.2 : 1.8,
+      Math.max(1, Math.min(VIEW_W / (m.box.w * (el.zoom === "inspect" ? 1.3 : 2.2)), VIEW_H / (m.box.h * (el.zoom === "inspect" ? 1.4 : 3)))),
     );
     const k = spring({ frame: frame - 8, fps, config: { damping: 200 }, durationInFrames: 30 });
     const sc = 1 + (scale - 1) * k;
@@ -197,21 +372,7 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
     const ty = Math.min(0, Math.max(VIEW_H - VIEW_H * sc, VIEW_H / 2 - cy * sc));
     transform = `translate(${tx}px, ${ty}px) scale(${sc})`;
     const on = interpolate(frame, [26, 38], [0, 1], clamp);
-    const pulse = 0.75 + 0.25 * Math.sin(frame / 7);
     const pad = 8;
-    const ring: React.CSSProperties =
-      kit.window === "brutal"
-        ? {
-            border: "4px solid #000",
-            background: brandTint(kit.accent, 55, 0.18),
-            boxShadow: "6px 6px 0 #000",
-          }
-        : kit.window === "terminal"
-          ? { border: `2px dashed ${accentOn(kit)}`, boxShadow: `0 0 18px ${accentOn(kit, 0.6)}` }
-          : {
-              border: `3px solid ${accentOn(kit)}`,
-              boxShadow: `0 0 0 6px ${accentOn(kit, 0.2)}, 0 0 28px ${accentOn(kit, 0.9)}`,
-            };
     highlight = (
       <div
         style={{
@@ -222,7 +383,7 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
           height: m.box.h + pad * 2,
           borderRadius: Math.min(12, kit.radius),
           opacity: on * (kit.window === "brutal" ? 1 : pulse),
-          ...ring,
+          ...ringStyle(kit),
         }}
       />
     );
@@ -236,24 +397,11 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
         position: "absolute",
         width: VIEW_W,
         height: VIEW_H,
-        transformOrigin: el.zoom === "target" ? "0 0" : "50% 50%",
+        transformOrigin: zoomed ? "0 0" : "50% 50%",
         transform,
       }}
     >
-      <Sequence durationInFrames={clipFrames} layout="none">
-        <OffthreadVideo
-          src={m.url}
-          muted
-          playbackRate={el.speed ?? 1}
-          style={{ position: "absolute", width: VIEW_W, height: VIEW_H }}
-        />
-      </Sequence>
-      {/* Narration can outlast the clip: hold the step's final screenshot instead of going blank. */}
-      {still && (
-        <Sequence from={clipFrames} layout="none">
-          <Img src={still} style={{ position: "absolute", width: VIEW_W, height: VIEW_H }} />
-        </Sequence>
-      )}
+      {rec}
       {highlight}
     </div>
   );

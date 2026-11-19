@@ -17,6 +17,7 @@ import { VideoPlanSchema, type VideoPlan } from "../schemas/video_plan";
 import type { Contract } from "../schemas/contract";
 import { ffmpeg, probeDuration } from "./ff";
 import { resolveKit } from "../../remotion/kits/default";
+import { acceptableRange } from "../../src/lib/pacing";
 import type { PitchVideoProps } from "../../remotion/types";
 
 // Resolved from the working directory: inside a Next.js server chunk, __dirname is not the repo.
@@ -150,7 +151,8 @@ export async function renderVideo(outDir: string, log: (m: string) => void = () 
       .catch(() => ffmpeg(["-i", demo, "-frames:v", "1", "-q:v", "3", thumb]));
     const duration_s = Math.round((await probeDuration(demo)) * 10) / 10;
     const demoSteps = plan.scenes.flatMap((s) => s.elements).filter((e) => e.type === "clip").length;
-    const notes = duration_s < 60 || duration_s > 90 ? `duration ${duration_s}s is outside 60-90s` : "";
+    const range = acceptableRange(plan.target_s);
+    const notes = duration_s < range.min || duration_s > range.max ? `duration ${duration_s}s is outside ${range.min}-${range.max}s` : "";
     return {
       status: notes ? "partial" : "ok",
       render_mode: "remotion" as Contract["render_mode"],

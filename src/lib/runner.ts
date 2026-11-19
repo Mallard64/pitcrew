@@ -123,12 +123,14 @@ async function run({ jobId, revision }: Task) {
 
   // The job timeout counts working time only: it pauses while the team reviews the script.
   let timer: NodeJS.Timeout | undefined;
-  let budget = config.jobTimeoutMs;
+  // Longer videos take longer to record, voice and render: about 5s of budget per second over 90s.
+  const totalBudget = config.jobTimeoutMs + Math.max(0, (job.length_s ?? 0) - 90) * 5000;
+  let budget = totalBudget;
   let armedAt = Date.now();
   let fail: (e: Error) => void = () => {};
   const arm = () => {
     armedAt = Date.now();
-    timer = setTimeout(() => fail(new Error(`Timed out after ${Math.round(config.jobTimeoutMs / 60000)} minutes`)), budget);
+    timer = setTimeout(() => fail(new Error(`Timed out after ${Math.round(totalBudget / 60000)} minutes`)), budget);
   };
   const pause = () => {
     clearTimeout(timer);
@@ -164,6 +166,8 @@ async function run({ jobId, revision }: Task) {
         whatsNext: job.whats_next ?? undefined, user: job.client_key, voice: job.voice ?? undefined, look: job.look ?? undefined,
         // Revisions are already reviewed by the request itself; only first runs pause.
         reviewScript: !!job.review_script && !revision,
+        lengthS: job.length_s ?? undefined,
+        closeups: !!job.closeups,
       },
       jobDir(jobId),
       version,

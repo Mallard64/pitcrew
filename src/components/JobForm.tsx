@@ -3,12 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { LOOKS, VOICES, VOICE_KEYS } from "@/lib/voices";
+import { DEFAULT_TARGET_S, formatSeconds, MAX_TARGET_S, MIN_TARGET_S } from "@/lib/pacing";
+
+function lengthHint(s: number) {
+  if (s === DEFAULT_TARGET_S) return "Default: lands between 60 and 90 seconds, the length most judges expect.";
+  if (s < 60) return "Short: one problem line, one solution line and the 3 strongest demo steps.";
+  if (s <= 90) return "Inside the usual 60–90 second pitch range.";
+  return `Longer than most hackathon pitches: more demo steps (up to 12). It takes a few minutes longer to make.`;
+}
 
 export default function JobForm() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voice, setVoice] = useState("auto");
+  const [length, setLength] = useState(DEFAULT_TARGET_S);
   const audio = useRef<HTMLAudioElement | null>(null);
   const preview = () => {
     if (voice === "auto") return;
@@ -24,6 +33,10 @@ export default function JobForm() {
     const fd = new FormData(e.currentTarget);
     const body: Record<string, unknown> = Object.fromEntries(fd.entries());
     body.review_script = fd.get("review_script") === "on";
+    body.closeups = fd.get("closeups") === "on";
+    // The default position keeps the standard 60–90s window rather than a fixed target.
+    if (length === DEFAULT_TARGET_S) delete body.length_s;
+    else body.length_s = length;
     for (const k of ["voice", "look"]) if (body[k] === "auto") delete body[k];
     try {
       const res = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -105,6 +118,34 @@ export default function JobForm() {
             </select>
           </label>
         </div>
+        <label className="block space-y-1.5">
+          <span className="flex items-baseline justify-between text-sm text-slate-300">
+            <span>Length</span>
+            <span className="font-mono tabular-nums text-slate-100">{length === DEFAULT_TARGET_S ? "60–90s" : `about ${formatSeconds(length)}`}</span>
+          </span>
+          <input
+            type="range"
+            name="length_s"
+            min={MIN_TARGET_S}
+            max={MAX_TARGET_S}
+            step={15}
+            value={length}
+            onChange={(e) => setLength(Number(e.target.value))}
+            className="w-full accent-indigo-500"
+            aria-valuetext={length === DEFAULT_TARGET_S ? "Default, 60 to 90 seconds" : `About ${formatSeconds(length)}`}
+          />
+          <span className="flex justify-between text-[11px] text-slate-500" aria-hidden>
+            <span>0:30</span><span>1:00</span><span>1:30</span><span>2:00</span><span>2:30</span><span>3:00</span>
+          </span>
+          <span className="block text-xs text-slate-500">{lengthHint(length)}</span>
+        </label>
+        <label className="flex items-start gap-2.5 text-sm text-slate-300">
+          <input type="checkbox" name="closeups" className="mt-1 accent-indigo-500" />
+          <span>
+            Magnify the UI in every demo step
+            <span className="block text-xs text-slate-500">Each step keeps the full screen in view and pops out a zoomed, live close-up of the panel it touches. Without this the agent zooms only where it helps.</span>
+          </span>
+        </label>
         <label className="flex items-start gap-2.5 text-sm text-slate-300">
           <input type="checkbox" name="review_script" className="mt-1 accent-indigo-500" />
           <span>

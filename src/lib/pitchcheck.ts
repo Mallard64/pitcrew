@@ -6,7 +6,7 @@
  *    and the server keeps the rewrite only if the rules score doesn't drop.
  */
 import type { VideoPlan } from "../../harness/schemas/video_plan";
-import { NATURAL_WPS } from "./pacing";
+import { formatSeconds, lengthWindow, NATURAL_WPS } from "./pacing";
 
 export type PitchCheck = { id: string; label: string; ok: boolean; detail: string };
 export type PitchReport = {
@@ -42,7 +42,13 @@ export function estimateSeconds(plan: VideoPlan) {
   );
 }
 
-export function checkPitch(plan: VideoPlan, projectName: string): PitchReport {
+/** The length check's bounds: the pacing window widened by what the ±15% voice pace can still absorb. */
+function lengthBounds(target?: number) {
+  const w = lengthWindow(target);
+  return { min: Math.floor(w.min * 0.88), max: Math.ceil(w.max * 1.1), label: target ? `about ${formatSeconds(w.target)}` : "60–90 seconds" };
+}
+
+export function checkPitch(plan: VideoPlan, projectName: string, target = plan.target_s): PitchReport {
   const by = (section: string) => plan.scenes.filter((s) => s.section === section);
   const first = plan.scenes.find((s) => s.narration.trim());
   const opener = first ? (sentences(first.narration)[0] ?? "") : "";
@@ -55,6 +61,7 @@ export function checkPitch(plan: VideoPlan, projectName: string): PitchReport {
     .flatMap((s) => sentences(s.narration))
     .filter((s) => words(s).length > 26);
   const secs = estimateSeconds(plan);
+  const len = lengthBounds(target);
   const name = projectName.trim().toLowerCase();
   const namesProduct = [...solution, ...demo.slice(0, 1)].some((s) =>
     s.narration.toLowerCase().includes(name),
@@ -102,8 +109,8 @@ export function checkPitch(plan: VideoPlan, projectName: string): PitchReport {
     },
     {
       id: "length",
-      label: "Fits 60–90 seconds",
-      ok: secs >= 55 && secs <= 95,
+      label: `Fits ${len.label}`,
+      ok: secs >= len.min && secs <= len.max,
       detail: `About ${secs}s before pacing (the voice pace adjusts ±15%)`,
     },
     {
@@ -123,7 +130,8 @@ export function checkPitch(plan: VideoPlan, projectName: string): PitchReport {
 }
 
 /** The follow-up turn: the agent critiques its own script as a judge and rewrites only the words. */
-export function judgePrompt(plan: VideoPlan, report: PitchReport, projectName: string) {
+export function judgePrompt(plan: VideoPlan, report: PitchReport, projectName: string, target = plan.target_s) {
+  const w = lengthWindow(target);
   const failing = report.checks.filter((c) => !c.ok).map((c) => `- ${c.label}: ${c.detail}`);
   const script = plan.scenes.map((s) => ({ id: s.id, section: s.section, narration: s.narration }));
   return [
@@ -134,7 +142,7 @@ export function judgePrompt(plan: VideoPlan, report: PitchReport, projectName: s
       ? `Our automatic checks flagged:\n${failing.join("\n")}`
       : `Our automatic checks passed; still tighten anything a judge would skim past.`,
     `Current script:\n${JSON.stringify(script)}`,
-    `Rules for the rewrite: change narration (and headline text) only. Keep every scene id, section, layout, element type, clip, stat element, source and the flow exactly as they are. Demo narration must still describe what that recorded step shows, ≤ 25 words. Keep total words within ±10% so the length stays 60–90s. Never add a number that is not already in the script.`,
+    `Rules for the rewrite: change narration (and headline text) only. Keep every scene id, section, layout, element type, clip, stat element, source and the flow exactly as they are. Demo narration must still describe what that recorded step shows, ≤ 25 words. Keep total words within ±10% so the length stays ${w.min}–${w.max}s. Never add a number that is not already in the script.`,
     `Reply with the full JSON block again (same format as before), plus a top-level "judge_review": {"notes": ["≤ 4 short notes on what you changed and why"]}.`,
   ].join("\n\n");
 }

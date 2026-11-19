@@ -22,7 +22,7 @@ import { checkPublicUrl, makeRequestGuard } from "./ssrf";
 import { fetchRepoFacts, type Commit } from "./buildlog";
 import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
 import { braveSearch, findCandidates, researchPrompt } from "./research/search";
-import { choosePace } from "./pacing";
+import { choosePace, lengthWindow } from "./pacing";
 import { checkPitch, judgePrompt, mergeJudgeRewrite, pitchCheckMarkdown, type PitchReport } from "./pitchcheck";
 import { resolveVoice, VOICES, LOOK_IDS } from "./voices";
 import { resolveKit } from "../../remotion/kits/default";
@@ -36,6 +36,10 @@ export type JobInput = {
   projectName: string; liveUrl: string; repoUrl?: string; blurb?: string; problem?: string; whatsNext?: string; user?: string;
   /** Team choices: narrator voice key, forced look, and whether to pause for a script review. */
   voice?: string; look?: string; reviewScript?: boolean;
+  /** Target length in seconds (30–180); undefined = the default 60–90s. */
+  lengthS?: number;
+  /** Show demo steps as magnified close-ups of the UI panel they touch. */
+  closeups?: boolean;
 };
 /** What the team sees while the job waits for their script review. */
 export type ReviewDraft = { scenes: { id: string; section: string; narration: string }[]; report: PitchReport; voice: string; look: string };
@@ -108,6 +112,7 @@ export async function runPipeline(
     log(`Using the ${input.look} look you picked (the agent suggested ${videoPlan.style_kit})`);
     videoPlan.style_kit = input.look;
   }
+  applyTeamChoices(videoPlan, input, log);
   const flow = videoPlan.flow;
   await fs.writeFile(path.join(outDir, "flow.json"), JSON.stringify(flow, null, 2));
   log(`Plan: ${videoPlan.scenes.length} scenes, ${flow.steps.length} demo steps (${plan.source} planner, seed ${videoPlan.seed})`);
@@ -180,6 +185,8 @@ export async function runPipeline(
   for (const n of await verifyResearch(videoPlan)) log(n);
   const dropped = sanitizePlan(videoPlan, clipIds, outDir);
   for (const d of dropped) log(d);
+  // Research and judge merges rebuild the plan; the team's choices still hold.
+  applyTeamChoices(videoPlan, input);
 
   // 4b. Human in the loop: the team reads (and can edit) the narration before it's voiced.
   const kitId = resolveKit(videoPlan.style_kit, videoPlan.seed, videoPlan.brand.primary).id;
@@ -210,8 +217,8 @@ export async function runPipeline(
   await fs.writeFile(path.join(outDir, "pitch_check.json"), JSON.stringify(report, null, 2));
   await fs.writeFile(path.join(outDir, "pitch_check.md"), pitchCheckMarkdown(input.projectName, report));
   await fs.writeFile(path.join(outDir, "sources.md"), sourcesMarkdown(input.projectName, videoPlan.sources));
-  // Pace: read a long script a bit faster and a short one a bit slower so the video lands in 60–90s.
-  const pace = choosePace(videoPlan.scenes);
+  // Pace: read a long script a bit faster and a short one a bit slower so the video lands in its window.
+  const pace = choosePace(videoPlan.scenes, lengthWindow(input.lengthS));
   log(`Voice pace ${pace.base}× (estimated length ${pace.estimate}s)`);
   const script = {
     segments: videoPlan.scenes.filter((sc) => sc.narration.trim()).map((sc) => ({ step_id: sc.id, text: sc.narration, pace: pace.perScene.get(sc.id) })),
@@ -350,6 +357,22 @@ async function researchProblemStats(
 }
 
 /** Narration + a short beat; demo scenes at least 2.6s (cursor move + click), the end card 2.5s. */
+/** Length target and close-ups are the team's call, so they override whatever the agent planned. */
+export function applyTeamChoices(plan: VideoPlan, input: Pick<JobInput, "lengthS" | "closeups">, log?: (m: string) => void) {
+  if (input.lengthS) plan.target_s = input.lengthS;
+  if (!input.closeups) return;
+  let n = 0;
+  for (const sc of plan.scenes)
+    for (const el of sc.elements) {
+      const clip = el.type === "device_frame" ? el.child : el;
+      if (clip.type === "clip" && clip.zoom !== "inspect") {
+        clip.zoom = "inspect";
+        n++;
+      }
+    }
+  if (n && log) log(`Close-ups on: ${n} demo step${n === 1 ? "" : "s"} will magnify the panel they touch`);
+}
+
 export function fitSceneDuration(sc: { section: string; narration: string; duration_s: number }, voice?: number): number {
   if (sc.section === "end") return 2.5;
   if (!voice || !sc.narration.trim()) return Math.min(sc.duration_s, sc.section === "demo" ? 3 : 4);
