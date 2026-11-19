@@ -13,23 +13,43 @@ export type Segment = { from: number; to: number; cuts: number };
 
 /** Scene-change times (s), from ffmpeg's scene score. */
 async function sceneCuts(src: string): Promise<number[]> {
-  const out = await run("ffmpeg", ["-hide_banner", "-i", src, "-vf", "select='gt(scene,0.3)',showinfo", "-an", "-f", "null", "-"], 300_000).catch((e: Error) => e.message);
+  const out = await run(
+    "ffmpeg",
+    ["-hide_banner", "-i", src, "-vf", "select='gt(scene,0.3)',showinfo", "-an", "-f", "null", "-"],
+    300_000,
+  ).catch((e: Error) => e.message);
   return [...String(out).matchAll(/pts_time:([\d.]+)/g)].map((m) => Number(m[1]));
 }
 
 /** Still stretches ≥ 1.5 s (loading screens, idle menus). */
 async function freezes(src: string): Promise<{ from: number; to: number }[]> {
-  const out = await run("ffmpeg", ["-hide_banner", "-i", src, "-vf", "freezedetect=n=0.003:d=1.5", "-an", "-f", "null", "-"], 300_000).catch((e: Error) => e.message);
+  const out = await run(
+    "ffmpeg",
+    ["-hide_banner", "-i", src, "-vf", "freezedetect=n=0.003:d=1.5", "-an", "-f", "null", "-"],
+    300_000,
+  ).catch((e: Error) => e.message);
   const starts = [...String(out).matchAll(/freeze_start: ([\d.]+)/g)].map((m) => Number(m[1]));
   const ends = [...String(out).matchAll(/freeze_end: ([\d.]+)/g)].map((m) => Number(m[1]));
   return starts.map((s, i) => ({ from: s, to: ends[i] ?? Infinity }));
 }
 
 /** Pure: active spans split at scene changes into 2–10 s segments, best first up to `budget` seconds. */
-export function chooseSegments(duration: number, cuts: number[], still: { from: number; to: number }[], budget = 60): Segment[] {
+export function chooseSegments(
+  duration: number,
+  cuts: number[],
+  still: { from: number; to: number }[],
+  budget = 60,
+): Segment[] {
   let active = [{ from: 0, to: duration }];
   for (const f of still)
-    active = active.flatMap((a) => (f.to <= a.from || f.from >= a.to ? [a] : [{ from: a.from, to: Math.max(a.from, f.from) }, { from: Math.min(a.to, f.to), to: a.to }]));
+    active = active.flatMap((a) =>
+      f.to <= a.from || f.from >= a.to
+        ? [a]
+        : [
+            { from: a.from, to: Math.max(a.from, f.from) },
+            { from: Math.min(a.to, f.to), to: a.to },
+          ],
+    );
   active = active.filter((a) => a.to - a.from >= 1.5);
   const segs: Segment[] = [];
   for (const a of active) {
@@ -56,7 +76,12 @@ export function chooseSegments(duration: number, cuts: number[], still: { from: 
   return picked.sort((x, y) => x.from - y.from);
 }
 
-export async function prepareFootage(src: string, outDir: string, budget = 60, log: (m: string) => void = () => {}): Promise<ClipInfo[]> {
+export async function prepareFootage(
+  src: string,
+  outDir: string,
+  budget = 60,
+  log: (m: string) => void = () => {},
+): Promise<ClipInfo[]> {
   const duration = await probeDuration(src);
   const [cuts, still] = await Promise.all([sceneCuts(src), freezes(src)]);
   let segs = chooseSegments(duration, cuts, still, budget);
@@ -71,13 +96,42 @@ export async function prepareFootage(src: string, outDir: string, budget = 60, l
     const file = path.join(clipsDir, `${id}.mp4`);
     // Keep the footage's own aspect ratio (the renderer letterboxes); cap at 1920x1080.
     await ffmpeg([
-      "-ss", s.from.toFixed(3), "-t", (s.to - s.from).toFixed(3), "-i", src,
-      "-vf", "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=60,format=yuv420p",
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-an", "-movflags", "+faststart", file,
+      "-ss",
+      s.from.toFixed(3),
+      "-t",
+      (s.to - s.from).toFixed(3),
+      "-i",
+      src,
+      "-vf",
+      "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=60,format=yuv420p",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "18",
+      "-an",
+      "-movflags",
+      "+faststart",
+      file,
     ]);
-    await ffmpeg(["-ss", ((s.to - s.from) / 2).toFixed(3), "-i", file, "-frames:v", "1", path.join(shotsDir, `${id}.png`)]);
+    await ffmpeg([
+      "-ss",
+      ((s.to - s.from) / 2).toFixed(3),
+      "-i",
+      file,
+      "-frames:v",
+      "1",
+      path.join(shotsDir, `${id}.png`),
+    ]);
     const len = Math.round((await probeDuration(file)) * 1000) / 1000;
-    clips.push({ step_id: id, file: `clips/${id}.mp4`, duration_s: len, raw_duration_s: Math.round((s.to - s.from) * 1000) / 1000, speedups: [] });
+    clips.push({
+      step_id: id,
+      file: `clips/${id}.mp4`,
+      duration_s: len,
+      raw_duration_s: Math.round((s.to - s.from) * 1000) / 1000,
+      speedups: [],
+    });
     log(`Footage clip ${id}: ${s.from.toFixed(1)}–${s.to.toFixed(1)} s`);
   }
   const deadCut = still.reduce((n, f) => n + Math.min(duration, f.to) - f.from, 0);

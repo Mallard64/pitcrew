@@ -79,3 +79,12 @@ Notes on what's checked (2026-11-17):
 
 ## P2 (after the hackathon)
 - [ ] P2 GitHub Action: regenerate the pitch video on each release (nice-to-have; not the expansion story).
+
+## Added 2026-11-18 (night)
+- [x] 6-part pitch outline + 90–120 s default + length presets
+- [x] GitHub-only projects: repo facts, auto demo mode, sandbox-run (probe verified), repo-showcase (images, code, diagram)
+- [x] Footage upload → demo clips (scene changes, dead time cut)
+- [x] Sensitive-topic detection, disclaimer, validator
+- [ ] cli-run (terminal recording) — falls back to repo-showcase today
+- [ ] Game binaries on xvfb (stretch)
+- [ ] Let the agent see footage keyframes (it narrates footage from README/team text today)

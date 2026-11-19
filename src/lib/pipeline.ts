@@ -21,6 +21,7 @@ import { downloadRepoImages, fetchRepo, fillCodeLines, type RepoFacts, type Repo
 import { fetchSandboxRecording } from "./sandbox";
 import { checkSensitive, detectTopic, DISCLAIMER, scrubSensitive, sensitivePrompt, type Topic } from "./sensitive";
 import { prepareFootage } from "../../harness/scripts/footage";
+import { ffmpeg as ffmpegRun } from "../../harness/scripts/ff";
 import { mergeRepairedSteps, repairableFailures, repairPrompt } from "./repair";
 import { seedFor } from "./harness/local";
 import { exploreSite, type SiteDigest } from "./explore";
@@ -99,6 +100,7 @@ type Context = {
   topic?: Topic | null;
   notice?: string;
   footageClips?: { id: string; duration_s: number }[];
+  footageFrames?: { name: string; path: string }[];
   repoImages?: { src: string; alt: string; path: string }[];
 };
 
@@ -173,6 +175,7 @@ export async function runPipeline(
     if (input.footagePath) {
       progress("recording", "Cutting your footage into demo clips");
       ctx.footageClips = (await prepareFootage(input.footagePath, assetsDir, 60, log)).map((c) => ({ id: c.step_id, duration_s: c.duration_s }));
+      ctx.footageFrames = await footageKeyframes(assetsDir, ctx.footageClips);
     }
     if (ctx.repo && ctx.mode !== "live") ctx.repoImages = await downloadRepoImages(ctx.repo, assetsDir);
     await fs.writeFile(ctxFile, JSON.stringify(ctx));
@@ -193,6 +196,7 @@ export async function runPipeline(
     repo: ctx.repo,
     demoMode: mode0,
     footageClips: ctx.footageClips,
+    footageFrames: ctx.footageFrames?.filter((f) => existsSync(f.path)),
     repoImages: ctx.repoImages,
     topic: ctx.topic,
     ...(mode0 === "sandbox-run" ? { timeoutSeconds: 1500 } : {}),
@@ -658,4 +662,23 @@ async function enforceSensitive(
   }
   const removed = scrubSensitive(videoPlan, topic);
   log(removed ? `Removed ${removed} line${removed === 1 ? "" : "s"} that still broke the ${topic} rules` : `Sensitive-topic check (${topic}): passed after the rewrite`);
+}
+
+/** Three small JPEG frames per footage clip (start, middle, end) for the agent to look at. */
+async function footageKeyframes(assetsDir: string, clips: { id: string; duration_s: number }[]) {
+  const dir = path.join(assetsDir, "keys");
+  await fs.mkdir(dir, { recursive: true });
+  const out: { name: string; path: string }[] = [];
+  for (const c of clips.slice(0, 8))
+    for (const [k, t] of [0.15, c.duration_s / 2, Math.max(0.2, c.duration_s - 0.3)].entries()) {
+      const name = `${c.id}-${k + 1}.jpg`;
+      const file = path.join(dir, name);
+      try {
+        await ffmpegRun(["-ss", t.toFixed(2), "-i", path.join(assetsDir, "clips", `${c.id}.mp4`), "-frames:v", "1", "-vf", "scale=640:-2", "-q:v", "5", file]);
+        out.push({ name, path: file });
+      } catch {
+        /* skip this frame */
+      }
+    }
+  return out;
 }

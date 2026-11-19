@@ -163,3 +163,25 @@ STRIPE_PAYMENT_LINK=    # P1: HD / no-credit upgrade
 - Our own submission video was made with Pit Crew (dogfooding).
 - README with setup, architecture diagram and the Harness ID.
 - HUMAN_TODO.md lists exactly what remains for humans (posting, submitting).
+
+## Update 2026-11-18 (night): outline, GitHub-only projects, footage, sensitive topics
+This section supersedes the 4-part structure and the 60–90 s length above.
+- **Outline:**
+  - Order: problem → solution + demo → evidence → how it's built → next steps → the ask → end card. Sections without true content are omitted, never padded.
+  - Length: 90–120 s by default, or the team's pick (presets 60 s / 2 min / 3 min, slider 30 s–3 min).
+  - Evidence comes only from the form's Evidence field or the repo's public GitHub signals, with the source on screen.
+  - "How it's built" is a diagram from manifests, the README and the form's "Built with / why".
+  - The ask comes from the form, or defaults to "Try it at <link>".
+- **Form:** the live URL is optional when a public GitHub repo is given. New optional fields: Evidence, Built with / why, Your ask, and a footage upload (MP4/MOV, ≤ 500 MB, ≤ 3 min).
+- **Demo modes**, recorded in the output contract (`demo_mode`) and shown on the job page:
+  - `live`: as before.
+  - `footage`: the team's upload.
+  - `sandbox-run`: web repos run and recorded inside the HarnessRouter sandbox. Repo code never runs on our server.
+  - `repo-showcase`: README images, code panels and the diagram, labeled "From the repository".
+  - `cli-run`: not implemented yet; CLI repos fall back to repo-showcase.
+- **Games** (Unity/Unreal/Godot): never built from source. Order: playable web link → uploaded footage → repo-showcase, plus a note asking for a 30 s gameplay upload.
+- **Sensitive topics** (mental health, health, finance, legal, children):
+  - A small on-screen disclaimer.
+  - No treat/diagnose/cure/replace-a-professional claims, and no outcome claims without a team-cited source.
+  - The plan validator enforces this: one agent rewrite, then offending lines are removed.
+- **Review:** the storyboard review lists every outline section so the team can edit each one before rendering.

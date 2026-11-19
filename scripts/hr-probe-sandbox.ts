@@ -22,7 +22,9 @@ const PROMPT = `Pre-flight check for a Pit Crew pitch video of a GitHub-only pro
 Leave demo.webm and home.png as files in your working directory. Reply only with the 7 bullets.`;
 
 async function main() {
-  const base = (process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai").replace(/\/+$/, "").replace(/\/v1$/, "");
+  const base = (process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai")
+    .replace(/\/+$/, "")
+    .replace(/\/v1$/, "");
   const key = process.env.HR_API_KEY || process.env.HARNESSROUTER_API_KEY;
   const id = process.env.HARNESS_ID;
   if (!key || !id) throw new Error("Set HR_API_KEY and HARNESS_ID in .env");
@@ -32,7 +34,12 @@ async function main() {
   const res = await fetch(`${base}/v1/responses`, {
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({ input: PROMPT, metadata: { harness_id: id }, stream: true, timeout_seconds: 1200 }),
+    body: JSON.stringify({
+      input: PROMPT,
+      metadata: { harness_id: id },
+      stream: true,
+      timeout_seconds: 1200,
+    }),
   });
   console.log(`HTTP ${res.status}`);
   if (!res.ok || !res.body) return console.log(await res.text());
@@ -41,25 +48,66 @@ async function main() {
   for await (const ev of sseEvents(res.body)) {
     const type = String(ev.type);
     if (type === "response.output_text.delta") text += String(ev.delta);
-    else if (type === "response.output_item.added" && (ev.item as { type: string }).type === "function_call")
-      console.log(`${((Date.now() - t0) / 1000).toFixed(0)}s tool: ${(ev.item as { name?: string }).name}`);
+    else if (
+      type === "response.output_item.added" &&
+      (ev.item as { type: string }).type === "function_call"
+    )
+      console.log(
+        `${((Date.now() - t0) / 1000).toFixed(0)}s tool: ${(ev.item as { name?: string }).name}`,
+      );
     else if (/^response\.(completed|failed|incomplete)/.test(type)) {
-      const r = ev.response as { id: string; status: string; usage: unknown; metadata?: { session_id?: string }; error: unknown };
+      const r = ev.response as {
+        id: string;
+        status: string;
+        usage: unknown;
+        metadata?: { session_id?: string };
+        error: unknown;
+      };
       sessionId = r.metadata?.session_id ?? "";
-      console.log(`\n${((Date.now() - t0) / 1000).toFixed(0)}s ${type}`, JSON.stringify({ id: r.id, status: r.status, usage: r.usage, session_id: sessionId, error: r.error }));
+      console.log(
+        `\n${((Date.now() - t0) / 1000).toFixed(0)}s ${type}`,
+        JSON.stringify({
+          id: r.id,
+          status: r.status,
+          usage: r.usage,
+          session_id: sessionId,
+          error: r.error,
+        }),
+      );
     }
   }
   console.log("\n--- report ---\n" + text);
   fs.writeFileSync(path.join(outDir, "report.md"), text);
   if (!sessionId) return;
   const list = await fetch(`${base}/v1/sessions/${sessionId}/files`, { headers });
-  const body = (await list.json().catch(() => ({}))) as { files?: { id?: string; file_id?: string; container_id?: string; filename?: string; path?: string; bytes?: number; download_url?: string }[]; data?: { id?: string; file_id?: string; container_id?: string; filename?: string; path?: string; bytes?: number; download_url?: string }[] };
+  const body = (await list.json().catch(() => ({}))) as {
+    files?: {
+      id?: string;
+      file_id?: string;
+      container_id?: string;
+      filename?: string;
+      path?: string;
+      bytes?: number;
+      download_url?: string;
+    }[];
+    data?: {
+      id?: string;
+      file_id?: string;
+      container_id?: string;
+      filename?: string;
+      path?: string;
+      bytes?: number;
+      download_url?: string;
+    }[];
+  };
   console.log(`files HTTP ${list.status}:`, JSON.stringify(body).slice(0, 800));
   for (const f of body.files ?? body.data ?? []) {
     const name = path.basename(f.filename ?? f.path ?? "");
     // Only our outputs at the top of the workspace, not the cloned repo's own files.
     if (!/\.(webm|mp4|png)$/.test(name) || (f.path ?? name).includes("/")) continue;
-    const url = f.download_url ?? `${base}/v1/containers/${f.container_id}/files/${f.file_id ?? f.id}/content`;
+    const url =
+      f.download_url ??
+      `${base}/v1/containers/${f.container_id}/files/${f.file_id ?? f.id}/content`;
     const dl = await fetch(url.startsWith("http") ? url : `${base}${url}`, { headers });
     if (!dl.ok) {
       console.log(`download ${name}: HTTP ${dl.status}`);

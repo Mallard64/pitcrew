@@ -125,3 +125,46 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Clip polish: a third, low-memory attempt (no full-recording re-encode, 1080p clips, one thread: 346 MB peak vs ~960 MB locally) before falling back to screenshots. A caller's -threads now wins over FFMPEG_THREADS.
 - When the host SIGKILLs ffmpeg, the error and server log now include cgroup memory use/limit, the oom_kill count and the top processes, so the shadcn/ui kill can be diagnosed next time.
 - Checked and rejected: the theory that trim+concat buffers frames during sped-up loading. Measured 643 MB vs 605 MB for a single setpts, so no change.
+
+## 2026-11-18 (night): Pitch outline, GitHub-only projects, team footage, sensitive topics
+**Phase 0 sandbox probe (scripts/hr-probe-sandbox.ts, stemduolingo, 154 s total):**
+- Shell: yes. CPU: 4. RAM: 3.4 GB, no swap. Disk: 15 GB free of 20 GB.
+- Runtimes: Node 22.23, npm 10.9, Python 3.12, git 2.47.
+- Virtual display: `xvfb-run` and `Xvfb` are present.
+- ffmpeg: not on PATH, but Playwright 1.64.1 ships its own copy under `/ms-playwright`.
+- `git clone --depth 1`: 1 s. `npm ci`: 61 s. `next dev` answered 200 after 9 s. A Playwright recordVideo of 1280×720 webm took 12 s.
+- Session files list and download through `GET /v1/sessions/{id}/files` + `download_url` (the response key is `files`).
+- Not measured: the hard runtime cap. We send `timeout_seconds: 1500` for sandbox-run, and 1200 s worked in the probe.
+
+**Supported modes, chosen automatically:**
+- `footage`: uploaded video. ffmpeg runs on our server, but only on the team's video file.
+- `live`: the existing path.
+- `sandbox-run`: web repos (Node with a dev/start script, or Python web frameworks). The agent clones, installs (6 min limit, no secrets, .env.example with empty values), starts on port 4100, explores, then runs our `harness/sandbox/record.cjs`. We download `demo.webm` + `timings.json` + `shots/`, convert to recording.mp4 and polish (1080p lite path).
+- `repo-showcase`: everything else. README images in the demo window, 1–2 code panels (the agent picks file and lines, the server fills in the text from raw.githubusercontent.com), and an architecture diagram. Labeled "From the repository".
+
+**Not built:**
+- `cli-run` (terminal recording) is in the schema but not built; CLI repos get repo-showcase.
+- The xvfb game-binary recording, a stretch goal, is not built.
+- Games never build the engine. Order: a playable link found in the README or homepage (itch.io/WebGL), then uploaded footage, then showcase with a note asking for 30 s of gameplay.
+
+**Safety:**
+- Repo code never runs on our server. We only read files over HTTPS (about 5 GitHub API calls per job; set `GITHUB_TOKEN` if the 60/h unauthenticated limit bites).
+- The sandbox recording is downloaded only from the HarnessRouter base URL and size-capped at 400 MB.
+
+**Outline:**
+- problem → solution → demo → evidence → built → next → ask → end, with empty sections dropped.
+- Default length is now 90–120 s (was 60–90). Presets are 60 s, 2 min and 3 min.
+- Evidence only comes from the team's field or the repo's public GitHub numbers (shown with "Source: github.com/…, date"), and only when meaningful (≥10 stars, ≥2 contributors, ≥10 downloads).
+
+**Sensitive topics:**
+- Detection is keyword based across the README, description and team fields. One hit is enough for mental health; other topics need two.
+- Plans get a small always-visible disclaimer.
+- `checkSensitive` rejects treat/diagnose/cure/heal claims, "replaces your therapist/doctor/lawyer/advisor", "guaranteed/proven", and outcome claims ("reduces anxiety") without a team-provided source.
+- The agent gets one words-only rewrite, then the remaining offending sentences are removed. The team's review edits get the same scrub.
+
+**Uploads:**
+- MP4/MOV up to 500 MB and 3 min, streamed to the container's temp disk (not the 500 MB volume), deleted after 3 h, at most 6 per visitor per hour.
+- ffmpeg drops still stretches over 1.5 s, splits at scene changes into 2–10 s clips and keeps up to 60 s.
+- The agent can't see the footage. It narrates from the README and team fields and must not claim details it can't know. This is a known quality limit.
+
+**Test labels vs. reality:** the three test repos don't match the labels in the request. DevPad is an iPad notebook app with a FastAPI backend, stemduolingo is OmniSTEM (AP Chemistry), and Wumpus is a Unity game. None is a mental-health chatbot, so the mental-health validator is covered by a synthetic plan in tests/outline.test.ts.

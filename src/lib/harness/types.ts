@@ -21,6 +21,8 @@ export type PlanRequest = {
   demoMode?: DemoMode;
   /** Team footage cut into clips (footage mode). */
   footageClips?: { id: string; duration_s: number }[];
+  /** Keyframes of the footage clips, attached so the agent narrates what is really on screen. */
+  footageFrames?: { name: string; path: string }[];
   /** README images we downloaded (repo-showcase). */
   repoImages?: { src: string; alt: string; path: string }[];
   evidence?: string;

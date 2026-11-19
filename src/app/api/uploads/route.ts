@@ -7,13 +7,19 @@ import { saveUpload, UploadError } from "@/lib/uploads";
 export async function POST(req: Request) {
   const key = `upload:${clientKeyFor(clientIp(req))}`;
   // A few uploads per visitor per hour keeps the temp disk safe.
-  if (countRateEvents(key, Date.now() - 60 * 60 * 1000) >= 6) return fail("Too many uploads in the last hour; try again later", 429);
+  if (countRateEvents(key, Date.now() - 60 * 60 * 1000) >= 6)
+    return fail("Too many uploads in the last hour; try again later", 429);
   recordRateEvent(key);
   try {
-    const up = await saveUpload(req.body, req.headers.get("content-type") ?? "", Number(req.headers.get("content-length") ?? 0));
+    const up = await saveUpload(
+      req.body,
+      req.headers.get("content-type") ?? "",
+      Number(req.headers.get("content-length") ?? 0),
+    );
     return json(up, 201);
   } catch (e) {
-    const err = e instanceof UploadError ? e : new UploadError("Upload failed; please try again", 500);
+    const err =
+      e instanceof UploadError ? e : new UploadError("Upload failed; please try again", 500);
     return fail(err.message, err.status);
   }
 }

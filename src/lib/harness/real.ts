@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { readFileSync } from "node:fs";
 /**
  * HarnessRouter client (UHP 2026-10-19). See docs/hr-api.md.
  * POST {base}/v1/responses with metadata.harness_id, stream=true; continue with previous_response_id.
@@ -28,7 +29,7 @@ export function buildPlanPrompt(req: PlanRequest) {
     req.evidence ? `Evidence (from the team: users, quotes, numbers, links): ${req.evidence}` : "No evidence from the team: the evidence section may only use the repo's public signals below (with their source), else omit it.",
     req.builtWith ? `Built with / why (from the team): ${req.builtWith}` : "",
     req.whatsNext ? `What's next (from the team): ${req.whatsNext}` : "No roadmap from the team: omit the next section unless the README or open issues state one.",
-    req.ask ? `The ask (from the team): ${req.ask}` : `No ask from the team: the ask scene is "Try it at ${req.liveUrl || req.repoUrl}".`,
+    req.ask ? `The ask (from the team): ${req.ask}` : `No ask from the team: the ask scene is "Try it at ${(req.liveUrl || req.repoUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, "")}" (write the link without https://).`,
   ];
   if (d) {
     const digest = {
@@ -53,6 +54,24 @@ export function buildPlanPrompt(req: PlanRequest) {
   return parts.filter(Boolean).join("\n\n");
 }
 
+/**
+ * Files the agent can open in its workspace (input_file data URLs; input_image is not passed through).
+ * Used for footage keyframes: small JPEGs, a few per clip.
+ */
+export function withAttachments(text: string, files?: { name: string; path: string }[]) {
+  if (!files?.length) return text;
+  return [
+    {
+      type: "message",
+      role: "user",
+      content: [
+        { type: "input_text", text },
+        ...files.map((f) => ({ type: "input_file", filename: f.name, file_data: `data:image/jpeg;base64,${readFileSync(f.path).toString("base64")}` })),
+      ],
+    },
+  ];
+}
+
 /** The demo-source part of the request. Footage and repository scenes are never presented as live. */
 export function modePrompt(req: PlanRequest) {
   const mode = req.demoMode ?? "live";
@@ -60,11 +79,17 @@ export function modePrompt(req: PlanRequest) {
   const noRecord = `Set video_plan.flow to {"project_name": ..., "url": "${target}", "viewport": {"width":1280,"height":720}, "steps": [...]} with one goto step per demo scene to "${target}" (id = that scene's clip id or s1, s2…, say = its narration, hold_ms 3000): we do not record it.`;
   if (mode === "footage") {
     const clips = (req.footageClips ?? []).map((c) => `${c.id} (${c.duration_s.toFixed(1)} s)`).join(", ");
+    const frames = req.footageFrames?.map((f) => f.name).join(", ");
+    const imgs = (req.repoImages ?? []).map((i) => `${i.src} (${i.path}${i.alt ? `, "${i.alt}"` : ""})`).join("; ");
     return [
       `Demo mode: footage. The team uploaded their own footage; we cut its active parts into clips: ${clips}.`,
-      `Each demo scene shows one clip: elements [{"type":"clip","step_id":"<clip id>","zoom":"none"}], in the order that tells the story best. Narrate what a viewer sees in that part of the team's footage, using the README and the team's description to name it; never claim a detail you can't know from them, and never call it live.`,
+      frames
+        ? `Attached in your workspace are frames from each clip (${frames}: start, middle and end of that clip). Look at every frame with your vision tool BEFORE writing narration. Each clip's narration must describe only what its frames show; the README and the team's text may name things, never add events that aren't in the frames.`
+        : "Narrate from the README and the team's description, and never claim a detail you can't know from them.",
+      `Each demo scene shows one clip: elements [{"type":"clip","step_id":"<clip id>","zoom":"none"}], in the order that tells the story best. Never call the footage live.`,
+      imgs ? `You may add up to 2 extra demo scenes with README screenshots ({"type":"image","src":"<src>","fit":"contain"}), shown as "From the repository": ${imgs}.` : "",
       noRecord,
-    ].join("\n");
+    ].filter(Boolean).join("\n");
   }
   if (mode === "sandbox-run") return sandboxPrompt(req.repoUrl ?? "");
   if (mode === "repo-showcase") {
@@ -288,7 +313,7 @@ export class HarnessRouterPlanner implements Planner {
   }
 
   plan(req: PlanRequest) {
-    return this.call({ input: buildPlanPrompt(req), ...(req.user ? { user: req.user } : {}), ...(req.timeoutSeconds ? { timeout_seconds: req.timeoutSeconds } : {}) });
+    return this.call({ input: withAttachments(buildPlanPrompt(req), req.footageFrames), ...(req.user ? { user: req.user } : {}), ...(req.timeoutSeconds ? { timeout_seconds: req.timeoutSeconds } : {}) });
   }
 
   research(req: { sessionId: string; prompt: string; user?: string }) {

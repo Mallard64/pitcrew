@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "seed": 1973,
+  "style_kit": "studio",
+  "brand": {
+    "primary": "#D9822B"
+  },
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "fps": 30,
+  "music": null,
+  "credit": true,
+  "demo_mode": "footage",
+  "scenes": [
+    {
+      "id": "problem",
+      "section": "problem",
+      "layout": "big-statement",
+      "duration_s": 10.4,
+      "narration": "You creep through a dark cave and step into a pit. In the classic game, that one wrong step ends the hunt, and you can't do anything about it.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "One wrong step into a pit shouldn't end the whole hunt",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "duration_s": 11.7,
+      "narration": "Hunt the Wumpus remakes the 1973 cave game in Unity. Now a hazard starts a trivia duel, with a question a language model writes on the spot.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Hazards start a trivia duel instead of ending the game",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "demo1",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 8.9,
+      "narration": "The hex map of the 30-room cave. Colour tells you about your room, and text warns of neighbouring rooms, like a smell of wumpus.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "f1",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "demo2",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 7.5,
+      "narration": "A hazard opens a trivia duel. A right answer gets you out of the pit or drives the monster off.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "f2",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "built",
+      "section": "built",
+      "layout": "diagram",
+      "duration_s": 11,
+      "narration": "The cave stays loaded in one scene. A hazard loads the trivia scene on top, which asks OpenAI, or falls back to offline questions.",
+      "elements": [
+        {
+          "type": "diagram",
+          "kind": "flow",
+          "nodes": [
+            {
+              "id": "gen",
+              "label": "CellGenerator"
+            },
+            {
+              "id": "player",
+              "label": "PlayerScript"
+            },
+            {
+              "id": "trivia",
+              "label": "TriviaDisplay"
+            },
+            {
+              "id": "client",
+              "label": "OpenAIClient"
+            },
+            {
+              "id": "api",
+              "label": "OpenAI API"
+            },
+            {
+              "id": "bank",
+              "label": "Offline question bank"
+            },
+            {
+              "id": "board",
+              "label": "Leaderboard"
+            }
+          ],
+          "edges": [
+            {
+              "from": "gen",
+              "to": "player",
+              "label": "builds cave"
+            },
+            {
+              "from": "player",
+              "to": "trivia",
+              "label": "loads on hazard"
+            },
+            {
+              "from": "trivia",
+              "to": "client",
+              "label": "asks"
+            },
+            {
+              "from": "client",
+              "to": "api",
+              "label": "request"
+            },
+            {
+              "from": "client",
+              "to": "bank",
+              "label": "fallback"
+            },
+            {
+              "from": "trivia",
+              "to": "player",
+              "label": "right or wrong"
+            },
+            {
+              "from": "player",
+              "to": "board",
+              "label": "score"
+            }
+          ]
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "duration_s": 5.7,
+      "narration": "Try it at github dot com slash Mallard64 slash Wumpus.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Try it at https://github.com/Mallard64/Wumpus",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "duration_s": 2.5,
+      "narration": "",
+      "elements": [],
+      "transition_in": "iris"
+    }
+  ],
+  "flow": {
+    "project_name": "Hunt the Wumpus",
+    "url": "https://github.com/Mallard64/Wumpus",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "f1",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "In a 30-room hex cave, colour tells you about your room, and text hints at the rooms next to it, like a smell of wumpus."
+      },
+      {
+        "id": "f2",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "A hazard starts a trivia duel, and your answer decides what happens next."
+      }
+    ]
+  },
+  "sources": [],
+  "target_s": 60
+}

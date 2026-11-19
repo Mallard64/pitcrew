@@ -39,17 +39,25 @@ function sweep() {
 }
 
 export class UploadError extends Error {
-  constructor(message: string, readonly status = 400) {
+  constructor(
+    message: string,
+    readonly status = 400,
+  ) {
     super(message);
   }
 }
 
 /** Streams the request body to disk with a hard size cap, then checks it's a video ≤ 3 min. */
-export async function saveUpload(body: ReadableStream<Uint8Array> | null, contentType: string, declaredBytes: number): Promise<{ id: string; duration_s: number; bytes: number }> {
+export async function saveUpload(
+  body: ReadableStream<Uint8Array> | null,
+  contentType: string,
+  declaredBytes: number,
+): Promise<{ id: string; duration_s: number; bytes: number }> {
   const ext = EXT[contentType.split(";")[0].trim().toLowerCase()];
   if (!ext) throw new UploadError("Upload an MP4 or MOV file");
   if (!body) throw new UploadError("Empty upload");
-  if (declaredBytes > MAX_UPLOAD_BYTES) throw new UploadError("Footage must be 500 MB or less", 413);
+  if (declaredBytes > MAX_UPLOAD_BYTES)
+    throw new UploadError("Footage must be 500 MB or less", 413);
   sweep();
   fs.mkdirSync(dir(), { recursive: true });
   const id = crypto.randomBytes(12).toString("base64url");
@@ -57,13 +65,15 @@ export async function saveUpload(body: ReadableStream<Uint8Array> | null, conten
   let bytes = 0;
   const capped = Readable.fromWeb(body as never).on("data", (chunk: Buffer) => {
     bytes += chunk.length;
-    if (bytes > MAX_UPLOAD_BYTES) capped.destroy(new UploadError("Footage must be 500 MB or less", 413));
+    if (bytes > MAX_UPLOAD_BYTES)
+      capped.destroy(new UploadError("Footage must be 500 MB or less", 413));
   });
   try {
     await pipeline(capped, fs.createWriteStream(file));
     const duration_s = await probeDuration(file).catch(() => 0);
     if (!duration_s) throw new UploadError("That file doesn't look like a playable video");
-    if (duration_s > MAX_UPLOAD_SECONDS + 1) throw new UploadError("Footage must be 3 minutes or shorter");
+    if (duration_s > MAX_UPLOAD_SECONDS + 1)
+      throw new UploadError("Footage must be 3 minutes or shorter");
     return { id, duration_s: Math.round(duration_s * 10) / 10, bytes };
   } catch (e) {
     fs.rmSync(file, { force: true });

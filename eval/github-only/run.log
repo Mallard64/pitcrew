@@ -1,0 +1,13 @@
+2026-11-19T04:37:56.001Z new build live after 75s
+2026-11-19T04:38:11.154Z upload hunt-the-wumpus-gameplay.mp4: 201 {"id":"2sAn8zBQShErsCPK","duration_s":10.4,"bytes":550555}
+2026-11-19T04:38:11.445Z create wumpus: 201 {"id":"wtlRH16x"}
+2026-11-19T04:38:11.533Z create omnistem: 201 {"id":"PrqgfguM"}
+2026-11-19T04:38:11.619Z create devpad: 201 {"id":"vmwOaWyD"}
+2026-11-19T04:38:11.723Z create regression-excalidraw: 201 {"id":"Xv0xrEFy"}
+2026-11-19T04:38:31.980Z wumpus wtlRH16x: running (footage)
+2026-11-19T04:38:32.070Z omnistem PrqgfguM: queued
+2026-11-19T04:38:32.158Z devpad vmwOaWyD: queued
+2026-11-19T04:38:32.247Z regression-excalidraw Xv0xrEFy: queued
+2026-11-19T04:45:22.512Z wumpus wtlRH16x: ok (footage)
+2026-11-19T04:45:25.594Z RESULT {"slug":"wumpus","id":"wtlRH16x","url":"https://pitcrew-production-83e5860b.up.railway.app/jobs/wtlRH16x","status":"ok","demo_mode":"footage","notice":null,"duration_s":57.7,"steps":"2/2","kit":"studio","pitch":"7/8","notes":"","error":null,"wall_s":434}
+2026-11-19T04:45:25.675Z omnistem PrqgfguM: running (sandbox-run)

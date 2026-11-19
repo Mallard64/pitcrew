@@ -511,7 +511,7 @@ function chrome(kit: Kit) {
   }
 }
 
-function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode }) {
+function BrowserWindow({ ctx, children, title }: { ctx: Ctx; children: React.ReactNode; title?: string }) {
   const frame = useDesignFrame();
   const fps = DESIGN_FPS;
   const { kit } = ctx;
@@ -583,7 +583,8 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
                 ...c.url,
               }}
             >
-              {ctx.demoMode === "footage"
+              {title ??
+                (ctx.demoMode === "footage"
                 ? "Team footage"
                 : ctx.demoMode === "repo-showcase"
                   ? `From the repository · ${host(ctx.url)}`
@@ -591,7 +592,7 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
                   ? `localhost · ${DEMO_LABEL["sandbox-run"].toLowerCase()}`
                   : kit.window === "terminal"
                     ? `● ~/${host(ctx.url)}`
-                    : host(ctx.url)}
+                    : host(ctx.url))}
             </div>
           </div>
           {c.dots ? <div style={{ width: 47 }} /> : null}
@@ -850,6 +851,8 @@ function Headline({
   const style: React.CSSProperties = {
     ...headlineType(kit, size),
     maxWidth: kit.align === "left" ? 1060 : 1120,
+    // Long links ("github.com/owner/repo") wrap instead of running off the frame.
+    overflowWrap: "anywhere",
   };
   if (kit.headlineMotion === "typewriter") {
     // Characters appear at a steady rate, with a blinking block cursor.
@@ -1221,7 +1224,7 @@ export function Scene({
     return (
       <AbsoluteFill style={{ color: kit.fg, fontFamily: kit.font }}>
         {backdrop}
-        <BrowserWindow ctx={ctx}>
+        <BrowserWindow ctx={ctx} title={`From the repository · ${host(ctx.url)}`}>
           <Img
             src={ctx.media.images[shot.src]}
             style={{

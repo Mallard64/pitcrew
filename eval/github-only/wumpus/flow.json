@@ -1,0 +1,24 @@
+{
+  "project_name": "Hunt the Wumpus",
+  "url": "https://github.com/Mallard64/Wumpus",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "f1",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "In a 30-room hex cave, colour tells you about your room, and text hints at the rooms next to it, like a smell of wumpus."
+    },
+    {
+      "id": "f2",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "A hazard starts a trivia duel, and your answer decides what happens next."
+    }
+  ]
+}

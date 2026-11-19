@@ -14,7 +14,11 @@ export const SANDBOX_INSTALL_MIN = 6;
 
 let recorderSrc = "";
 function recorder() {
-  if (!recorderSrc) recorderSrc = readFileSync(path.join(process.cwd(), "harness", "sandbox", "record.cjs"), "utf8");
+  if (!recorderSrc)
+    recorderSrc = readFileSync(
+      path.join(process.cwd(), "harness", "sandbox", "record.cjs"),
+      "utf8",
+    );
   return recorderSrc;
 }
 
@@ -40,15 +44,21 @@ export async function fetchSandboxRecording(
   outDir: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ timings: StepTiming[]; videoPath: string; stepsOk: number }> {
-  const base = (process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai").replace(/\/+$/, "").replace(/\/v1$/, "");
+  const base = (process.env.HARNESSROUTER_BASE_URL || "https://api.harnessrouter.ai")
+    .replace(/\/+$/, "")
+    .replace(/\/v1$/, "");
   const key = process.env.HR_API_KEY || process.env.HARNESSROUTER_API_KEY;
   if (!key) throw new Error("no HarnessRouter key on the server");
   const headers = { Authorization: `Bearer ${key}`, "UHP-Version": "2026-09-28" };
-  const res = await fetchImpl(`${base}/v1/sessions/${encodeURIComponent(sessionId)}/files`, { headers, signal: AbortSignal.timeout(30000) });
+  const res = await fetchImpl(`${base}/v1/sessions/${encodeURIComponent(sessionId)}/files`, {
+    headers,
+    signal: AbortSignal.timeout(30000),
+  });
   if (!res.ok) throw new Error(`sandbox files: HTTP ${res.status}`);
   const body = (await res.json()) as { files?: SessionFile[]; data?: SessionFile[] };
   const files = body.files ?? body.data ?? [];
-  const want = (p: string) => p === "demo.webm" || p === "timings.json" || /^shots\/[A-Za-z0-9_-]+\.png$/.test(p);
+  const want = (p: string) =>
+    p === "demo.webm" || p === "timings.json" || /^shots\/[A-Za-z0-9_-]+\.png$/.test(p);
   const get = async (f: SessionFile) => {
     if (!f.download_url?.startsWith(base)) throw new Error("unexpected download URL");
     const r = await fetchImpl(f.download_url, { headers, signal: AbortSignal.timeout(60000) });
@@ -58,7 +68,8 @@ export async function fetchSandboxRecording(
   const picked = files.filter((f) => want(f.path ?? ""));
   const video = picked.find((f) => f.path === "demo.webm");
   const timingsFile = picked.find((f) => f.path === "timings.json");
-  if (!video || !timingsFile) throw new Error("the sandbox left no recording (demo.webm + timings.json)");
+  if (!video || !timingsFile)
+    throw new Error("the sandbox left no recording (demo.webm + timings.json)");
   if ((video.bytes ?? 0) > 400 * 1024 * 1024) throw new Error("sandbox recording too large");
   await fs.mkdir(path.join(outDir, "shots"), { recursive: true });
   const webm = path.join(outDir, "sandbox.webm");
@@ -66,10 +77,31 @@ export async function fetchSandboxRecording(
   const raw = JSON.parse((await get(timingsFile)).toString("utf8")) as StepTiming[];
   const timings = raw
     .filter((t) => typeof t.step_id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(t.step_id))
-    .map((t) => ({ step_id: t.step_id, ok: !!t.ok, start_ms: Number(t.start_ms) || 0, end_ms: Number(t.end_ms) || 0, ...(t.error ? { error: String(t.error).slice(0, 200) } : {}), ...(t.box ? { box: t.box } : {}) }));
-  for (const f of picked.filter((x) => x.path?.startsWith("shots/"))) await fs.writeFile(path.join(outDir, f.path!), await get(f));
+    .map((t) => ({
+      step_id: t.step_id,
+      ok: !!t.ok,
+      start_ms: Number(t.start_ms) || 0,
+      end_ms: Number(t.end_ms) || 0,
+      ...(t.error ? { error: String(t.error).slice(0, 200) } : {}),
+      ...(t.box ? { box: t.box } : {}),
+    }));
+  for (const f of picked.filter((x) => x.path?.startsWith("shots/")))
+    await fs.writeFile(path.join(outDir, f.path!), await get(f));
   const videoPath = path.join(outDir, "recording.mp4");
-  await ffmpeg(["-i", webm, "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-pix_fmt", "yuv420p", "-an", videoPath]);
+  await ffmpeg([
+    "-i",
+    webm,
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-crf",
+    "16",
+    "-pix_fmt",
+    "yuv420p",
+    "-an",
+    videoPath,
+  ]);
   await fs.rm(webm, { force: true });
   await fs.writeFile(path.join(outDir, "timings.json"), JSON.stringify(timings, null, 2));
   return { timings, videoPath, stepsOk: timings.filter((t) => t.ok).length };

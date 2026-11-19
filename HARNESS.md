@@ -79,3 +79,17 @@ Final message contains one JSON block:
 - Diversity check: **no two eval videos share the same style kit + layout + transition sequence.**
 - Truth check: **0 unverified stats across the eval set** (P0). The verifier re-runs on every `sources.md` entry.
 - Tune the director prompt on this set (TASKS.md P0).
+
+## Update 2026-11-18 (night)
+- The request now carries:
+  - a demo mode (live / sandbox-run / footage / repo-showcase) with mode-specific rules (`modePrompt` in `src/lib/harness/real.ts`)
+  - repo facts (`repoDigest`)
+  - the team's evidence, built-with and ask fields
+  - a sensitive-topic rule line
+- sandbox-run sends the recorder script (`harness/sandbox/record.cjs`) as text. The agent runs it in its own sandbox, and the server downloads `demo.webm`, `timings.json` and `shots/` from the session's files.
+- The agent may answer `"demo_mode": "repo-showcase"` when the repo won't install or start.
+- Follow-up turns in the same session:
+  - step repair (failed selectors plus the page's real elements)
+  - judge pass
+  - sensitive-topic rewrite (words only)
+- The agent timeout is per request: 420 s by default, 1500 s for sandbox-run.

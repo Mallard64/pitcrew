@@ -267,3 +267,8 @@ _Written (Claude Code, Nov 17); standalone server verified locally. `docker buil
 - Job page: new stepper (`Opening site → Writing the pitch → Planning the demo → Directing → Recording → Voicing → Rendering → Reviewing`), downloads incl. `submission.md` and `sources.md`, style kit + seed shown small, P1 HD/no-credit button (`STRIPE_PAYMENT_LINK`).
 - `/stats`: "X teams / Y finalists used Pit Crew" (finalists = `is_finalist` set in `/admin` from the official list). `/admin`: "mark finalist" toggle.
 **Acceptance:** `npm run build` passes; integration test covers the two new form fields and the finalist count; Playwright smoke test (the one still missing from C9) passes in mock mode.
+
+## Added 2026-11-18 (night) — renderer (done by Claude Code)
+- New sections evidence / built / ask with labels; demo label per mode ("Team footage", "From the repository", "Run from the repo").
+- New elements: `diagram` (dependency columns, animated arrows) and `code` (file panel, line numbers, highlighted lines; text filled server-side).
+- Footage letterboxed (objectFit contain); repo screenshots shown in the demo window; on-screen disclaimer pill for sensitive topics.

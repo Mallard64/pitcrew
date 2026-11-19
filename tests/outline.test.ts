@@ -104,3 +104,18 @@ describe("architecture diagram", () => {
     expect(diagramLayers({ nodes: [{ id: "a", label: "A" }, { id: "b", label: "B" }], edges: [{ from: "a", to: "b" }, { from: "b", to: "a" }] }).flat().sort()).toEqual(["a", "b"]);
   });
 });
+
+describe("footage keyframes for the agent", () => {
+  it("sends frames as input_file data URLs next to the prompt", async () => {
+    const { withAttachments } = await import("../src/lib/harness/real");
+    const fs = await import("node:fs");
+    const os = await import("node:os");
+    const path = await import("node:path");
+    const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "pc-kf-")), "f1-1.jpg");
+    fs.writeFileSync(f, Buffer.from([0xff, 0xd8, 0xff]));
+    expect(withAttachments("hello")).toBe("hello");
+    const input = withAttachments("hello", [{ name: "f1-1.jpg", path: f }]) as { content: { type: string; filename?: string; file_data?: string }[] }[];
+    expect(input[0].content[0]).toEqual({ type: "input_text", text: "hello" });
+    expect(input[0].content[1]).toMatchObject({ type: "input_file", filename: "f1-1.jpg", file_data: "data:image/jpeg;base64,/9j/" });
+  });
+});
