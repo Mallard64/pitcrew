@@ -70,3 +70,8 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 - Sensitive-topic guardrails (mental health, health, finance, legal, children): a disclaimer plus a claim validator.
 - Problems found while testing on production: the 434 MB volume filled up; model-provider 429s; renders killed for memory; footage narration not matching the clip. Each one now has a guard, a retry or a fix, logged in DECISIONS.md.
 - Our submission video (`launch/our-demo.mp4`, 2:42) is built with Pit Crew's own engine from real screen recordings of the live site, including a real run with a script review and the three GitHub-only projects. The pitch videos' own audio plays under their on-screen playback.
+
+## 2026-11-19: Pitch Room
+- Three cheap agents (claude-haiku-5.5) each rewrite the planned script from one angle (customer story, data-first, demo-first); one strong judge (claude-fable-5-2) scores every outline section; any number our claim checker can't find caps a draft at 5.
+- Production run on Excalidraw (60 s): drafts + judge took 63 s and 38,282 tokens; the judge picked "customer story" (7.8/10), we clicked "Use this one" on data-first, and the rendered script was data-first (`ok`, 63.8 s, 4/4 steps).
+- Behind `PITCH_ROOM_ENABLED`; only the winner is rendered, and if all drafts or the judge fail the job keeps the normal script.

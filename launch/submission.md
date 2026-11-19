@@ -10,5 +10,6 @@ Every team in this hackathon has to ship a demo video by the same deadline. Pit 
 - Demo video (made with Pit Crew): launch/our-demo.mp4
 - Traction (from /stats at <TIME>): <N> videos for <M> teams, <F> finalists used Pit Crew, <X>% success rate, median <T> per video
 - Quotes (only with consent): <QUOTES>
+- Pitch Room: three AI agents each draft a pitch, a judge agent scores them against the demo-day outline, and the best one wins. You can pick a different one.
 
 How it works: the HarnessRouter agent does the thinking (plans the click-flow, writes the narration and a progress update from your commits). Our server does the mechanics (Playwright, TTS, ffmpeg), with fallbacks so a team always gets a usable video.

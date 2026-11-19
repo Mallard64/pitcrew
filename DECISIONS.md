@@ -173,3 +173,5 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - In The Big Hack Game, a "Build log" is a forum post with feedback, feature requests and bug reports for HarnessRouter. Our commit-history summary is something else, so calling it a "Build Log draft" was misleading.
 - User-facing text (site, form, job page, README, SPEC, submission and Discord drafts) now says "progress update draft". The internal file name `build_log.md` and its API path stay, so existing jobs and downloads keep working.
 - Our real Build log posts are in `launch/build-log/`.
+
+- 2026-11-19 Pitch Room drafts rewrite only the narration of the already-planned scenes (same ids, shared notes, no per-agent exploration) so recording/rendering stay unchanged and cost stays ~40k tokens; models come from GET /v1/harnesses/{id}/models via fixed cheap/strong preference lists because that endpoint returns no prices.

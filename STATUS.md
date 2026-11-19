@@ -3,6 +3,27 @@
 - **Deadline:** Nov 19, 2026, 11:59 AM PST. Live at https://pitcrew-production-83e5860b.up.railway.app (Railway, manual "Deploy latest commit").
 - **Phase:** feature-complete for submission; tonight's work: pitch outline, GitHub-only projects, team footage, sensitive-topic guardrails.
 
+## Pitch Room (Nov 19, live)
+- **Production URL:** https://pitcrew-production-83e5860b.up.railway.app. `PITCH_ROOM_ENABLED=true` is set on Railway; commit `389369a` is deployed. The checkbox is on the form.
+- **Did it work: yes.** Production job [707K-tZr](https://pitcrew-production-83e5860b.up.railway.app/jobs/707K-tZr) (Excalidraw, 60 s):
+  - all 3 drafts came back (claude-haiku-5.5);
+  - the judge (claude-fable-5-2) picked "customer story" at 7.8/10; the other two scored 6.8 and 6.8;
+  - no draft was capped for unverified numbers;
+  - "Use this one" on the data-first draft worked: the rendered script.md is that draft;
+  - final result: `ok`, 63.8 s, 4/4 steps.
+- **Time and token cost:**
+  - Pitch Room itself took 62.5 s and 38,282 tokens (32,745 in / 5,537 out), drafts and judge combined. HarnessRouter returns tokens only, no USD.
+  - The whole job took 13:30, including the review wait while I took screenshots.
+  - The local e2e run (Hunt the Wumpus, footage, 60 s) took 70 s and 39,085 tokens. It came back `ok` at 62.4 s.
+- **Cost note:** this is on top of the normal plan, research and judge-pass calls. Only the winner is voiced and rendered.
+- **Normal (non-Pitch-Room) run after the deploy:** pending: blocked by our own 20-videos-per-day limit (the test runs used up the rolling 24 h window). A retry is running every 5 min; this line gets updated when it finishes.
+- **Screenshots:** launch/demo-backup/pitch-room-review.jpg (cards with "Use this one") and pitch-room-done.jpg (finished job, "Your pick" next to "Judge's pick").
+- **Limits:**
+  - Drafts rewrite narration only. On-screen headlines stay from the main plan, so a picked draft can open with different words than the title card.
+  - A Pitch Room job always pauses for review. With no pick, it auto-continues with the winner after 10 minutes.
+  - The draft and judge models come from a fixed preference list filtered by GET /v1/harnesses/{id}/models (it lists no prices). Override with PITCH_ROOM_DRAFT_MODEL / PITCH_ROOM_JUDGE_MODEL.
+- **You need to:** nothing required. To turn it off: Railway → Variables → set `PITCH_ROOM_ENABLED=false` → Deploy.
+
 ## Works now (verified)
 - **Live-URL jobs:** the real agent on HarnessRouter plans, the demo is recorded in Chromium, voiced (ElevenLabs, 10 voices) and rendered with Remotion at 1080p60. In the wide test, 7 of 8 production jobs came back ok (Excalidraw, Hoppscotch, Carbon, Mermaid, Squoosh after the step repair, JSON Crack); shadcn/ui came back partial with a screenshot demo.
 - **Pitch outline:** problem → solution → demo → evidence → how it's built → next → ask. Empty sections are omitted. The default length is 90–120 s, with presets 60 s / 2 min / 3 min.

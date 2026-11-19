@@ -23,6 +23,7 @@ Built for The Big Hack Game (HarnessRouter, Stanford vs. Berkeley), where every 
 
 - Live progress: `Opening site → Planning flow → Recording → Writing narration → Voicing → Assembling`
 - Outputs: `demo.mp4` (1280×720 H.264/AAC, faststart), `captions.srt`, `script.md`, `build_log.md`, `thumb.jpg`
+- Pitch Room: three AI agents each draft a pitch, a judge agent scores them against the demo-day outline, and the best one wins. You can pick a different one.
 - Revisions ("make it shorter", "focus on pricing"), continued in the same HarnessRouter session via `previous_response_id`
 - Fallbacks instead of failures: failed steps are dropped, fewer than 3 good steps switches to a screenshot slideshow, TTS errors fall back to silence, an invalid agent plan falls back to the offline planner
 - Guardrails: SSRF guard on the submitted URL and on every browser request, no logins or form submits, per-user/hourly/daily rate limits, 10-minute job timeout
@@ -72,6 +73,7 @@ One job without the web app: `npx tsx scripts/run-local.ts https://example.com "
 | `TTS_PROVIDER`, `TTS_API_KEY`, `TTS_VOICE` | `openai`, `elevenlabs`, `piper` or `none` (silent, captions only) |
 | `ADMIN_TOKEN` | Protects `/admin` |
 | `MAX_JOBS_PER_HOUR`, `MAX_JOBS_PER_USER_PER_DAY`, `MAX_JOBS_PER_DAY`, `MAX_CONCURRENT_JOBS` | Rate limits and budget cap |
+| `PITCH_ROOM_ENABLED`, `PITCH_ROOM_DRAFT_MODEL`, `PITCH_ROOM_JUDGE_MODEL` | Pitch Room on/off (default off); optional model overrides (default: cheapest/strongest allowed by the Harness) |
 | `DATA_DIR` | SQLite + job files (`/data` in Docker) |
 
 ## Tests
