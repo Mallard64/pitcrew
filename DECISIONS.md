@@ -168,3 +168,8 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - The agent can't see the footage. It narrates from the README and team fields and must not claim details it can't know. This is a known quality limit.
 
 **Test labels vs. reality:** the three test repos don't match the labels in the request. DevPad is an iPad notebook app with a FastAPI backend, stemduolingo is OmniSTEM (AP Chemistry), and Wumpus is a Unity game. None is a mental-health chatbot, so the mental-health validator is covered by a synthetic plan in tests/outline.test.ts.
+
+## 2026-11-19: "Build Log draft" renamed to "progress update draft"
+- In The Big Hack Game, a "Build log" is a forum post with feedback, feature requests and bug reports for HarnessRouter. Our commit-history summary is something else, so calling it a "Build Log draft" was misleading.
+- User-facing text (site, form, job page, README, SPEC, submission and Discord drafts) now says "progress update draft". The internal file name `build_log.md` and its API path stay, so existing jobs and downloads keep working.
+- Our real Build log posts are in `launch/build-log/`.

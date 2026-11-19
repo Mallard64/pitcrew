@@ -1,6 +1,6 @@
 # Pit Crew
 
-Paste your project's live link and get a narrated demo video (`demo.mp4`), captions, and a Build Log draft in a few minutes.
+Paste your project's live link and get a narrated demo video (`demo.mp4`), captions, and a progress update draft in a few minutes.
 
 > **Direction (in progress, see [SPEC.md](SPEC.md)):** "Others record a walkthrough. Pit Crew makes your pitch." Next version: a 60–90s pitch video (problem → solution → demo → what's next) directed by the agent and rendered with Remotion, plus submission text and verified sources. What's described below is what runs **today**.
 
@@ -46,7 +46,7 @@ Browser ──POST /api/jobs──► Next.js (one container)
                        SQLite /data/pitcrew.db  +  /data/jobs/<id>/v<n>/ files
 ```
 
-The agent does the thinking (flow JSON, narration, build log). Our server does the mechanics (Chromium, TTS, ffmpeg). This is "Plan B" in [SPEC.md](SPEC.md); the reasoning is in [DECISIONS.md](DECISIONS.md). HarnessRouter API notes: [docs/hr-api.md](docs/hr-api.md).
+The agent does the thinking (flow JSON, narration, progress update). Our server does the mechanics (Chromium, TTS, ffmpeg). This is "Plan B" in [SPEC.md](SPEC.md); the reasoning is in [DECISIONS.md](DECISIONS.md). HarnessRouter API notes: [docs/hr-api.md](docs/hr-api.md).
 
 ## Run locally
 

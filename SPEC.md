@@ -1,7 +1,7 @@
 # SPEC: Pit Crew
 
 ## One-liner
-Paste your hackathon project's link and get a narrated **pitch video**, a Build Log draft and your submission text in minutes.
+Paste your hackathon project's link and get a narrated **pitch video**, a progress update draft and your submission text in minutes.
 **Others record a walkthrough. Pit Crew makes your pitch.** (Competitors: `COMPETITORS.md`. Never claim "first".)
 
 ## Users

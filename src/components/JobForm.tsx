@@ -100,7 +100,7 @@ export default function JobForm() {
       </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-slate-200">
-          Public GitHub repo <span className="font-normal text-slate-500">(needed if there&apos;s no live link; also writes the Build Log)</span>
+          Public GitHub repo <span className="font-normal text-slate-500">(needed if there&apos;s no live link; also drafts your progress update)</span>
         </span>
         <input name="repo_url" placeholder="https://github.com/you/project" className="field" />
         <span className="block text-xs text-slate-500">

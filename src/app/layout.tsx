@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: "Pit Crew: your hackathon pitch video from a live link",
   description:
-    "Paste your project's link. Pit Crew writes the pitch, records a live demo, checks every statistic and hands you a narrated pitch video, submission text and a Build Log draft.",
+    "Paste your project's link. Pit Crew writes the pitch, records a live demo, checks every statistic and hands you a narrated pitch video, submission text and a progress update draft.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

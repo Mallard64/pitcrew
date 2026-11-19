@@ -42,8 +42,8 @@ const GETS = [
     d: "What it is, the problem, how it works and what's next, written from your site and repo. Ready to paste.",
   },
   {
-    t: "Build Log draft",
-    d: "Dated sections from your commit history: what you built, decided, struggled with. Add a public repo to get it.",
+    t: "Progress update draft",
+    d: "A dated summary of what you built and changed, written from your commit history. Add a public repo to get it.",
   },
   {
     t: "sources.md",
@@ -90,7 +90,7 @@ export default async function Home() {
           </h1>
           <p className="max-w-xl text-lg text-slate-400">
             Paste your project&apos;s live link. You get a narrated pitch video with a real recorded
-            demo, submission text and a Build Log draft, with every statistic checked against its
+            demo, submission text and a progress update draft, with every statistic checked against its
             source.
           </p>
           <div className="flex flex-wrap items-center gap-3">

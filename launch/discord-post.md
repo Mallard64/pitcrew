@@ -2,7 +2,7 @@
 
 **Need a pitch video before Wednesday 11:59 AM? Send us your link, and Pit Crew makes your pitch.**
 
-Not just a screen recording: a 60–90s video that goes problem → solution → live demo → what's next, with captions, plus a Build Log draft and submission text. Built on HarnessRouter. Free for Big Hack Game teams.
+Not just a screen recording: a 60–90s video that goes problem → solution → live demo → what's next, with captions, plus a progress update draft and submission text. Built on HarnessRouter. Free for Big Hack Game teams.
 
 Reply here or DM with: project name, live URL, repo (optional), and one line on the problem it solves. We'll send your video back. The self-serve app is going live shortly: <LIVE_URL>.
 

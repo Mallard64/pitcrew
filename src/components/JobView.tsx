@@ -68,7 +68,7 @@ const FINAL = ["ok", "partial", "failed"];
 /** Everything after the video, which gets its own primary button. */
 const DOWNLOADS: [string, string][] = [
   ["captions.srt", "Captions (srt)"],
-  ["build_log.md", "Build Log draft"],
+  ["build_log.md", "Progress update draft"],
   ["submission.md", "Submission text"],
   ["sources.md", "Sources"],
   ["script.md", "Script"],
@@ -264,7 +264,7 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
                   ))}
                 </ul>
               </div>
-              {!has("build_log.md") && <p className="text-xs text-slate-500">Add a public GitHub repo next time to get a Build Log draft.</p>}
+              {!has("build_log.md") && <p className="text-xs text-slate-500">Add a public GitHub repo next time to get a progress update draft.</p>}
             </div>
             <form onSubmit={revise} className="card space-y-2">
               <h2 className="font-semibold text-white">Revise</h2>
