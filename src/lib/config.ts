@@ -33,17 +33,23 @@ export const config = {
   get pitchRoomEnabled() {
     return process.env.PITCH_ROOM_ENABLED === "true";
   },
-  /** Landing-page pilot line: hidden until PILOT_PARTNER_ENABLED=true and both values are set. */
-  get pilotPartner() {
-    const size = int(process.env.PILOT_PARTNER_SIZE, 0);
-    const season = (process.env.PILOT_PARTNER_SEASON ?? "").trim();
-    return process.env.PILOT_PARTNER_ENABLED === "true" && size && season ? { size, season } : null;
+  /** Landing-page organizer line: shown only when PILOT_PARTNER_ENABLED=true. ORGANIZER_LINE overrides the default text. */
+  get organizerLine() {
+    if (process.env.PILOT_PARTNER_ENABLED !== "true") return "";
+    return (process.env.ORGANIZER_LINE ?? "").trim() || "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team.";
   },
-  /** Paid count and dollars collected aren't in our DB (Stripe holds them), so they're set by hand from the Stripe dashboard. Unset = hidden. */
+  /**
+   * Payments aren't in our DB (Stripe holds them), so these are set by hand from the Stripe dashboard. Unset = hidden.
+   * TRACTION_COLLECTED_USD / TRACTION_PAID_COUNT are money actually received and the people who paid it.
+   * TRACTION_ORGANIZER_USD is an organizer's commitment; set TRACTION_ORGANIZER_RECEIVED=true only once that money has arrived
+   * (and include it in the collected total and paid count).
+   */
   get paidTraction() {
     const paid = int(process.env.TRACTION_PAID_COUNT, 0);
     const usd = int(process.env.TRACTION_COLLECTED_USD, 0);
-    return paid && usd ? { paid, usd } : null;
+    const organizerUsd = int(process.env.TRACTION_ORGANIZER_USD, 0);
+    const organizerReceived = process.env.TRACTION_ORGANIZER_RECEIVED === "true";
+    return paid && usd ? { paid, usd, organizerUsd, organizerReceived } : null;
   },
   /** Public link to our HarnessRouter build log thread (empty = no link). */
   get buildLogUrl() {

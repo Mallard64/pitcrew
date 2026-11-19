@@ -74,8 +74,8 @@ One job without the web app: `npx tsx scripts/run-local.ts https://example.com "
 | `ADMIN_TOKEN` | Protects `/admin` |
 | `MAX_JOBS_PER_HOUR`, `MAX_JOBS_PER_USER_PER_DAY`, `MAX_JOBS_PER_DAY`, `MAX_CONCURRENT_JOBS` | Rate limits and budget cap |
 | `STRIPE_PAYMENT_LINK` | Optional Stripe Payment Link (`https://buy.stripe.com/…`) shown when a team hits its daily limit; limits are raised by hand after payment |
-| `PILOT_PARTNER_ENABLED`, `PILOT_PARTNER_SIZE`, `PILOT_PARTNER_SEASON` | Landing-page pilot-partner line (labeled as intent, not revenue). Hidden unless enabled and both values are set |
-| `TRACTION_PAID_COUNT`, `TRACTION_COLLECTED_USD` | Paid count and dollars collected for the traction strip, copied by hand from the Stripe dashboard (not in our DB). Hidden unless both are set |
+| `PILOT_PARTNER_ENABLED`, `ORGANIZER_LINE` | Landing-page organizer line; shown only when enabled. `ORGANIZER_LINE` overrides the default (unnamed) text |
+| `TRACTION_PAID_COUNT`, `TRACTION_COLLECTED_USD`, `TRACTION_ORGANIZER_USD`, `TRACTION_ORGANIZER_RECEIVED` | Payment numbers for the traction strip, copied by hand from Stripe (not in our DB). Hidden unless paid count and collected are set. The organizer amount shows as "committed" until `TRACTION_ORGANIZER_RECEIVED=true` |
 | `BUILD_LOG_URL` | Public link to our HarnessRouter build log thread (hidden if unset) |
 | `PITCH_ROOM_ENABLED`, `PITCH_ROOM_DRAFT_MODELS`, `PITCH_ROOM_JUDGE_MODEL` | Pitch Room on/off (default off); optional overrides (default: three different cheap models, one per provider, and the strongest judge the Harness allows) |
 | `DATA_DIR` | SQLite + job files (`/data` in Docker) |

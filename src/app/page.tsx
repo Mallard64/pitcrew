@@ -85,7 +85,7 @@ export default async function Home() {
   await connection();
   const s = getStats();
   const paid = config.paidTraction;
-  const pilot = config.pilotPartner;
+  const organizerLine = config.organizerLine;
   const freeLimit = config.maxJobsPerUserPerDay;
   const buildLogUrl = config.buildLogUrl;
   return (
@@ -127,8 +127,19 @@ export default async function Home() {
                 {paid && (
                   <>
                     {" · "}
-                    <span className="font-semibold text-white">{paid.paid}</span> paid to keep going
-                    after the free limit (${paid.usd} collected)
+                    <span className="font-semibold text-white">${paid.usd}</span> collected
+                    {" · "}
+                    <span className="font-semibold text-white">{paid.paid}</span>
+                    {paid.organizerReceived
+                      ? ` paying customer${paid.paid === 1 ? "" : "s"}, including our first hackathon organizer`
+                      : ` paying user${paid.paid === 1 ? "" : "s"}`}
+                    {!paid.organizerReceived && paid.organizerUsd > 0 && (
+                      <>
+                        {" · "}
+                        <span className="font-semibold text-white">${paid.organizerUsd}</span> committed by a
+                        hackathon organizer
+                      </>
+                    )}
                   </>
                 )}
                 {" · "}
@@ -136,13 +147,7 @@ export default async function Home() {
                   live stats
                 </a>
               </p>
-              {pilot && (
-                <p className="text-slate-500">
-                  <span className="font-medium text-slate-300">Pilot partner (intent, not revenue):</span>{" "}
-                  an upcoming student hackathon (~{pilot.size} participants, {pilot.season}) plans to offer
-                  Pit Crew to all teams. Letter of intent available on request.
-                </p>
-              )}
+              {organizerLine && <p className="text-slate-300">{organizerLine}</p>}
             </div>
           )}
         </div>
@@ -345,6 +350,17 @@ export default async function Home() {
               .
             </p>
           </div>
+        </div>
+        <div className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-semibold text-white">For organizers</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Give every team at your hackathon a pitch video. Organizer plans from $100 per event.
+            </p>
+          </div>
+          <a href="https://github.com/Mallard64/pitcrew/issues" className="btn-ghost w-fit px-4 py-2 text-sm">
+            Contact us
+          </a>
         </div>
       </section>
 
