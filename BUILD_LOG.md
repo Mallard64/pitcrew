@@ -63,3 +63,10 @@ Public log for the Best Build Log award. Short, specific, honest entries: what w
 ## 2026-11-18 (late): length slider + UI close-ups
 - Teams pick a length from 30s to 3 min. The agent gets a section budget for that length, the voice pace aims for it, and the pitch check judges against it.
 - New "inspect" camera: instead of only zooming in (and losing the rest of the screen), the demo spotlights the panel and pops out a magnified, live copy of it beside the panel. Checked on rendered tldraw frames: it stays on screen and never covers what it magnifies.
+
+## 2026-11-18 (late night): GitHub-only projects, team footage, and our own demo video
+- Pitch outline (problem → demo → evidence → how it's built → next → ask), a 90–120 s default and presets up to 3 min.
+- Projects without a live link: the agent clones, installs and records the app inside the HarnessRouter sandbox (OmniSTEM, DevPad), never on our server. Games use the team's footage, and the agent looks at keyframes before narrating (Hunt the Wumpus). Repos that won't run get a labeled repository showcase with code panels and an architecture diagram.
+- Sensitive-topic guardrails (mental health, health, finance, legal, children): a disclaimer plus a claim validator.
+- Problems found while testing on production: the 434 MB volume filled up; model-provider 429s; renders killed for memory; footage narration not matching the clip. Each one now has a guard, a retry or a fix, logged in DECISIONS.md.
+- Our submission video (`launch/our-demo.mp4`, 2:42) is built with Pit Crew's own engine from real screen recordings of the live site, including a real run with a script review and the three GitHub-only projects. The pitch videos' own audio plays under their on-screen playback.

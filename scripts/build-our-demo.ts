@@ -129,7 +129,7 @@ async function main() {
     section: "built",
     layout: "diagram",
     narration:
-      "Here's how it works. Our server hands the project to an agent on HarnessRouter, which explores the site or runs the repo, and writes the plan as JSON. Our server checks every statistic against its source, records the demo, you review the script, then ElevenLabs voices it and Remotion renders it.",
+      "Here's how it works. Our server hands the project to an agent on HarnessRouter, which explores the site or runs the repo in its sandbox, and writes the plan as JSON. Our server checks every statistic against its source page, records the demo, waits for your review, then ElevenLabs voices it and Remotion renders it.",
     elements: [
       {
         type: "diagram",
@@ -214,7 +214,7 @@ async function main() {
   });
 
   // 1. Voice (Sarah), paced for a ~115 s video.
-  const pace = choosePace(scenes, lengthWindow(115));
+  const pace = choosePace(scenes, lengthWindow(150));
   const script = {
     segments: scenes
       .filter((s) => s.narration)
@@ -228,10 +228,10 @@ async function main() {
   for (const sc of scenes) sc.duration_s = fitSceneDuration(sc, len.get(sc.id));
   // The finished videos get time to play; the others follow the narration.
   const extra: Record<string, number> = {
-    demo_c_done: 6,
-    demo_c_omnistem: 2,
-    demo_c_devpad: 2,
-    demo_c_wumpus: 2,
+    demo_c_done: 10,
+    demo_c_omnistem: 4,
+    demo_c_devpad: 4,
+    demo_c_wumpus: 4,
   };
   for (const sc of scenes)
     if (extra[sc.id]) sc.duration_s = Math.round((sc.duration_s + extra[sc.id]) * 10) / 10;

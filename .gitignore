@@ -50,3 +50,8 @@ eval/samples/*.mp4
 /tmp/
 eval/runs/
 remotion-bundle/
+
+# Large local media (demo footage, render workdirs, eval videos)
+launch/footage/
+launch/build/
+eval/github-only/**/*.mp4

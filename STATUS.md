@@ -28,8 +28,20 @@
 - **Clip polish on ui.shadcn.com** was SIGKILLed twice on Railway (cause unknown); the job degrades to screenshots and reports partial.
 - **Real users:** no real-user feedback yet. /stats only counts our own test runs.
 
+## Our demo video (launch/our-demo.mp4, 2:42, 1080p60, H.264 + AAC)
+Path B: Pit Crew didn't make this video by itself, so the video says "Rendered with Pit Crew's own video engine", not "made by Pit Crew".
+- **What's real:** every product shot is a screen recording of the live site from tonight:
+  - a real Excalidraw job (form → agent → script review with one edit → finished video)
+  - the OmniSTEM, DevPad and Wumpus job pages playing their generated videos
+  - the pitch videos' own audio is mixed under their playback, in sync
+- **What's edited:** the ~6.6 min agent wait is sped up ×44 and labeled. The narration, captions, diagram and title cards were rendered by Pit Crew's renderer (Blueprint look, Sarah voice) from a hand-written plan (`scripts/build-our-demo.ts`).
+- **No stats, no user claims:** the test runs are labeled as ours.
+- **Files:** narration in launch/our-demo-script.md, captions in launch/our-demo.srt, sources in launch/our-demo-sources.md.
+
 ## What I (the human) need to do
-- Submit: upload the demo video as YouTube unlisted or Loom, and paste the link into the project page's "Demo video" field.
+- Watch launch/our-demo.mp4 once with sound.
+- Upload it to YouTube as **Unlisted**: Create → Upload video → pick the file → Visibility: Unlisted → Publish → copy the link. (Or Loom: New video → Upload a video.) Optionally add launch/our-demo.srt as subtitles.
+- Paste the link into the project page's **Demo video** field and submit before **Nov 19, 11:59 AM PST**.
 - Optional: grow the Railway volume (Settings → Volume) if real traffic comes in.
 
 ## GitHub-only eval (Nov 18 night)
