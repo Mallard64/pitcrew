@@ -13,11 +13,11 @@
 | ffmpeg | **not on PATH** (Playwright's copy under `/ms-playwright` only) |
 | Display | `xvfb-run`/`Xvfb` present |
 | Network | public web OK; `git clone` 1 s; `npm ci` 61 s |
-| Max runtime | still unknown; 1200 s worked |
+| Max runtime | undocumented; `timeout_seconds: 1500` was accepted |
 
 We made two architecture decisions blind and wrote two probe scripts (one cost about 390k input tokens).
 
-**Cost to us:** about 2 hours of probes and rework. Our first plan assumed ffmpeg would be in the sandbox.
+**Cost to us:** two probe scripts plus a design change. Our first plan assumed ffmpeg would be in the sandbox.
 
 **Loved:** once we knew the limits, the sandbox was excellent. It cloned, installed, started and Playwright-recorded a Next.js app in 154 s, and the webm came back intact through the session files API.
 

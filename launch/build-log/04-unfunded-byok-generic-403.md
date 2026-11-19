@@ -8,9 +8,9 @@
 
 1. Our HarnessRouter key was sent to TokenRouter's base URL (copied env) → **401**. Fair, though a hint like "this looks like a HarnessRouter key" would help.
 2. Auth and Harness ID were fine: we got HTTP 200 and a `hsess…` session was created. But **every model then failed with 403**. The cause was a $0.00 quota on the TokenRouter account behind BYOK. We only found that by calling TokenRouter directly and seeing `insufficient_user_quota`.
-3. After adding credit to a new TokenRouter key, the old key was still saved in HarnessRouter's BYOK settings, so we got the same failure again.
+3. A new, funded TokenRouter key went into our `.env` but not into HarnessRouter's BYOK settings, so the same failure continued until we updated BYOK.
 
-**Cost to us:** about 1.5 hours on Nov 17, the evening we planned to start building.
+**Cost to us:** the quota diagnosis alone took about 25 minutes on Nov 17 (17:15 → 17:40 PT), on the evening we planned to start building.
 
 **Loved:** the session and Harness ID were created and reported correctly even while the model call failed. That told us auth was fine and narrowed the search.
 

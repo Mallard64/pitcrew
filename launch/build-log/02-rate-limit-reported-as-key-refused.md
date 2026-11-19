@@ -13,13 +13,13 @@ error: Your tokenrouter key was refused: The model provider refused the request
 ```
 
 Steps we observed (intermittent):
-1. Run 3–4 back-to-back sandbox tasks of about 400k input tokens each on `claude-sonnet-5.5` via BYOK.
+1. Run 3–4 back-to-back multi-minute tasks (sandbox runs, vision) on `claude-sonnet-5.5` via BYOK.
 2. One task fails partway through (after 10 tool calls) with the event above.
 
 - **Expected:** the router retries the provider call with backoff, or returns a clear `rate_limited` error with `retry_after`.
 - **Actual:** `response.failed`; the work so far is lost. "Key was refused" sent us to check the key, which was fine (the next job ran on it).
 
-**Cost to us:** this happened in 2 of 9 production jobs that night. Both fell back to our offline planner (pitch check 4/8 instead of 8/8). We wrote retry logic (30 s wait, one retry) and re-ran both jobs, about 1 hour.
+**Cost to us:** this hit 2 of the 8 production jobs where the agent ran that night. Both fell back to our offline planner, which wrote weaker videos (pitch check 4/8 and 2/8, against 7–8/8 when the agent ran). Adding a retry (30 s wait, once) took about 10 minutes, plus re-running both jobs.
 
 **Loved:** the provider's request id and status pass through verbatim, so the cause was clear once we read past "refused".
 

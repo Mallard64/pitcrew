@@ -14,7 +14,7 @@ Steps to reproduce:
 - **Expected:** a description of the image, or a 4xx naming the unsupported content type.
 - **Actual:** after 24 s, HTTP 200 with *"I can't describe a screenshot because none reached me: there is no image attached to this request, and the workspace has no image files."*
 
-**Cost to us:** our first footage video narrated scenes that weren't in the clip, because the agent had to guess. Finding the cause and the workaround took about 1.5 hours plus a re-run.
+**Cost to us:** our first footage video narrated scenes that weren't in the clip, because the agent had to guess. Finding the cause and the workaround took about 15 minutes, plus re-running the job.
 
 **Loved:** the workaround is good. The same JPEG sent as `{type:"input_file", filename:"f1.jpg", file_data:"data:image/jpeg;base64,…"}` lands in the agent's workspace. Its vision tool then read it accurately: *"Question #1 of 3 … who wrote 'Pride and Prejudice'"*.
 

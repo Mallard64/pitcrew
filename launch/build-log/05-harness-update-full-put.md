@@ -2,7 +2,7 @@
 
 **Title:** Updating a Harness needs a full PUT of every field, so prompt edits risk wiping settings
 
-**Building:** Pit Crew's agent behavior lives in the Harness instructions. We changed them 6 times in two days, adding new video features, a footage mode and sensitive-topic rules, while production was live.
+**Building:** Pit Crew's agent behavior lives in the Harness instructions. We revised them more than 10 times in two days (new video features, a footage mode, sensitive-topic rules), mostly while production was live.
 
 **Blocked:** To change only the instructions, we have to:
 1. `GET /v1/harnesses/{id}` and keep the ETag.
@@ -10,11 +10,11 @@
 3. `PUT` the complete object with `If-Match`, because PUT replaces it and any omitted field resets to its default.
 4. Re-read and compare, because a field-mapping mistake fails silently.
 
-That is a 70-line script (`scripts/hr-harness.ts`) for a one-field change. Separately, a Harness's base can't be changed (we're on `hermes`). Switching would mean a new Harness ID, and usage is tracked per ID.
+That is a 91-line script (`scripts/hr-harness.ts`) for a one-field change. Separately, a Harness's base can't be changed (we're on `hermes`). Switching would mean a new Harness ID, and usage is tracked per ID.
 
 **Cost to us:** about 1 hour writing and checking the script. Every later update needed a careful diff first.
 
-**Loved:** ETag + `If-Match` is the right design. It refused stale writes, and the re-read never showed a mismatch across 6 updates. Instructions living on the Harness rather than in each request also kept our prompts small.
+**Loved:** ETag + `If-Match` is the right design. Combined with a re-read after each write, every update we checked came back with no mismatches. Instructions living on the Harness rather than in each request also kept our prompts small.
 
 **Want:**
 - `PATCH /v1/harnesses/{id}` with merge semantics (and still `If-Match`): `{"instructions":"…"}` changes only that field.

@@ -10,7 +10,7 @@
 - We filter by exact top-level paths and an allow-list (`demo.webm`, `timings.json`, `shots/*.png`), and cap downloads at 400 MB because we found no documented size limit.
 - Nothing marks which files the task produced and which were already there.
 
-**Cost to us:** about 45 minutes and one wasted probe run (about 390k tokens) before downloads worked.
+**Cost to us:** about 20 minutes, and our first download pass silently fetched nothing.
 
 **Loved:** each entry carries a `download_url`, `bytes` and `path`. The webm came back byte-exact and ffmpeg read it with no conversion issues.
 
