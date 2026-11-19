@@ -43,6 +43,20 @@ describe("db", () => {
     expect(s.median_duration_s).toBe(200);
   });
 
+  it("totals delivered video length and counts demo sources", () => {
+    const a = mk("https://e.com", "ok", 100);
+    updateJob(a.id, { contract_json: JSON.stringify({ duration_s: 61.5 }) });
+    const b = mk("https://f.com", "partial", 100);
+    updateJob(b.id, { contract_json: JSON.stringify({ duration_s: 80 }), demo_mode: "sandbox-run" });
+    const c = mk("https://g.com", "failed", 100);
+    updateJob(c.id, { contract_json: JSON.stringify({ duration_s: 999 }), demo_mode: "footage" });
+    const s = getStats();
+    expect(s.video_seconds).toBe(142); // failed jobs don't count
+    expect(s.by_mode["sandbox-run"]).toBe(1);
+    expect(s.by_mode.footage).toBeUndefined();
+    expect(s.by_mode.live).toBeGreaterThanOrEqual(1); // older jobs without a mode count as live
+  });
+
   it("median + projectKey", () => {
     expect(median([])).toBe(0);
     expect(median([3, 1, 2, 10])).toBe(2.5);

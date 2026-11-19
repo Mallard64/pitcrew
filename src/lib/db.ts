@@ -205,10 +205,14 @@ export type Stats = {
   median_duration_s: number;
   thumbs_up: number;
   thumbs_down: number;
+  /** Total length of all delivered videos, from each job's measured output. */
+  video_seconds: number;
+  /** Delivered videos by demo source (jobs from before demo modes count as live). */
+  by_mode: Record<string, number>;
 };
 
 export function getStats(): Stats {
-  const jobs = db().prepare(`SELECT status, live_url, repo_url, duration_ms FROM jobs`).all() as Pick<Job, "status" | "live_url" | "repo_url" | "duration_ms">[];
+  const jobs = db().prepare(`SELECT status, live_url, repo_url, duration_ms, contract_json, demo_mode FROM jobs`).all() as Pick<Job, "status" | "live_url" | "repo_url" | "duration_ms" | "contract_json" | "demo_mode">[];
   const finished = jobs.filter((j) => j.status === "ok" || j.status === "partial" || j.status === "failed");
   const made = finished.filter((j) => j.status !== "failed");
   const fb = db().prepare(`SELECT SUM(rating = 1) AS up, SUM(rating = -1) AS down FROM feedback`).get() as { up: number | null; down: number | null };
@@ -220,6 +224,20 @@ export function getStats(): Stats {
     unique_projects: new Set(made.map((j) => (j.live_url ? projectKey(j.live_url) : (j.repo_url ?? "")))).size,
     success_rate: finished.length ? made.length / finished.length : 0,
     median_duration_s: Math.round(median(made.map((j) => (j.duration_ms ?? 0) / 1000))),
+    video_seconds: Math.round(
+      made.reduce((n, j) => {
+        try {
+          return n + (Number(JSON.parse(j.contract_json ?? "{}").duration_s) || 0);
+        } catch {
+          return n;
+        }
+      }, 0),
+    ),
+    by_mode: made.reduce<Record<string, number>>((m, j) => {
+      const k = j.demo_mode ?? "live";
+      m[k] = (m[k] ?? 0) + 1;
+      return m;
+    }, {}),
     thumbs_up: fb.up ?? 0,
     thumbs_down: fb.down ?? 0,
   };
