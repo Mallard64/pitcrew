@@ -1,0 +1,40 @@
+running
+Reading https://github.com/Mallard64/stemduolingo
+Read the repo: Next.js, React, Tailwind, Supabase, Zustand, TypeScript, 87 files
+Read 56 commits from https://github.com/Mallard64/stemduolingo
+Demo source: the repo, run and recorded in a HarnessRouter sandbox
+Running the repo in a sandbox, then directing the video
+Agent started on HarnessRouter
+Agent checked its notes from earlier videos
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent opened http://localhost:4100/
+Agent used terminal
+Agent opened http://localhost:4100/learn
+Agent used terminal
+harness error: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119044646474727751Bp92piT))
+agent failed (HarnessRouter task failed: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119044646474727751Bp92piT))); falling back to the offline planner
+Planning from the repository and footage (offline planner)
+The repo didn't run in the sandbox; building the demo from the repository instead
+Plan: 9 scenes (local planner, seed 3080955637)
+Pitch check: 4/8 (to fix: hook, problem, wow, length)
+Writing the narration and captions
+Voice pace 0.88× (estimated length 32.9s)
+Voicing with Matilda (upbeat, professional, american)
+Rendering the video
+bundling renderer
+rendering 0%
+rendering 10%
+rendering 20%
+rendering 30%
+rendering 40%
+rendering 50%
+rendering 60%
+rendering 70%
+rendering 80%
+rendering 90%
+rendering 100%
+ok

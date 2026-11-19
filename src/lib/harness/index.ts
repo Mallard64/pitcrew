@@ -18,16 +18,27 @@ class FallbackPlanner implements Planner {
     this.name = primary.name;
   }
   private async *wrap(run: () => AsyncIterable<PlannerEvent>, fb: () => AsyncIterable<PlannerEvent>) {
-    try {
-      let got = false;
-      for await (const ev of run()) {
-        if (ev.type === "plan") got = true;
-        yield ev;
+    // One retry when the model provider is rate-limited (429 / "too many requests"): it usually clears in seconds.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        let got = false;
+        for await (const ev of run()) {
+          if (ev.type === "plan") got = true;
+          yield ev;
+        }
+        if (got) return;
+        yield { type: "log", message: "agent returned no plan; falling back to the offline planner" } as PlannerEvent;
+        break;
+      } catch (e) {
+        const msg = (e as Error).message;
+        if (attempt === 0 && /\b429\b|too many requests|rate.?limit/i.test(msg)) {
+          yield { type: "log", message: "The model provider is busy (rate limit); retrying the agent in 30 s" } as PlannerEvent;
+          await new Promise((r) => setTimeout(r, Number(process.env.AGENT_RETRY_MS ?? 30000)));
+          continue;
+        }
+        yield { type: "log", message: `agent failed (${msg.slice(0, 200)}); falling back to the offline planner` } as PlannerEvent;
+        break;
       }
-      if (got) return;
-      yield { type: "log", message: "agent returned no plan; falling back to the offline planner" } as PlannerEvent;
-    } catch (e) {
-      yield { type: "log", message: `agent failed (${(e as Error).message.slice(0, 200)}); falling back to the offline planner` } as PlannerEvent;
     }
     yield* fb();
   }

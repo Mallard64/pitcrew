@@ -212,7 +212,8 @@ export async function runPipeline(
   let videoPlan: VideoPlan = plan.videoPlan ?? localVideoPlan(input, plan.flow, ctx.digest, seedFor(ctx.liveUrl || input.repoUrl || ""));
   // sandbox-run may fall back to a repo showcase when the project won't install or start.
   let mode: DemoMode = mode0 === "sandbox-run" && plan.demoMode === "repo-showcase" ? "repo-showcase" : mode0;
-  if (mode !== mode0) log("The repo didn't run in the sandbox; building the demo from the repository instead");
+  if (mode !== mode0)
+    log(plan.source === "local" ? "The agent was unavailable, so the demo is built from the repository instead of a sandbox run" : "The repo didn't run in the sandbox; building the demo from the repository instead");
   if (input.look && LOOK_IDS.includes(input.look) && videoPlan.style_kit !== input.look) {
     log(`Using the ${input.look} look you picked (the agent suggested ${videoPlan.style_kit})`);
     videoPlan.style_kit = input.look;

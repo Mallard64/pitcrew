@@ -1,0 +1,47 @@
+1
+00:00:00,300 --> 00:00:04,879
+OmniSTEM: a gamified AP Chemistry web app:
+
+2
+00:00:04,879 --> 00:00:07,496
+Duolingo-style lessons with hearts,
+
+3
+00:00:07,496 --> 00:00:12,076
+XP and streaks, a daily equation-balancing challenge,
+
+4
+00:00:12,076 --> 00:00:15,347
+friends and an item store.
+
+5
+00:00:16,300 --> 00:00:18,991
+Lesson player, from the repository.
+
+6
+00:00:19,700 --> 00:00:22,756
+Daily Balance Builder, from the repository.
+
+7
+00:00:23,500 --> 00:00:26,086
+Skill tree, from the repository.
+
+8
+00:00:26,800 --> 00:00:29,621
+Friends list, from the repository.
+
+9
+00:00:30,400 --> 00:00:33,593
+OmniSTEM is built with Next.js,
+
+10
+00:00:33,593 --> 00:00:36,147
+React, Tailwind, Supabase, Zustand.
+
+11
+00:00:37,100 --> 00:00:40,261
+On GitHub, OmniSTEM has 4 contributors.
+
+12
+00:00:41,300 --> 00:00:46,211
+Try it at github.com/Mallard64/stemduolingo.

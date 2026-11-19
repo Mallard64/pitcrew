@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "seed": 3080955637,
+  "style_kit": "default",
+  "brand": {
+    "primary": "#6366f1"
+  },
+  "size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fps": 30,
+  "credit": true,
+  "scenes": [
+    {
+      "transition_in": "fade",
+      "duration_s": 16,
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "narration": "OmniSTEM: a gamified AP Chemistry web app: Duolingo-style lessons with hearts, XP and streaks, a daily equation-balancing challenge, friends and an item store.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "OmniSTEM",
+          "animation": "word-by-word"
+        },
+        {
+          "type": "text",
+          "text": "A gamified AP Chemistry web app: Duolingo-style lessons with hearts, XP and streaks, a daily equation-balancing challenge, friends…",
+          "role": "body"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 3.4,
+      "id": "demo_img1",
+      "section": "demo",
+      "layout": "full-frame",
+      "narration": "Lesson player, from the repository.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img1.png",
+          "fit": "contain"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 3.8,
+      "id": "demo_img2",
+      "section": "demo",
+      "layout": "full-frame",
+      "narration": "Daily Balance Builder, from the repository.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img2.png",
+          "fit": "contain"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 3.3,
+      "id": "demo_img3",
+      "section": "demo",
+      "layout": "full-frame",
+      "narration": "Skill tree, from the repository.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img3.png",
+          "fit": "contain"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 3.6,
+      "id": "demo_img4",
+      "section": "demo",
+      "layout": "full-frame",
+      "narration": "Friends list, from the repository.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img4.png",
+          "fit": "contain"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 6.7,
+      "id": "built",
+      "section": "built",
+      "layout": "big-statement",
+      "narration": "OmniSTEM is built with Next.js, React, Tailwind, Supabase, Zustand.",
+      "elements": [
+        {
+          "type": "diagram",
+          "kind": "hub-and-spoke",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "OmniSTEM"
+            },
+            {
+              "id": "n0",
+              "label": "Next.js"
+            },
+            {
+              "id": "n1",
+              "label": "React"
+            },
+            {
+              "id": "n2",
+              "label": "Tailwind"
+            },
+            {
+              "id": "n3",
+              "label": "Supabase"
+            },
+            {
+              "id": "n4",
+              "label": "Zustand"
+            },
+            {
+              "id": "n5",
+              "label": "TypeScript"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "n0"
+            },
+            {
+              "from": "app",
+              "to": "n1"
+            },
+            {
+              "from": "app",
+              "to": "n2"
+            },
+            {
+              "from": "app",
+              "to": "n3"
+            },
+            {
+              "from": "app",
+              "to": "n4"
+            },
+            {
+              "from": "app",
+              "to": "n5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 4.2,
+      "id": "evidence",
+      "section": "evidence",
+      "layout": "bullet-reveal",
+      "narration": "On GitHub, OmniSTEM has 4 contributors.",
+      "elements": [
+        {
+          "type": "bullets",
+          "items": [
+            "4 contributors"
+          ],
+          "animation": "slide-up"
+        },
+        {
+          "type": "text",
+          "text": "Source: github.com/Mallard64/stemduolingo, 2026-11-19",
+          "role": "label"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 5.9,
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "narration": "Try it at github.com/Mallard64/stemduolingo.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Try it at github.com/Mallard64/stemduolingo",
+          "animation": "word-by-word"
+        }
+      ]
+    },
+    {
+      "transition_in": "fade",
+      "duration_s": 2.5,
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "narration": "",
+      "elements": []
+    }
+  ],
+  "flow": {
+    "project_name": "OmniSTEM",
+    "url": "https://github.com/Mallard64/stemduolingo",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "s1",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/stemduolingo",
+        "hold_ms": 3000,
+        "say": "Lesson player, from the repository."
+      },
+      {
+        "id": "s2",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/stemduolingo",
+        "hold_ms": 3000,
+        "say": "Daily Balance Builder, from the repository."
+      },
+      {
+        "id": "s3",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/stemduolingo",
+        "hold_ms": 3000,
+        "say": "Skill tree, from the repository."
+      },
+      {
+        "id": "s4",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/stemduolingo",
+        "hold_ms": 3000,
+        "say": "Friends list, from the repository."
+      }
+    ]
+  },
+  "sources": [],
+  "demo_mode": "repo-showcase",
+  "target_s": 60
+}

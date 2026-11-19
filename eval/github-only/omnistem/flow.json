@@ -1,0 +1,38 @@
+{
+  "project_name": "OmniSTEM",
+  "url": "https://github.com/Mallard64/stemduolingo",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/stemduolingo",
+      "hold_ms": 3000,
+      "say": "Lesson player, from the repository."
+    },
+    {
+      "id": "s2",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/stemduolingo",
+      "hold_ms": 3000,
+      "say": "Daily Balance Builder, from the repository."
+    },
+    {
+      "id": "s3",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/stemduolingo",
+      "hold_ms": 3000,
+      "say": "Skill tree, from the repository."
+    },
+    {
+      "id": "s4",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/stemduolingo",
+      "hold_ms": 3000,
+      "say": "Friends list, from the repository."
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "score": 4,
+  "total": 8,
+  "checks": [
+    {
+      "id": "hook",
+      "label": "Opens with a hook, not the product name",
+      "ok": false,
+      "detail": "First line: “OmniSTEM: a gamified AP Chemistry web app: Duolingo-style lessons with hearts, XP and streaks, a daily equation-balancin”"
+    },
+    {
+      "id": "problem",
+      "label": "States a specific problem",
+      "ok": false,
+      "detail": "No problem scene"
+    },
+    {
+      "id": "named",
+      "label": "Names the product when it introduces the fix",
+      "ok": true,
+      "detail": "“OmniSTEM” is said in the solution"
+    },
+    {
+      "id": "demo",
+      "label": "Shows a demo (3+ scenes)",
+      "ok": true,
+      "detail": "4 demo scenes"
+    },
+    {
+      "id": "wow",
+      "label": "Demo ends on a payoff line",
+      "ok": false,
+      "detail": "Last demo line: “Friends list, from the repository.”"
+    },
+    {
+      "id": "length",
+      "label": "Fits about 1:00",
+      "ok": false,
+      "detail": "About 32s before pacing (the voice pace adjusts ±15%)"
+    },
+    {
+      "id": "plain",
+      "label": "No hype words",
+      "ok": true,
+      "detail": "Plain language throughout"
+    },
+    {
+      "id": "short",
+      "label": "Sentences short enough to follow by ear",
+      "ok": true,
+      "detail": "All sentences ≤ 26 words"
+    }
+  ]
+}
