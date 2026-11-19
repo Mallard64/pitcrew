@@ -24,6 +24,14 @@ const ev = (dir: string) =>
 
 type Cut = { id: string; src: string; from: number; to: number };
 
+/** GitHub-only projects: show the original pitch video (from its demo section) after a short look at its job page. */
+const PAGE_INTRO_S = 2.5;
+export const PITCH: Record<string, { file: string; seek: number }> = {
+  c_omnistem: { file: "eval/github-only/omnistem/demo.mp4", seek: 24 },
+  c_devpad: { file: "eval/github-only/devpad/demo.mp4", seek: 17.5 },
+  c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1 },
+};
+
 async function main() {
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(path.join(OUT, "clips"), { recursive: true });
@@ -246,24 +254,36 @@ async function main() {
       : Math.min(Math.max(1, c.to - c.from), sc.duration_s);
     const factor = Math.max(1, raw / sc.duration_s);
     const file = path.join(OUT, "clips", `${c.id}.mp4`);
+    const pitch = PITCH[c.id];
+    if (pitch) {
+      // The job page for a moment (its demo-mode badge), then the original 1080p60 pitch video itself.
+      await ffmpeg([
+        "-ss", c.from.toFixed(2), "-t", PAGE_INTRO_S.toFixed(2), "-i", c.src,
+        "-ss", pitch.seek.toFixed(2), "-t", (sc.duration_s - PAGE_INTRO_S).toFixed(2), "-i", pitch.file,
+        "-filter_complex",
+        "[0:v]scale=1920:1080,fps=60,setsar=1,format=yuv420p[a];[1:v]scale=1920:1080,fps=60,setsar=1,format=yuv420p[b];[a][b]concat=n=2:v=1:a=0[v]",
+        "-map", "[v]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-an", file,
+      ]);
+    } else {
     await ffmpeg([
-      "-ss",
-      c.from.toFixed(2),
-      "-t",
-      raw.toFixed(2),
-      "-i",
-      c.src,
-      "-vf",
-      `setpts=PTS/${factor.toFixed(4)},fps=30,format=yuv420p`,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "18",
-      "-an",
-      file,
-    ]);
+        "-ss",
+        c.from.toFixed(2),
+        "-t",
+        raw.toFixed(2),
+        "-i",
+        c.src,
+        "-vf",
+        `setpts=PTS/${factor.toFixed(4)},fps=30,format=yuv420p`,
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-an",
+        file,
+      ]);
+    }
     await ffmpeg([
       "-sseof",
       "-0.2",

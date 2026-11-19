@@ -1,167 +1,167 @@
 1
-00:00:00,300 --> 00:00:04,435
+00:00:00,300 --> 00:00:04,557
 Every team at this hackathon has to submit a
 
 2
-00:00:04,435 --> 00:00:08,569
+00:00:04,557 --> 00:00:08,815
 demo video. Most of us are making it right
 
 3
-00:00:08,569 --> 00:00:10,407
+00:00:08,815 --> 00:00:10,707
 now, at 3 a.m.
 
 4
-00:00:10,407 --> 00:00:13,163
+00:00:10,707 --> 00:00:13,545
 A good one needs a script,
 
 5
-00:00:13,163 --> 00:00:15,001
+00:00:13,545 --> 00:00:15,437
 a clean recording, editing,
 
 6
-00:00:15,001 --> 00:00:16,839
+00:00:15,437 --> 00:00:17,329
 a voiceover and captions.
 
 7
-00:00:16,839 --> 00:00:19,136
+00:00:17,329 --> 00:00:19,694
 That's hours you don't have.
 
 8
-00:00:20,100 --> 00:00:23,035
+00:00:20,700 --> 00:00:23,899
 Pit Crew makes the pitch video for you.
 
 9
-00:00:23,035 --> 00:00:24,503
+00:00:23,899 --> 00:00:25,498
 Paste your live link,
 
 10
-00:00:24,503 --> 00:00:26,338
+00:00:25,498 --> 00:00:27,497
 or just your GitHub repo.
 
 11
-00:00:27,300 --> 00:00:28,955
+00:00:28,500 --> 00:00:30,028
 Here's a real run.
 
 12
-00:00:28,955 --> 00:00:30,609
+00:00:30,028 --> 00:00:31,555
 I paste Excalidraw's link,
 
 13
-00:00:30,609 --> 00:00:34,746
+00:00:31,555 --> 00:00:35,374
 pick a narrator, and ask to review the script first.
 
 14
-00:00:35,500 --> 00:00:39,419
+00:00:36,100 --> 00:00:40,061
 An agent on HarnessRouter explores the site and plans
 
 15
-00:00:39,419 --> 00:00:43,773
+00:00:40,061 --> 00:00:44,461
 the pitch, while our server records each step in Chromium.
 
 16
-00:00:44,500 --> 00:00:45,889
+00:00:45,200 --> 00:00:46,652
 Before anything is voiced,
 
 17
-00:00:45,889 --> 00:00:48,668
+00:00:46,652 --> 00:00:49,556
 I get the outline and a pitch check,
 
 18
-00:00:48,668 --> 00:00:50,752
+00:00:49,556 --> 00:00:51,734
 and I can change any line.
 
 19
-00:00:51,500 --> 00:00:55,559
+00:00:52,500 --> 00:00:56,528
 Then it's voiced and rendered into a finished 1080p
 
 20
-00:00:55,559 --> 00:00:57,815
+00:00:56,528 --> 00:00:58,767
 pitch video, ready to download.
 
 21
-00:01:08,600 --> 00:01:12,618
+00:01:09,500 --> 00:01:13,448
 No live link? OmniSTEM is just a GitHub repo.
 
 22
-00:01:12,618 --> 00:01:16,636
+00:01:13,448 --> 00:01:17,396
 Pit Crew ran it inside a HarnessRouter sandbox and
 
 23
-00:01:16,636 --> 00:01:17,975
+00:01:17,396 --> 00:01:18,712
 recorded it there.
 
 24
-00:01:22,700 --> 00:01:25,446
+00:01:23,500 --> 00:01:26,494
 DevPad's API ran the same way,
 
 25
-00:01:25,446 --> 00:01:28,649
+00:01:26,494 --> 00:01:29,987
 and its video shows the real responses,
 
 26
-00:01:28,649 --> 00:01:30,022
+00:01:29,987 --> 00:01:31,484
 sign-in errors included.
 
 27
-00:01:34,800 --> 00:01:36,527
+00:01:36,200 --> 00:01:38,006
 And Hunt the Wumpus,
 
 28
-00:01:36,527 --> 00:01:40,414
+00:01:38,006 --> 00:01:42,068
 a Unity game, got its video from the team's
 
 29
-00:01:40,414 --> 00:01:45,164
+00:01:42,068 --> 00:01:47,034
 own gameplay clip, narrated from frames the agent actually looked at.
 
 30
-00:01:49,900 --> 00:01:51,802
+00:01:51,800 --> 00:01:53,729
 Here's how it works.
 
 31
-00:01:51,802 --> 00:01:56,083
+00:01:53,729 --> 00:01:58,069
 Our server hands the project to an agent on
 
 32
-00:01:56,083 --> 00:02:00,364
+00:01:58,069 --> 00:02:02,410
 HarnessRouter, which explores the site or runs the repo
 
 33
-00:02:00,364 --> 00:02:04,644
+00:02:02,410 --> 00:02:06,750
 in its sandbox, and writes the plan as JSON.
 
 34
-00:02:04,644 --> 00:02:08,925
+00:02:06,750 --> 00:02:11,090
 Our server checks every statistic against its source page,
 
 35
-00:02:08,925 --> 00:02:12,254
+00:02:11,090 --> 00:02:14,466
 records the demo, waits for your review,
 
 36
-00:02:12,254 --> 00:02:16,059
+00:02:14,466 --> 00:02:18,324
 then ElevenLabs voices it and Remotion renders it.
 
 37
-00:02:17,100 --> 00:02:20,555
+00:02:19,300 --> 00:02:22,537
 Tonight we tested it on Excalidraw,
 
 38
-00:02:20,555 --> 00:02:23,434
+00:02:22,537 --> 00:02:25,235
 Hoppscotch, Carbon, Mermaid and Squoosh,
 
 39
-00:02:23,434 --> 00:02:27,465
+00:02:25,235 --> 00:02:29,011
 plus three student projects straight from GitHub.
 
 40
-00:02:28,500 --> 00:02:31,586
+00:02:30,000 --> 00:02:33,448
 Next: a pitch video for every launch.
 
 41
-00:02:31,586 --> 00:02:34,232
+00:02:33,448 --> 00:02:36,404
 Product Hunt, demo days, investor updates.
 
 42
-00:02:35,200 --> 00:02:38,509
+00:02:37,400 --> 00:02:40,578
 Paste your link, and Pit Crew makes the pitch.
