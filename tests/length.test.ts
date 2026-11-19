@@ -111,7 +111,7 @@ describe("panel area", () => {
   it("grows a small button to a readable area and keeps it on screen", () => {
     const p = panelBox({ x: 1124, y: 84, w: 40, h: 40 });
     expect(p.w).toBe(250);
-    expect(p.h).toBe(160);
+    expect(p.h).toBe(96);
     expect(p.x + p.w).toBeLessThanOrEqual(1280);
     expect(p.y).toBeGreaterThanOrEqual(0);
   });

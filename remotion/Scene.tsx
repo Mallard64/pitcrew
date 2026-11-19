@@ -208,7 +208,7 @@ type Box = { x: number; y: number; w: number; h: number };
 
 /** Smallest area a close-up shows: a lone button is magnified together with the UI around it. */
 const PANEL_MIN_W = 250;
-const PANEL_MIN_H = 160;
+const PANEL_MIN_H = 96;
 
 /** Pads the target, grows it to the minimum area around its centre, and keeps it inside the viewport. */
 export function panelBox(b: Box, pad = 10): Box {
