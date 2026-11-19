@@ -74,3 +74,37 @@ See eval/results.md and eval/github-only/.
 - `launch/build-log/ADDENDUM.md`: endpoints used, 12 real production runs, timeline. Tokens/cost per job are "not recorded" except the Pitch Room step (HarnessRouter reports tokens, not USD).
 - **Blocked #5 (full PUT / casing) still valid.** No harness-update helper (e.g. a `harness_config.py` "ensure") is vendored in our repo; GitHub code search of HarnessRouter/harnessrouter finds no `harness_config`, the HarnessRouter/skills repo has no harness-config file, and protocol 2026-10-19 lists `PATCH` only for memory records, not harnesses. Code search can miss files, so this is "not found", not "doesn't exist".
 - Optional one-line clarification for the post: "Update: we looked for an official helper that updates a Harness (in the protocol docs and the skills repo) and didn't find one; if it exists, a link from the Harness API docs would solve most of this."
+
+## Public landing page update (Nov 19, commit ccdffa1, live)
+- **Live:** https://pitcrew-production-83e5860b.up.railway.app. Railway did not auto-deploy the push; I triggered "Deploy latest commit" by hand.
+- **What changed (website only):** traction strip, pilot-partner line (behind a flag, off), pricing section, 4-video example gallery labeled "test run", "How it works on HarnessRouter" section, hero badge no longer shows the passed deadline, hero copy says the progress update needs a public repo.
+- **Numbers shown and where they come from** (all computed live by `getStats()` in `src/lib/db.ts` from the production `jobs` table):
+  - **23 videos made**: jobs with status ok or partial.
+  - **3 builders**: distinct `client_key` (hashed IP) with at least one delivered video. This counts IPs, not people, and includes our own test runs. It is lower than the "5+ builders" on the project page, so that page should say 3 unless there's another source.
+  - **Success rate on /stats: 79%** (delivered ÷ finished). Not changed to 91%: the DB doesn't show 91%. If the newer successful runs were in production, the number would already reflect them. Local runs aren't in the production DB.
+  - **Paid / collected: not shown.** Stripe holds these, not our DB. To show "N paid to keep going after the free limit ($X collected)", set `TRACTION_PAID_COUNT` and `TRACTION_COLLECTED_USD` on Railway from the Stripe dashboard.
+- **Pricing:**
+  - **Free tier:** reads "Up to 20 videos a day per team" from `MAX_JOBS_PER_USER_PER_DAY`, because "your first video" isn't true while the limit is 20. It switches to "Your first video" automatically if the limit is set to 1.
+  - **$5 price:** taken from the request; I couldn't read the Payment Link's price from its page.
+  - **Contact:** links to GitHub issues, since no contact email is configured.
+- **"Costs us about $X per video" omitted.**
+  - `GET /v1/sessions/{id}` does return `spend_usd`, but our production session ids (`hr_session_id`) live only in the production DB, which isn't reachable from here.
+  - `GET /v1/sessions` mixes local and production sessions with no job link.
+  - Several sessions with 30k+ tokens report `spend_usd: 0`, so the figures don't look like complete cost.
+- **Pitch Room "merges":** no such wording on the site. Copy says the judge scores the drafts and picks the best one.
+- **Verified live:**
+  - All sections render.
+  - The pilot line is absent with the flag off.
+  - All 4 gallery files return 200/206 `video/mp4` and decode at full length.
+  - In-browser playback could not be confirmed: the automated Chrome window was hidden, so it never loaded media.
+  - The 3 numbers match /stats.
+  - The job API still answers. My IP is over the daily limit, so it returns 429 with the pay link.
+  - No new job was run.
+  - The mobile layout was not visually checked (the window resize didn't apply).
+- **Gallery user-video candidates:** none. All 4 gallery videos (tldraw, Excalidraw, JSON Crack `Qr8JKBWh`, Hunt the Wumpus `1zB8JuKN`) are our own test runs. The admin page lists any outside jobs. Nothing from users is published.
+- **Human to-do:**
+  1. When your friend confirms, set `PILOT_PARTNER_ENABLED=true`, `PILOT_PARTNER_SIZE=<N>` and `PILOT_PARTNER_SEASON=<season>` on Railway. The event is never named.
+  2. Optionally set `TRACTION_PAID_COUNT` and `TRACTION_COLLECTED_USD` from Stripe.
+  3. Set `BUILD_LOG_URL` to the HarnessRouter build log thread; no thread URL is recorded in the repo, so the link is hidden.
+  4. Watch a gallery video once on the live site.
+  5. Each Railway variable change redeploys and kills running jobs.
