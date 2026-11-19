@@ -1,0 +1,83 @@
+1
+00:00:00,300 --> 00:00:03,001
+A teammate is waiting for your idea.
+
+2
+00:00:03,001 --> 00:00:06,473
+You open a diagramming tool and it asks you
+
+3
+00:00:06,473 --> 00:00:08,016
+to sign up first.
+
+4
+00:00:08,016 --> 00:00:10,331
+You only wanted a blank canvas.
+
+5
+00:00:11,300 --> 00:00:15,226
+Excalidraw is an open source whiteboard that turns rough
+
+6
+00:00:15,226 --> 00:00:17,407
+sketches into hand-drawn style diagrams,
+
+7
+00:00:17,407 --> 00:00:20,025
+with no sign-up in the way.
+
+8
+00:00:21,000 --> 00:00:24,997
+Open excalidraw.com and the canvas is already blank.
+
+9
+00:00:24,997 --> 00:00:27,495
+No sign-up screen, no setup,
+
+10
+00:00:27,495 --> 00:00:28,993
+just a toolbar.
+
+11
+00:00:29,700 --> 00:00:31,330
+Choose the text tool.
+
+12
+00:00:31,330 --> 00:00:35,813
+Rectangles, arrows, sticky notes and an eraser sit right beside it.
+
+13
+00:00:36,600 --> 00:00:38,298
+Click anywhere on the canvas.
+
+14
+00:00:38,298 --> 00:00:41,015
+A text cursor appears right where you clicked,
+
+15
+00:00:41,015 --> 00:00:42,713
+ready for your first word.
+
+16
+00:00:43,500 --> 00:00:46,606
+Type a line and it lands on the canvas
+
+17
+00:00:46,606 --> 00:00:47,986
+in a hand-drawn font.
+
+18
+00:00:47,986 --> 00:00:50,057
+Your drawing autosaves in the browser.
+
+19
+00:00:50,800 --> 00:00:55,965
+The open source repo has 135,932 GitHub stars.
+
+20
+00:00:55,965 --> 00:00:59,838
+381 contributors have helped build it.
+
+21
+00:01:00,800 --> 00:01:03,020
+Try it at excalidraw.com.

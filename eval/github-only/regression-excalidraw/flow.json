@@ -1,0 +1,40 @@
+{
+  "project_name": "Excalidraw",
+  "url": "https://excalidraw.com",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "action": "goto",
+      "url": "https://excalidraw.com",
+      "hold_ms": 8000,
+      "say": "Open excalidraw.com and you land on a blank canvas. No sign-up, no setup, just the toolbar."
+    },
+    {
+      "id": "s2",
+      "action": "click",
+      "selector": "[data-testid=\"toolbar-text\"]",
+      "hold_ms": 8000,
+      "say": "Pick the text tool from the toolbar. Shapes, arrows, sticky notes and an eraser sit beside it."
+    },
+    {
+      "id": "s3",
+      "action": "click",
+      "selector": "canvas.interactive",
+      "hold_ms": 8000,
+      "say": "Click anywhere on the canvas to start. The canvas is infinite, so there is room for the whole idea.",
+      "zoom": "canvas.interactive"
+    },
+    {
+      "id": "s4",
+      "action": "type",
+      "selector": "textarea.excalidraw-wysiwyg",
+      "text": "Sketch first, polish later",
+      "hold_ms": 8000,
+      "say": "Type a line and it appears on the canvas. Your drawing autosaves in the browser."
+    }
+  ]
+}

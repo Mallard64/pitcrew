@@ -1,58 +1,33 @@
-# Pit Crew: our demo video, script v2 (DRAFT, not recorded yet)
+# Pit Crew: our demo video, final narration
 
-Target: about 115 s at 1920×1080, about 270 words of narration. It follows Pit Crew's own 6-part outline.
-Every product line must match the real footage. Demo lines get adjusted to what the recorded run actually shows.
+Rendered with Pit Crew's own engine (Blueprint look, Sarah voice). Every demo shot is a real screen recording of https://pitcrew-production-83e5860b.up.railway.app, cut and sped up where labeled.
 
-| # | Time | On screen | Narration |
-|---|------|-----------|-----------|
-| 1 Problem | 0–14s | A countdown clock ticking to **11:59 AM**, then a checklist that fills up: *script · record · edit · voiceover · captions* | Every team at this hackathon has to submit a demo video. Most of us are making it right now, at 3 a.m. A good one needs a script, a clean recording, editing, a voiceover and captions. That's hours you don't have. |
-| 2 Solution | 14–22s | Headline "Paste a link. Get a pitch." + the Pit Crew form | Pit Crew makes the pitch video for you. Paste your live link, or just your GitHub repo. |
-| 3 Demo (live) | 22–50s | REAL footage of our production site:<br>• typing `excalidraw.com`, picking a narrator, ticking "review the script", clicking **Make my pitch video**<br>• live progress, sped up with a **×8** label<br>• the outline review: pitch check, editing one line, clicking **Voice and render this**<br>• the finished video playing about 6 s with its own sound | Here's a real run on Excalidraw. The agent opens the site, plans the story, and our server records every step in Chromium. Before anything is voiced, I get the outline, a pitch check, and can change any line. About eight minutes later, the video is done. *(times adjusted to this run)* |
-| 3b Demo (no live link) | 50–62s | Split screen of two finished test videos: **OmniSTEM**, a repo run in a sandbox (window title "localhost · run from the repo"), and **Hunt the Wumpus**, the team's own gameplay (title "Team footage") | No live link? Pit Crew runs your repo in a HarnessRouter sandbox, or cuts your own gameplay footage, and always labels where the demo came from. |
-| 4 How it's built | 62–82s | **Animated architecture diagram** (spec below); each box lights up as it's named | Your link goes to our server on Railway. It hands the project to an agent on HarnessRouter, which explores the site or runs the repo in its sandbox and writes the plan as JSON. Our server checks every statistic against its source page, records the demo in Chromium, voices it with ElevenLabs, and renders it with Remotion at 1080p. You review the script before it's voiced. |
-| 5 Evidence | 82–94s | A grid of real thumbnails from tonight's runs, labeled **"Our test runs, Nov 18"** | We tested it tonight on open-source products like Excalidraw, Hoppscotch, Squoosh and Mermaid, plus three GitHub-only student projects. *(Add counts only from eval/results.md; no user claims.)* |
-| 6 Next | 94–104s | Three cards: Product Hunt · Demo days · Investor updates | Next: a pitch video for every launch. Product Hunt, demo days, investor updates. |
-| 7 Ask + end | 104–115s | The live URL + **#bighackgame**, plus the credit line (see decision 3) | Paste your link, and Pit Crew makes the pitch. Try it tonight. |
+**problem** (17.6 s): Every team at this hackathon has to submit a demo video. Most of us are making it right now, at 3 a.m. A good one needs a script, a clean recording, editing, a voiceover and captions. That's hours you don't have.
 
-## The architecture diagram (scene 4)
-It uses our renderer's own `diagram` element, so it's drawn in the same style as the videos Pit Crew makes. Nodes flow left to right, and every box and arrow is something the code really does:
+**solution** (6.4 s): Pit Crew makes the pitch video for you. Paste your live link, or just your GitHub repo.
 
-```
- Team ──link / repo / footage──▶ Pit Crew server (Next.js on Railway)
-                                     │  task + site digest / repo facts
-                                     ▼
-                        HarnessRouter agent (Claude, own sandbox)
-                        explores the site · runs the repo · writes plan JSON
-                                     │  video plan (story, scenes, demo steps)
-                                     ▼
- Pit Crew server:  verify stats (fetch source, exact number match)
-                   → record demo (Playwright + Chromium, step repair)
-                   → you review the outline (human in the loop)
-                   → voice (ElevenLabs) → render (Remotion, 1080p60)
-                                     │
-                                     ▼
-                     pitch video + build log + submission text
-```
+**demo** (7.3 s): Here's a real run. I paste Excalidraw's link, pick a narrator, and ask to review the script first.
 
-`diagram` element (layered, 8 nodes):
-```json
-{"type":"diagram","kind":"layered",
- "nodes":[{"id":"team","label":"Your link or repo"},{"id":"server","label":"Pit Crew server"},
-          {"id":"agent","label":"HarnessRouter agent"},{"id":"stats","label":"Stat checker"},
-          {"id":"rec","label":"Chromium recorder"},{"id":"review","label":"Your review"},
-          {"id":"voice","label":"ElevenLabs voice"},{"id":"render","label":"Remotion render"}],
- "edges":[{"from":"team","to":"server"},{"from":"server","to":"agent","label":"task"},
-          {"from":"agent","to":"stats","label":"plan"},{"from":"stats","to":"rec"},
-          {"from":"rec","to":"review"},{"from":"review","to":"voice"},{"from":"voice","to":"render"}]}
-```
+**demo** (7.8 s): An agent on HarnessRouter explores the site and plans the pitch, while our server records each step in Chromium.
 
-## Accuracy notes (checked against the code)
-- **The agent** plans and explores (and runs repos in its sandbox). **Our server** does the recording of live sites, stat verification, voicing and rendering. That split is why the diagram has two lanes.
-- **"About eight minutes":** the measured production runs took 6–9.5 min at 60–75 s. Replace this with the recorded run's real time.
-- **No traction claims:** /stats only contains our own test runs, and the feedback table has 0 rows, so no quotes.
-- **No problem statistic:** I found no source page I could verify for "hours to make a demo video".
+**demo** (6.1 s): Before anything is voiced, I get the outline and a pitch check, and I can change any line.
 
-## Still your call
-1. **Credit line:** this video is assembled by hand in Pit Crew's own renderer (same looks, voice, captions, diagram element), because the pipeline doesn't take a screen recording of itself as input. Proposed line: **"Rendered with Pit Crew's own video engine."** The alternative is to run Pit Crew on its own URL and use that output as a section, which earns "made by Pit Crew" for that part only.
-2. **Voice and look:** Sarah on Blueprint (blue grid suits the tech diagram), or another combination.
-3. **Scene 3b split screen:** this needs tonight's OmniSTEM and Wumpus reruns to come out well. If either is weak, I'll cut 3b and give the 12 s to scene 4.
+**demo** (11.7 s): Then it's voiced and rendered into a finished 1080p pitch video, ready to download.
+
+**demo** (10.2 s): No live link? OmniSTEM is just a GitHub repo. Pit Crew ran it inside a HarnessRouter sandbox and recorded it there.
+
+**demo** (9.4 s): DevPad's API ran the same way, and its video shows the real responses, sign-in errors included.
+
+**demo** (11.2 s): And Hunt the Wumpus, a Unity game, got its video from the team's own gameplay clip, narrated from frames the agent actually looked at.
+
+**built** (23.7 s): Here's how it works. Our server hands the project to an agent on HarnessRouter, which explores the site or runs the repo, and writes the plan as JSON. Our server checks every statistic against its source, records the demo, you review the script, then ElevenLabs voices it and Remotion renders it.
+
+**evidence** (9.8 s): Tonight we tested it on Excalidraw, Hoppscotch, Carbon, Mermaid and Squoosh, plus three student projects straight from GitHub.
+
+**next** (7.2 s): Next: a pitch video for every launch. Product Hunt, demo days, investor updates.
+
+**ask** (3.7 s): Paste your link, and Pit Crew makes the pitch.
+
+**end** (2.5 s): _(end card)_
+
+Total: 134.6 s.

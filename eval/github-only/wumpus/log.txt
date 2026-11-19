@@ -14,23 +14,20 @@ Agent used vision analyze
 Agent used vision analyze
 Agent used vision analyze
 Agent used vision analyze
-harness error: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050335688245827k5a5n1rN))
-The model provider is busy (rate limit); retrying the agent in 30 s
+Agent checked its notes from earlier videos
+Plan: 8 scenes (harness planner, seed 1973)
+Research: searching for "percentage of players who quit a game after an early unfair death survey", "does retrieval practice quiz improve learning compared to rereading study", "percentage of students who find trivia games make learning more engaging survey"
+Research: 12 candidate statistics from 4 pages
 Agent started on HarnessRouter
-Agent used vision analyze
-Agent used vision analyze
-Agent used vision analyze
-Agent used vision analyze
-Agent used vision analyze
-Agent used vision analyze
-harness error: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050502964231379hosD4cMG))
-agent failed (HarnessRouter task failed: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050502964231379hosD4cMG))); falling back to the offline planner
-Planning from the repository and footage (offline planner)
-Plan: 7 scenes (local planner, seed 3479790520)
-Pitch check: 2/8 (to fix: hook, problem, demo, wow, length, short)
+Research: the agent proposed 0 statistic(s)
+Pitch check: 8/8
+Reviewing the pitch the way a judge would
+Agent started on HarnessRouter
+Judge pass applied: pitch check 8/8
 Writing the narration and captions
-Voice pace 0.88× (estimated length 32s)
-Voicing with Brian (deep, calm, american)
+Removed an unverified number from the problem narration
+Voice pace 0.88× (estimated length 46.6s)
+Voicing with Sarah (confident, reassuring, american)
 Rendering the video
 bundling renderer
 rendering 0%
@@ -39,7 +36,9 @@ rendering 20%
 rendering 30%
 rendering 40%
 rendering 50%
-Error: FFmpeg quit with code 1 (signal SIGKILL) while piping frame 1513. Stderr: ffmpeg version n7.1 Copyright (c) 2000-2024 the FFmpeg developers
-  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
-  configuration: --prefix=remotion --extra-cflags='-Iremotion/include -Iremotion/include/opus -Iremotion/include/lame -Iremotion/include/vpx' --extra-ldflags=-Lremotion/lib --enable-small --enable-shared --enable-libdav1d --enable-libaom --enable-libzimg --enable-libfdk-aac --disable-static --disable-ffplay 
-failed
+rendering 60%
+rendering 70%
+rendering 80%
+rendering 90%
+rendering 100%
+ok

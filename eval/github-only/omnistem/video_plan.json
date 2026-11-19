@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "seed": 42,
+  "style_kit": "poster",
+  "brand": {
+    "primary": "#DC2626"
+  },
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "fps": 30,
+  "music": null,
+  "credit": true,
+  "scenes": [
+    {
+      "id": "problem",
+      "section": "problem",
+      "layout": "big-statement",
+      "duration_s": 8.9,
+      "narration": "You've reread the moles chapter twice, and you still can't tell if it stuck. A textbook never quizzes you back.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Rereading the moles chapter doesn't tell you if it stuck",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "duration_s": 14.2,
+      "narration": "OmniSTEM fixes that: a Duolingo-style AP Chemistry app with short lessons, hearts, XP, streaks, and a daily equation-balancing puzzle.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "AP Chemistry, gamified: lessons, streaks and a daily puzzle",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "zoom"
+    },
+    {
+      "id": "demo1",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 9.5,
+      "narration": "On the landing page, a student sees bite-size AP Chemistry lessons, a daily equation-balancing puzzle, and a streak to keep.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s1",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "push"
+    },
+    {
+      "id": "demo2",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 7.6,
+      "narration": "The welcome screen sets expectations: daily two-minute lessons and a puzzle, so practice stays short.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s2",
+          "zoom": "target"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "demo3",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 8.8,
+      "narration": "Get started asks one question, what brings you here, with AP Chem, high school chem, or just exploring as choices.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s3",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "demo4",
+      "section": "demo",
+      "layout": "framed-zoom",
+      "duration_s": 7.4,
+      "narration": "Clicking AP Chem outlines the card in red and enables Continue, so the app can match its tone to the student.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s4",
+          "zoom": "target"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "built",
+      "section": "built",
+      "layout": "diagram",
+      "duration_s": 15.9,
+      "narration": "It's built on Next.js, with a Zustand store that syncs to Supabase, or to local storage without it. GPT-4o writes the questions, zod checks them, and a seed bank is the fallback.",
+      "elements": [
+        {
+          "type": "diagram",
+          "kind": "flow",
+          "nodes": [
+            {
+              "id": "web",
+              "label": "Next.js app"
+            },
+            {
+              "id": "store",
+              "label": "Zustand store"
+            },
+            {
+              "id": "sb",
+              "label": "Supabase (Postgres)"
+            },
+            {
+              "id": "ls",
+              "label": "localStorage"
+            },
+            {
+              "id": "api",
+              "label": "API route handlers"
+            },
+            {
+              "id": "gpt",
+              "label": "GPT-4o"
+            },
+            {
+              "id": "zod",
+              "label": "zod validation"
+            },
+            {
+              "id": "seed",
+              "label": "Seed question bank"
+            }
+          ],
+          "edges": [
+            {
+              "from": "web",
+              "to": "store",
+              "label": "reads/writes"
+            },
+            {
+              "from": "store",
+              "to": "sb",
+              "label": "syncs"
+            },
+            {
+              "from": "store",
+              "to": "ls",
+              "label": "local-only"
+            },
+            {
+              "from": "web",
+              "to": "api",
+              "label": "requests"
+            },
+            {
+              "from": "api",
+              "to": "gpt",
+              "label": "prompts"
+            },
+            {
+              "from": "gpt",
+              "to": "zod",
+              "label": "questions"
+            },
+            {
+              "from": "api",
+              "to": "seed",
+              "label": "fallback"
+            }
+          ]
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "duration_s": 6.3,
+      "narration": "Try it at github.com/Mallard64/stemduolingo.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Try it at github.com/Mallard64/stemduolingo",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "duration_s": 2.5,
+      "narration": "",
+      "elements": [],
+      "transition_in": "iris"
+    }
+  ],
+  "flow": {
+    "project_name": "OmniSTEM",
+    "url": "http://localhost:4100/",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "s1",
+        "action": "goto",
+        "url": "http://localhost:4100/",
+        "hold_ms": 8000,
+        "say": "The landing page promises bite-size AP Chemistry lessons, a daily equation-balancing puzzle, and a streak."
+      },
+      {
+        "id": "s2",
+        "action": "goto",
+        "url": "http://localhost:4100/welcome",
+        "hold_ms": 8000,
+        "say": "The welcome screen promises daily two-minute lessons and a puzzle that keeps students sharp."
+      },
+      {
+        "id": "s3",
+        "action": "click",
+        "selector": "a[href=\"/pick-goal\"]",
+        "hold_ms": 8000,
+        "say": "Get started asks one question: what brings you here? AP Chem, high school chem, or just exploring."
+      },
+      {
+        "id": "s4",
+        "action": "click",
+        "selector": "text=I'm in AP Chem",
+        "hold_ms": 8000,
+        "say": "Picking AP Chem highlights the choice and unlocks Continue, so the app can set the right tone."
+      }
+    ]
+  },
+  "sources": [],
+  "target_s": 60,
+  "demo_mode": "sandbox-run"
+}

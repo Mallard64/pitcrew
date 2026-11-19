@@ -1,0 +1,45 @@
+running
+Reading https://github.com/Mallard64/Wumpus
+Read the repo: Unity 2022.3.32f1, C#, 210 files
+Read 26 commits from https://github.com/Mallard64/Wumpus
+Cutting your footage into demo clips
+Footage clip f1: 0.0–8.0 s
+Footage clip f2: 8.0–10.4 s
+Demo source: your uploaded footage
+Writing the pitch and directing the video
+Agent started on HarnessRouter
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+harness error: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050335688245827k5a5n1rN))
+The model provider is busy (rate limit); retrying the agent in 30 s
+Agent started on HarnessRouter
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+Agent used vision analyze
+harness error: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050502964231379hosD4cMG))
+agent failed (HarnessRouter task failed: Your tokenrouter key was refused: The model provider refused the request (429: Too many requests. Please try again later. (request id: 20261119050502964231379hosD4cMG))); falling back to the offline planner
+Planning from the repository and footage (offline planner)
+Plan: 7 scenes (local planner, seed 3479790520)
+Pitch check: 2/8 (to fix: hook, problem, demo, wow, length, short)
+Writing the narration and captions
+Voice pace 0.88× (estimated length 32s)
+Voicing with Brian (deep, calm, american)
+Rendering the video
+bundling renderer
+rendering 0%
+rendering 10%
+rendering 20%
+rendering 30%
+rendering 40%
+rendering 50%
+Error: FFmpeg quit with code 1 (signal SIGKILL) while piping frame 1513. Stderr: ffmpeg version n7.1 Copyright (c) 2000-2024 the FFmpeg developers
+  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
+  configuration: --prefix=remotion --extra-cflags='-Iremotion/include -Iremotion/include/opus -Iremotion/include/lame -Iremotion/include/vpx' --extra-ldflags=-Lremotion/lib --enable-small --enable-shared --enable-libdav1d --enable-libaom --enable-libzimg --enable-libfdk-aac --disable-static --disable-ffplay 
+failed

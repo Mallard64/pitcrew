@@ -1,0 +1,38 @@
+{
+  "project_name": "Hunt the Wumpus",
+  "url": "https://github.com/Mallard64/Wumpus",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "f1",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "The hex cave warns, Bats nearby. Then the player falls into a pit and faces three trivia questions to climb out."
+    },
+    {
+      "id": "f2",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "Back on the map: I feel a breeze."
+    },
+    {
+      "id": "s3",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "Colour tells you about your room. Text hints at the rooms next to it."
+    },
+    {
+      "id": "s4",
+      "action": "goto",
+      "url": "https://github.com/Mallard64/Wumpus",
+      "hold_ms": 3000,
+      "say": "Each question is generated on the spot. If the API fails, an offline question bank takes over."
+    }
+  ]
+}

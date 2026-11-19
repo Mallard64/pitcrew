@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "seed": 1973,
+  "style_kit": "studio",
+  "brand": {
+    "primary": "#B5658A"
+  },
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "fps": 30,
+  "music": null,
+  "credit": true,
+  "scenes": [
+    {
+      "id": "problem",
+      "section": "problem",
+      "layout": "big-statement",
+      "duration_s": 3.5,
+      "narration": "One wrong room and the hunt is over.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "In the original, one pit ends the hunt",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "duration_s": 10.1,
+      "narration": "Hunt the Wumpus, AI Edition remakes it in Unity: a hazard starts a trivia duel, and a language model writes the question.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Hazards don't kill you. They quiz you.",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "zoom"
+    },
+    {
+      "id": "demo1",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 8.4,
+      "narration": "The map warns, Bats nearby. Then a pit drops the player into three trivia questions, the only way out.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "f1",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "push"
+    },
+    {
+      "id": "demo2",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 6.5,
+      "narration": "Final question, then back to the map: I feel a breeze, a pit nearby.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "f2",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "demo3",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 8.8,
+      "narration": "Colour describes your room. Text describes the neighbours. From those clues, you deduce where the Wumpus hides.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img1.png",
+          "fit": "contain"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "demo4",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 9.6,
+      "narration": "A language model writes each question on the spot. If the API fails, an offline bank keeps the game playable.",
+      "elements": [
+        {
+          "type": "image",
+          "src": "repo/img2.png",
+          "fit": "contain"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "duration_s": 5.5,
+      "narration": "Try it at github.com/Mallard64/Wumpus",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Try it at github.com/Mallard64/Wumpus",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "duration_s": 2.5,
+      "narration": "",
+      "elements": [],
+      "transition_in": "iris"
+    }
+  ],
+  "flow": {
+    "project_name": "Hunt the Wumpus",
+    "url": "https://github.com/Mallard64/Wumpus",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "f1",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "The hex cave warns, Bats nearby. Then the player falls into a pit and faces three trivia questions to climb out."
+      },
+      {
+        "id": "f2",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "Back on the map: I feel a breeze."
+      },
+      {
+        "id": "s3",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "Colour tells you about your room. Text hints at the rooms next to it."
+      },
+      {
+        "id": "s4",
+        "action": "goto",
+        "url": "https://github.com/Mallard64/Wumpus",
+        "hold_ms": 3000,
+        "say": "Each question is generated on the spot. If the API fails, an offline question bank takes over."
+      }
+    ]
+  },
+  "sources": [],
+  "target_s": 60,
+  "demo_mode": "footage"
+}

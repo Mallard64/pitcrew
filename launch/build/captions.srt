@@ -1,0 +1,167 @@
+1
+00:00:00,300 --> 00:00:03,848
+Every team at this hackathon has to submit a
+
+2
+00:00:03,848 --> 00:00:07,396
+demo video. Most of us are making it right
+
+3
+00:00:07,396 --> 00:00:08,973
+now, at 3 a.m.
+
+4
+00:00:08,973 --> 00:00:11,338
+A good one needs a script,
+
+5
+00:00:11,338 --> 00:00:12,915
+a clean recording, editing,
+
+6
+00:00:12,915 --> 00:00:14,492
+a voiceover and captions.
+
+7
+00:00:14,492 --> 00:00:16,463
+That's hours you don't have.
+
+8
+00:00:17,500 --> 00:00:20,301
+Pit Crew makes the pitch video for you.
+
+9
+00:00:20,301 --> 00:00:21,702
+Paste your live link,
+
+10
+00:00:21,702 --> 00:00:23,452
+or just your GitHub repo.
+
+11
+00:00:24,500 --> 00:00:25,977
+Here's a real run.
+
+12
+00:00:25,977 --> 00:00:27,454
+I paste Excalidraw's link,
+
+13
+00:00:27,454 --> 00:00:31,147
+pick a narrator, and ask to review the script first.
+
+14
+00:00:31,900 --> 00:00:35,072
+An agent on HarnessRouter explores the site and plans
+
+15
+00:00:35,072 --> 00:00:38,596
+the pitch, while our server records each step in Chromium.
+
+16
+00:00:39,300 --> 00:00:40,468
+Before anything is voiced,
+
+17
+00:00:40,468 --> 00:00:42,805
+I get the outline and a pitch check,
+
+18
+00:00:42,805 --> 00:00:44,557
+and I can change any line.
+
+19
+00:00:45,300 --> 00:00:48,801
+Then it's voiced and rendered into a finished 1080p
+
+20
+00:00:48,801 --> 00:00:50,746
+pitch video, ready to download.
+
+21
+00:00:57,500 --> 00:01:00,703
+No live link? OmniSTEM is just a GitHub repo.
+
+22
+00:01:00,703 --> 00:01:03,906
+Pit Crew ran it inside a HarnessRouter sandbox and
+
+23
+00:01:03,906 --> 00:01:04,973
+recorded it there.
+
+24
+00:01:07,700 --> 00:01:10,273
+DevPad's API ran the same way,
+
+25
+00:01:10,273 --> 00:01:13,276
+and its video shows the real responses,
+
+26
+00:01:13,276 --> 00:01:14,563
+sign-in errors included.
+
+27
+00:01:17,300 --> 00:01:18,836
+And Hunt the Wumpus,
+
+28
+00:01:18,836 --> 00:01:22,293
+a Unity game, got its video from the team's
+
+29
+00:01:22,293 --> 00:01:26,517
+own gameplay clip, narrated from frames the agent actually looked at.
+
+30
+00:01:29,300 --> 00:01:31,015
+Here's how it works.
+
+31
+00:01:31,015 --> 00:01:34,875
+Our server hands the project to an agent on
+
+32
+00:01:34,875 --> 00:01:38,735
+HarnessRouter, which explores the site or runs the repo,
+
+33
+00:01:38,735 --> 00:01:41,308
+and writes the plan as JSON.
+
+34
+00:01:41,308 --> 00:01:44,738
+Our server checks every statistic against its source,
+
+35
+00:01:44,738 --> 00:01:47,740
+records the demo, you review the script,
+
+36
+00:01:47,740 --> 00:01:51,171
+then ElevenLabs voices it and Remotion renders it.
+
+37
+00:01:52,200 --> 00:01:55,410
+Tonight we tested it on Excalidraw,
+
+38
+00:01:55,410 --> 00:01:58,086
+Hoppscotch, Carbon, Mermaid and Squoosh,
+
+39
+00:01:58,086 --> 00:02:01,831
+plus three student projects straight from GitHub.
+
+40
+00:02:02,800 --> 00:02:05,756
+Next: a pitch video for every launch.
+
+41
+00:02:05,756 --> 00:02:08,289
+Product Hunt, demo days, investor updates.
+
+42
+00:02:09,300 --> 00:02:12,124
+Paste your link, and Pit Crew makes the pitch.

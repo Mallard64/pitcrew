@@ -1,0 +1,51 @@
+[
+  {
+    "step_id": "c_form",
+    "file": "clips/c_form.mp4",
+    "duration_s": 7.4,
+    "raw_duration_s": 11.399999999999999,
+    "speedups": []
+  },
+  {
+    "step_id": "c_progress",
+    "file": "clips/c_progress.mp4",
+    "duration_s": 7.4,
+    "raw_duration_s": 395.2,
+    "speedups": []
+  },
+  {
+    "step_id": "c_review",
+    "file": "clips/c_review.mp4",
+    "duration_s": 6,
+    "raw_duration_s": 9.400000000000034,
+    "speedups": []
+  },
+  {
+    "step_id": "c_done",
+    "file": "clips/c_done.mp4",
+    "duration_s": 12.2,
+    "raw_duration_s": 12.2,
+    "speedups": []
+  },
+  {
+    "step_id": "c_omnistem",
+    "file": "clips/c_omnistem.mp4",
+    "duration_s": 10.2,
+    "raw_duration_s": 10.2,
+    "speedups": []
+  },
+  {
+    "step_id": "c_devpad",
+    "file": "clips/c_devpad.mp4",
+    "duration_s": 9.6,
+    "raw_duration_s": 9.6,
+    "speedups": []
+  },
+  {
+    "step_id": "c_wumpus",
+    "file": "clips/c_wumpus.mp4",
+    "duration_s": 12,
+    "raw_duration_s": 12,
+    "speedups": []
+  }
+]

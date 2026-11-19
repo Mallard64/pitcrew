@@ -1,0 +1,103 @@
+1
+00:00:00,300 --> 00:00:02,675
+You've reread the moles chapter twice,
+
+2
+00:00:02,675 --> 00:00:05,841
+and you still can't tell if it stuck.
+
+3
+00:00:05,841 --> 00:00:08,215
+A textbook never quizzes you back.
+
+4
+00:00:09,200 --> 00:00:15,449
+OmniSTEM fixes that: a Duolingo-style AP Chemistry app with
+
+5
+00:00:15,449 --> 00:00:18,226
+short lessons, hearts, XP,
+
+6
+00:00:18,226 --> 00:00:22,392
+streaks, and a daily equation-balancing puzzle.
+
+7
+00:00:23,400 --> 00:00:25,155
+On the landing page,
+
+8
+00:00:25,155 --> 00:00:28,227
+a student sees bite-size AP Chemistry lessons,
+
+9
+00:00:28,227 --> 00:00:29,983
+a daily equation-balancing puzzle,
+
+10
+00:00:29,983 --> 00:00:32,177
+and a streak to keep.
+
+11
+00:00:32,900 --> 00:00:35,181
+The welcome screen sets expectations:
+
+12
+00:00:35,181 --> 00:00:37,919
+daily two-minute lessons and a puzzle,
+
+13
+00:00:37,919 --> 00:00:39,744
+so practice stays short.
+
+14
+00:00:40,500 --> 00:00:42,524
+Get started asks one question,
+
+15
+00:00:42,524 --> 00:00:44,144
+what brings you here,
+
+16
+00:00:44,144 --> 00:00:46,573
+with AP Chem, high school chem,
+
+17
+00:00:46,573 --> 00:00:48,598
+or just exploring as choices.
+
+18
+00:00:49,300 --> 00:00:52,144
+Clicking AP Chem outlines the card in red and
+
+19
+00:00:52,144 --> 00:00:54,987
+enables Continue, so the app can match its tone
+
+20
+00:00:54,987 --> 00:00:55,935
+to the student.
+
+21
+00:00:56,700 --> 00:00:58,564
+It's built on Next.js,
+
+22
+00:00:58,564 --> 00:01:02,293
+with a Zustand store that syncs to Supabase,
+
+23
+00:01:02,293 --> 00:01:05,090
+or to local storage without it.
+
+24
+00:01:05,090 --> 00:01:06,955
+GPT-4o writes the questions,
+
+25
+00:01:06,955 --> 00:01:11,616
+zod checks them, and a seed bank is the fallback.
+
+26
+00:01:12,600 --> 00:01:17,851
+Try it at github.com/Mallard64/stemduolingo.

@@ -1,0 +1,67 @@
+1
+00:00:00,300 --> 00:00:02,834
+One wrong room and the hunt is over.
+
+2
+00:00:03,800 --> 00:00:07,519
+Hunt the Wumpus, AI Edition remakes it in Unity:
+
+3
+00:00:07,519 --> 00:00:09,998
+a hazard starts a trivia duel,
+
+4
+00:00:09,998 --> 00:00:12,891
+and a language model writes the question.
+
+5
+00:00:13,900 --> 00:00:15,921
+The map warns, Bats nearby.
+
+6
+00:00:15,921 --> 00:00:19,559
+Then a pit drops the player into three trivia
+
+7
+00:00:19,559 --> 00:00:21,580
+questions, the only way out.
+
+8
+00:00:22,300 --> 00:00:25,200
+Final question, then back to the map:
+
+9
+00:00:25,200 --> 00:00:26,857
+I feel a breeze,
+
+10
+00:00:26,857 --> 00:00:28,099
+a pit nearby.
+
+11
+00:00:28,800 --> 00:00:30,699
+Colour describes your room.
+
+12
+00:00:30,699 --> 00:00:32,599
+Text describes the neighbours.
+
+13
+00:00:32,599 --> 00:00:36,872
+From those clues, you deduce where the Wumpus hides.
+
+14
+00:00:37,600 --> 00:00:41,585
+A language model writes each question on the spot.
+
+15
+00:00:41,585 --> 00:00:43,356
+If the API fails,
+
+16
+00:00:43,356 --> 00:00:46,456
+an offline bank keeps the game playable.
+
+17
+00:00:47,200 --> 00:00:51,745
+Try it at github.com/Mallard64/Wumpus

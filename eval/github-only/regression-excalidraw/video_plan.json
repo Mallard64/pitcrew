@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "seed": 2718,
+  "style_kit": "paper",
+  "brand": {
+    "primary": "#6965DB"
+  },
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "fps": 30,
+  "music": null,
+  "credit": true,
+  "scenes": [
+    {
+      "id": "problem",
+      "section": "problem",
+      "layout": "big-statement",
+      "duration_s": 11,
+      "narration": "A teammate is waiting for your idea. You open a diagramming tool and it asks you to sign up first. You only wanted a blank canvas.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Sketching an idea shouldn't start with a sign-up form",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "duration_s": 9.7,
+      "narration": "Excalidraw is an open source whiteboard that turns rough sketches into hand-drawn style diagrams, with no sign-up in the way.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "An open source whiteboard with a hand-drawn feel",
+          "animation": "word-by-word"
+        },
+        {
+          "type": "text",
+          "text": "Collaborative and end-to-end encrypted",
+          "role": "body"
+        }
+      ],
+      "transition_in": "zoom"
+    },
+    {
+      "id": "demo1",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 8.7,
+      "narration": "Open excalidraw.com and the canvas is already blank. No sign-up screen, no setup, just a toolbar.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s1",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "push"
+    },
+    {
+      "id": "demo2",
+      "section": "demo",
+      "layout": "framed-zoom",
+      "duration_s": 6.9,
+      "narration": "Choose the text tool. Rectangles, arrows, sticky notes and an eraser sit right beside it.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s2",
+          "zoom": "target"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "demo3",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 6.9,
+      "narration": "Click anywhere on the canvas. A text cursor appears right where you clicked, ready for your first word.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s3",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "demo4",
+      "section": "demo",
+      "layout": "framed-zoom",
+      "duration_s": 7.3,
+      "narration": "Type a line and it lands on the canvas in a hand-drawn font. Your drawing autosaves in the browser.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "s4",
+          "zoom": "inspect"
+        }
+      ],
+      "transition_in": "slide"
+    },
+    {
+      "id": "evidence",
+      "section": "evidence",
+      "layout": "bullet-reveal",
+      "duration_s": 10,
+      "narration": "The open source repo has 135,932 GitHub stars. 381 contributors have helped build it.",
+      "elements": [
+        {
+          "type": "bullets",
+          "items": [
+            "135,932 GitHub stars",
+            "16,228 forks",
+            "381 contributors"
+          ],
+          "animation": "slide-up"
+        },
+        {
+          "type": "text",
+          "text": "Source: github.com/excalidraw/excalidraw, 2026-11-19",
+          "role": "label"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "duration_s": 3.2,
+      "narration": "Try it at excalidraw.com.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Try it at excalidraw.com",
+          "animation": "word-by-word"
+        }
+      ],
+      "transition_in": "wipe"
+    },
+    {
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "duration_s": 2.5,
+      "narration": "",
+      "elements": [],
+      "transition_in": "iris"
+    }
+  ],
+  "flow": {
+    "project_name": "Excalidraw",
+    "url": "https://excalidraw.com",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "s1",
+        "action": "goto",
+        "url": "https://excalidraw.com",
+        "hold_ms": 8000,
+        "say": "Open excalidraw.com and you land on a blank canvas. No sign-up, no setup, just the toolbar."
+      },
+      {
+        "id": "s2",
+        "action": "click",
+        "selector": "[data-testid=\"toolbar-text\"]",
+        "hold_ms": 8000,
+        "say": "Pick the text tool from the toolbar. Shapes, arrows, sticky notes and an eraser sit beside it."
+      },
+      {
+        "id": "s3",
+        "action": "click",
+        "selector": "canvas.interactive",
+        "hold_ms": 8000,
+        "say": "Click anywhere on the canvas to start. The canvas is infinite, so there is room for the whole idea.",
+        "zoom": "canvas.interactive"
+      },
+      {
+        "id": "s4",
+        "action": "type",
+        "selector": "textarea.excalidraw-wysiwyg",
+        "text": "Sketch first, polish later",
+        "hold_ms": 8000,
+        "say": "Type a line and it appears on the canvas. Your drawing autosaves in the browser."
+      }
+    ]
+  },
+  "sources": [],
+  "target_s": 60,
+  "demo_mode": "live"
+}

@@ -224,7 +224,8 @@ export function showcasePlan(req: PlanRequest): VideoPlan {
     seed: seedFor(target),
     style_kit: "default",
     brand: { primary: "#6366f1" },
-    size: { width: 1920, height: 1080 },
+    // Plans are authored at 1280x720; the renderer scales the output to 1080p.
+    size: { width: 1280, height: 720 },
     fps: 30,
     credit: true,
     scenes,

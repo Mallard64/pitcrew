@@ -41,5 +41,20 @@
     "notes": "duration 77.1s is outside 46-74s",
     "error": null,
     "wall_s": 2174
+  },
+  {
+    "slug": "regression-excalidraw",
+    "id": "NqNjDISU",
+    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/NqNjDISU",
+    "status": "ok",
+    "demo_mode": "live",
+    "notice": null,
+    "duration_s": 66.2,
+    "steps": "4/4",
+    "kit": "paper",
+    "pitch": "8/8",
+    "notes": "",
+    "error": null,
+    "wall_s": 2520
   }
 ]

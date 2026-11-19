@@ -1,0 +1,63 @@
+{
+  "score": 7,
+  "total": 8,
+  "checks": [
+    {
+      "id": "hook",
+      "label": "Opens with a hook, not the product name",
+      "ok": true,
+      "detail": "First line: “One wrong room and the hunt is over.”"
+    },
+    {
+      "id": "problem",
+      "label": "States a specific problem",
+      "ok": false,
+      "detail": "8 words on the problem"
+    },
+    {
+      "id": "named",
+      "label": "Names the product when it introduces the fix",
+      "ok": true,
+      "detail": "“Hunt the Wumpus” is said in the solution"
+    },
+    {
+      "id": "demo",
+      "label": "Shows a demo (3+ scenes)",
+      "ok": true,
+      "detail": "4 demo scenes"
+    },
+    {
+      "id": "wow",
+      "label": "Demo ends on a payoff line",
+      "ok": true,
+      "detail": "Last demo line: “A language model writes each question on the spot. If the API fails, an offline bank keeps the game ”"
+    },
+    {
+      "id": "length",
+      "label": "Fits about 1:00",
+      "ok": true,
+      "detail": "About 44s before pacing (the voice pace adjusts ±15%)"
+    },
+    {
+      "id": "plain",
+      "label": "No hype words",
+      "ok": true,
+      "detail": "Plain language throughout"
+    },
+    {
+      "id": "short",
+      "label": "Sentences short enough to follow by ear",
+      "ok": true,
+      "detail": "All sentences ≤ 26 words"
+    }
+  ],
+  "judge": {
+    "notes": [
+      "Problem now opens on the concrete moment, one wrong room ends the hunt, then places it in the 1973 game.",
+      "Solution is one sentence: the remake, the hazard-starts-a-trivia-duel twist, and the model writing the question.",
+      "Demo lines now describe only what the frames show (Bats nearby, the pit, three questions, the breeze) and say why each matters.",
+      "Last two demo lines use README facts only (clues from colour and text, questions written on the spot, offline fallback). No new numbers were added."
+    ],
+    "rewritten": true
+  }
+}

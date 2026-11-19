@@ -1,0 +1,54 @@
+[
+  {
+    "step_id": "problem",
+    "duration_s": 16.162812
+  },
+  {
+    "step_id": "solution",
+    "duration_s": 5.952245
+  },
+  {
+    "step_id": "demo_c_form",
+    "duration_s": 6.646644
+  },
+  {
+    "step_id": "demo_c_progress",
+    "duration_s": 6.696372
+  },
+  {
+    "step_id": "demo_c_review",
+    "duration_s": 5.256916
+  },
+  {
+    "step_id": "demo_c_done",
+    "duration_s": 5.445624
+  },
+  {
+    "step_id": "demo_c_omnistem",
+    "duration_s": 7.473424
+  },
+  {
+    "step_id": "demo_c_devpad",
+    "duration_s": 6.86254
+  },
+  {
+    "step_id": "demo_c_wumpus",
+    "duration_s": 9.21737
+  },
+  {
+    "step_id": "built",
+    "duration_s": 21.871043
+  },
+  {
+    "step_id": "evidence",
+    "duration_s": 9.631247
+  },
+  {
+    "step_id": "next",
+    "duration_s": 5.489456
+  },
+  {
+    "step_id": "ask",
+    "duration_s": 2.823583
+  }
+]

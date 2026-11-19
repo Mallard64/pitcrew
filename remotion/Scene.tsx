@@ -1337,15 +1337,22 @@ export function diagramLayers(el: Pick<DiagramEl, "nodes" | "edges">): string[][
 function Diagram({ el, kit, frame, delay }: { el: DiagramEl; kit: Kit; frame: number; delay: number }) {
   const W = 1140;
   const H = 470;
-  const BW = 250;
   const cols = diagramLayers(el);
+  // Long chains wrap into rows of at most 4 columns, snaking so the flow reads continuously.
+  const perRow = 4;
+  const bands = Math.ceil(cols.length / perRow);
+  const across = Math.min(cols.length, perRow);
+  const BW = Math.min(250, (W - 40) / across - 30);
+  const bandH = H / bands;
   // Boxes shrink when one column holds many nodes, so they never overlap.
   const most = Math.max(...cols.map((c) => c.length));
-  const BH = Math.min(84, H / most - 14);
+  const BH = Math.min(84, bandH / most - 14);
   const pos = new Map<string, { x: number; y: number; col: number }>();
   cols.forEach((col, c) => {
-    const x = cols.length === 1 ? W / 2 : 20 + BW / 2 + (c * (W - 40 - BW)) / (cols.length - 1);
-    col.forEach((id, r) => pos.set(id, { x, y: ((r + 1) * H) / (col.length + 1), col: c }));
+    const band = Math.floor(c / perRow);
+    const slot = band % 2 === 0 ? c % perRow : across - 1 - (c % perRow);
+    const x = across === 1 ? W / 2 : 20 + BW / 2 + (slot * (W - 40 - BW)) / (across - 1);
+    col.forEach((id, r) => pos.set(id, { x, y: band * bandH + ((r + 1) * bandH) / (col.length + 1), col: c }));
   });
   const light = kit.mode === "light";
   const label = new Map(el.nodes.map((n) => [n.id, n.label]));
@@ -1362,7 +1369,7 @@ function Diagram({ el, kit, frame, delay }: { el: DiagramEl; kit: Kit; frame: nu
           const a = pos.get(e.from);
           const b = pos.get(e.to);
           if (!a || !b) return null;
-          const sameCol = a.col === b.col;
+          const sameCol = a.col === b.col || Math.abs(a.x - b.x) < 1;
           const x1 = sameCol ? a.x : a.x + (b.x > a.x ? BW / 2 : -BW / 2);
           const y1 = sameCol ? a.y + (b.y > a.y ? BH / 2 : -BH / 2) : a.y;
           const x2 = sameCol ? b.x : b.x + (b.x > a.x ? -BW / 2 : BW / 2);

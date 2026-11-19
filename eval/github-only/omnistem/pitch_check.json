@@ -1,0 +1,63 @@
+{
+  "score": 8,
+  "total": 8,
+  "checks": [
+    {
+      "id": "hook",
+      "label": "Opens with a hook, not the product name",
+      "ok": true,
+      "detail": "First line: “You've reread the moles chapter twice, and you still can't tell if it stuck.”"
+    },
+    {
+      "id": "problem",
+      "label": "States a specific problem",
+      "ok": true,
+      "detail": "20 words on the problem"
+    },
+    {
+      "id": "named",
+      "label": "Names the product when it introduces the fix",
+      "ok": true,
+      "detail": "“OmniSTEM” is said in the solution"
+    },
+    {
+      "id": "demo",
+      "label": "Shows a demo (3+ scenes)",
+      "ok": true,
+      "detail": "4 demo scenes"
+    },
+    {
+      "id": "wow",
+      "label": "Demo ends on a payoff line",
+      "ok": true,
+      "detail": "Last demo line: “Clicking AP Chem outlines the card in red and enables Continue, so the app can match its tone to the”"
+    },
+    {
+      "id": "length",
+      "label": "Fits about 1:00",
+      "ok": true,
+      "detail": "About 61s before pacing (the voice pace adjusts ±15%)"
+    },
+    {
+      "id": "plain",
+      "label": "No hype words",
+      "ok": true,
+      "detail": "Plain language throughout"
+    },
+    {
+      "id": "short",
+      "label": "Sentences short enough to follow by ear",
+      "ok": true,
+      "detail": "All sentences ≤ 26 words"
+    }
+  ],
+  "judge": {
+    "notes": [
+      "Hook now opens on a concrete moment (reread the moles chapter twice, still unsure) instead of a generic statement about studying alone.",
+      "Solution scene now names OmniSTEM as the fix in one sentence, directly after the problem.",
+      "Removed the flagged hype word 'unlocks'. The demo lines now say what appears on screen (red outline, Continue enabled). I made the same change to the matching flow say text so it stays equal to the na",
+      "Built scene is split into shorter sentences. No numbers were added, and total word count stays within 10% of the previous script."
+    ],
+    "rewritten": true
+  }
+}

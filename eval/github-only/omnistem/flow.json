@@ -1,0 +1,38 @@
+{
+  "project_name": "OmniSTEM",
+  "url": "http://localhost:4100/",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "action": "goto",
+      "url": "http://localhost:4100/",
+      "hold_ms": 8000,
+      "say": "The landing page promises bite-size AP Chemistry lessons, a daily equation-balancing puzzle, and a streak."
+    },
+    {
+      "id": "s2",
+      "action": "goto",
+      "url": "http://localhost:4100/welcome",
+      "hold_ms": 8000,
+      "say": "The welcome screen promises daily two-minute lessons and a puzzle that keeps students sharp."
+    },
+    {
+      "id": "s3",
+      "action": "click",
+      "selector": "a[href=\"/pick-goal\"]",
+      "hold_ms": 8000,
+      "say": "Get started asks one question: what brings you here? AP Chem, high school chem, or just exploring."
+    },
+    {
+      "id": "s4",
+      "action": "click",
+      "selector": "text=I'm in AP Chem",
+      "hold_ms": 8000,
+      "say": "Picking AP Chem highlights the choice and unlocks Continue, so the app can set the right tone."
+    }
+  ]
+}

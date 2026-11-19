@@ -1,0 +1,69 @@
+running
+Reading https://github.com/Mallard64/stemduolingo
+Read the repo: Next.js, React, Tailwind, Supabase, Zustand, TypeScript, 87 files
+Read 56 commits from https://github.com/Mallard64/stemduolingo
+Demo source: the repo, run and recorded in a HarnessRouter sandbox
+Running the repo in a sandbox, then directing the video
+Agent started on HarnessRouter
+Agent checked its notes from earlier videos
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent opened http://localhost:4100/
+Agent tried a click to check a selector
+Agent looked at the page
+Agent used terminal
+Agent opened http://localhost:4100/daily
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent opened http://localhost:4100/signup
+Agent tried typing into a field
+Agent tried typing into a field
+Agent tried typing into a field
+Agent tried a click to check a selector
+Agent used terminal
+Agent opened http://localhost:4100/daily
+Agent opened http://localhost:4100/learn
+Agent used terminal
+Agent used terminal
+Agent used vision analyze
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Agent used terminal
+Plan: 9 scenes, 4 demo steps (harness planner, seed 42)
+Research: searching for "percentage of high school students who say AP Chemistry is difficult survey", "AP Chemistry exam score distribution percent scoring 3 or higher College Board", "percent of students who use active recall practice testing vs rereading study habits survey"
+Downloading the recording made in the sandbox
+Research: 12 candidate statistics from 5 pages
+Agent started on HarnessRouter
+4/4 steps recorded in the sandbox
+clip s1: 9.358s → 9.367s
+clip s2: 9.348s → 9.367s
+clip s3: 11.417s → 11.433s
+clip s4: 9.715s → 9.683s
+Research: the agent proposed 0 statistic(s)
+Pitch check: 7/8 (to fix: plain)
+Reviewing the pitch the way a judge would
+Agent started on HarnessRouter
+Judge pass applied: pitch check 8/8
+Writing the narration and captions
+Voice pace 1× (estimated length 58.8s)
+Voicing with Liam (energetic creator, american)
+Rendering the video
+bundling renderer
+rendering 0%
+rendering 10%
+rendering 20%
+rendering 30%
+rendering 40%
+rendering 50%
+rendering 60%
+rendering 70%
+rendering 80%
+rendering 90%
+rendering 100%
+Notes: duration 81.1s is outside 46-74s
+partial

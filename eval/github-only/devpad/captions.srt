@@ -1,0 +1,107 @@
+1
+00:00:00,300 --> 00:00:02,325
+You fill a notebook with handwriting,
+
+2
+00:00:02,325 --> 00:00:03,675
+then your iPad breaks.
+
+3
+00:00:03,675 --> 00:00:05,025
+The notes are gone.
+
+4
+00:00:05,025 --> 00:00:07,388
+Your notes should live in your account,
+
+5
+00:00:07,388 --> 00:00:08,738
+not on one device.
+
+6
+00:00:09,700 --> 00:00:13,271
+DevPad is a notebook backend that saves typed and
+
+7
+00:00:13,271 --> 00:00:16,048
+handwritten notes to each signed-in user's account.
+
+8
+00:00:17,000 --> 00:00:19,333
+This is DevPad's API running locally.
+
+9
+00:00:19,333 --> 00:00:23,609
+Folders, notebooks, pages, cells and strokes each get their own endpoints.
+
+10
+00:00:24,400 --> 00:00:26,301
+Create Notebook takes a title,
+
+11
+00:00:26,301 --> 00:00:28,202
+folder, cover color and template.
+
+12
+00:00:28,202 --> 00:00:29,723
+Pages then hold code,
+
+13
+00:00:29,723 --> 00:00:31,244
+text or ink cells.
+
+14
+00:00:32,000 --> 00:00:33,541
+Try it out makes the form live,
+
+15
+00:00:33,541 --> 00:00:35,082
+so we can send a real request.
+
+16
+00:00:35,800 --> 00:00:37,911
+Execute sends it to the running server,
+
+17
+00:00:37,911 --> 00:00:39,118
+with no sign-in token.
+
+18
+00:00:39,900 --> 00:00:41,970
+The server answers 401,
+
+19
+00:00:41,970 --> 00:00:46,111
+not authenticated. Notebooks belong to a signed-in user:
+
+20
+00:00:46,111 --> 00:00:48,181
+no token, no data.
+
+21
+00:00:48,900 --> 00:00:52,838
+The iPad app is written in Swift and signs
+
+22
+00:00:52,838 --> 00:00:56,776
+in through Supabase. It sends tokens to a FastAPI
+
+23
+00:00:56,776 --> 00:01:01,151
+backend, which stores data with SQLAlchemy in SQLite or Postgres.
+
+24
+00:01:02,200 --> 00:01:05,648
+Next: typed-note editing and free placement of cells,
+
+25
+00:01:05,648 --> 00:01:07,372
+then images and attachments,
+
+26
+00:01:07,372 --> 00:01:09,096
+search and offline sync.
+
+27
+00:01:10,100 --> 00:01:13,940
+Try it at github.com/yuchan-chung1964/DevPad

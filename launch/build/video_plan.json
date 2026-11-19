@@ -1,0 +1,382 @@
+{
+  "version": 1,
+  "seed": 2026,
+  "style_kit": "blueprint",
+  "brand": {
+    "primary": "#6366f1"
+  },
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "fps": 30,
+  "credit": false,
+  "demo_mode": "live",
+  "scenes": [
+    {
+      "id": "problem",
+      "section": "problem",
+      "layout": "big-statement",
+      "duration_s": 17.2,
+      "narration": "Every team at this hackathon has to submit a demo video. Most of us are making it right now, at 3 a.m. A good one needs a script, a clean recording, editing, a voiceover and captions. That's hours you don't have.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "The demo video is due at 11:59 AM",
+          "animation": "word-by-word"
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Write a script",
+            "Record a clean demo",
+            "Edit, voice and caption it"
+          ],
+          "animation": "slide-up"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "solution",
+      "section": "solution",
+      "layout": "big-statement",
+      "duration_s": 7,
+      "narration": "Pit Crew makes the pitch video for you. Paste your live link, or just your GitHub repo.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Paste a link. Get a pitch.",
+          "animation": "word-by-word"
+        },
+        {
+          "type": "text",
+          "text": "Live link or GitHub repo → a narrated 1080p pitch video",
+          "role": "body"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_form",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 7.4,
+      "narration": "Here's a real run. I paste Excalidraw's link, pick a narrator, and ask to review the script first.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_form",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_progress",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 7.4,
+      "narration": "An agent on HarnessRouter explores the site and plans the pitch, while our server records each step in Chromium.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_progress",
+          "zoom": "none"
+        },
+        {
+          "type": "text",
+          "text": "▶▶ ×53 sped up",
+          "role": "label"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_review",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 6,
+      "narration": "Before anything is voiced, I get the outline and a pitch check, and I can change any line.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_review",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_done",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 12.2,
+      "narration": "Then it's voiced and rendered into a finished 1080p pitch video, ready to download.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_done",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_omnistem",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 10.2,
+      "narration": "No live link? OmniSTEM is just a GitHub repo. Pit Crew ran it inside a HarnessRouter sandbox and recorded it there.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_omnistem",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_devpad",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 9.6,
+      "narration": "DevPad's API ran the same way, and its video shows the real responses, sign-in errors included.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_devpad",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "demo_c_wumpus",
+      "section": "demo",
+      "layout": "full-frame",
+      "duration_s": 12,
+      "narration": "And Hunt the Wumpus, a Unity game, got its video from the team's own gameplay clip, narrated from frames the agent actually looked at.",
+      "elements": [
+        {
+          "type": "clip",
+          "step_id": "c_wumpus",
+          "zoom": "none"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "built",
+      "section": "built",
+      "layout": "diagram",
+      "duration_s": 22.9,
+      "narration": "Here's how it works. Our server hands the project to an agent on HarnessRouter, which explores the site or runs the repo, and writes the plan as JSON. Our server checks every statistic against its source, records the demo, you review the script, then ElevenLabs voices it and Remotion renders it.",
+      "elements": [
+        {
+          "type": "diagram",
+          "kind": "layered",
+          "nodes": [
+            {
+              "id": "team",
+              "label": "Your link or repo"
+            },
+            {
+              "id": "server",
+              "label": "Pit Crew server"
+            },
+            {
+              "id": "agent",
+              "label": "HarnessRouter agent"
+            },
+            {
+              "id": "stats",
+              "label": "Stat checker"
+            },
+            {
+              "id": "rec",
+              "label": "Chromium recorder"
+            },
+            {
+              "id": "review",
+              "label": "Your review"
+            },
+            {
+              "id": "voice",
+              "label": "ElevenLabs voice"
+            },
+            {
+              "id": "render",
+              "label": "Remotion render"
+            }
+          ],
+          "edges": [
+            {
+              "from": "team",
+              "to": "server"
+            },
+            {
+              "from": "server",
+              "to": "agent",
+              "label": "task"
+            },
+            {
+              "from": "agent",
+              "to": "stats",
+              "label": "plan"
+            },
+            {
+              "from": "stats",
+              "to": "rec"
+            },
+            {
+              "from": "rec",
+              "to": "review"
+            },
+            {
+              "from": "review",
+              "to": "voice"
+            },
+            {
+              "from": "voice",
+              "to": "render"
+            }
+          ]
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "evidence",
+      "section": "evidence",
+      "layout": "bullet-reveal",
+      "duration_s": 10.6,
+      "narration": "Tonight we tested it on Excalidraw, Hoppscotch, Carbon, Mermaid and Squoosh, plus three student projects straight from GitHub.",
+      "elements": [
+        {
+          "type": "bullets",
+          "items": [
+            "Live sites: Excalidraw, Hoppscotch, Carbon, Mermaid, Squoosh",
+            "GitHub only: OmniSTEM, DevPad, Hunt the Wumpus"
+          ],
+          "animation": "slide-up"
+        },
+        {
+          "type": "text",
+          "text": "Our own test runs, Nov 18",
+          "role": "label"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "next",
+      "section": "next",
+      "layout": "bullet-reveal",
+      "duration_s": 6.5,
+      "narration": "Next: a pitch video for every launch. Product Hunt, demo days, investor updates.",
+      "elements": [
+        {
+          "type": "bullets",
+          "items": [
+            "Product Hunt launches",
+            "Demo days",
+            "Investor updates"
+          ],
+          "animation": "slide-up"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "ask",
+      "section": "ask",
+      "layout": "big-statement",
+      "duration_s": 3.8,
+      "narration": "Paste your link, and Pit Crew makes the pitch.",
+      "elements": [
+        {
+          "type": "kinetic_headline",
+          "text": "Paste your link. Pit Crew makes the pitch.",
+          "animation": "word-by-word"
+        },
+        {
+          "type": "text",
+          "text": "#bighackgame · Rendered with Pit Crew's own video engine",
+          "role": "label"
+        }
+      ],
+      "transition_in": "fade"
+    },
+    {
+      "id": "end",
+      "section": "end",
+      "layout": "end-card",
+      "duration_s": 2.5,
+      "narration": "",
+      "elements": [],
+      "transition_in": "fade"
+    }
+  ],
+  "flow": {
+    "project_name": "Pit Crew",
+    "url": "https://pitcrew-production-83e5860b.up.railway.app",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "steps": [
+      {
+        "id": "c_form",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_progress",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_review",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_done",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_omnistem",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_devpad",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      },
+      {
+        "id": "c_wumpus",
+        "action": "goto",
+        "url": "https://pitcrew-production-83e5860b.up.railway.app",
+        "hold_ms": 3000,
+        "say": ""
+      }
+    ]
+  },
+  "sources": []
+}

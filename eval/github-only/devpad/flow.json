@@ -1,0 +1,49 @@
+{
+  "project_name": "DevPad",
+  "url": "http://localhost:4100/docs",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "action": "goto",
+      "url": "http://localhost:4100/docs",
+      "hold_ms": 7000,
+      "say": "The DevPad API runs locally, with endpoints for folders, notebooks, pages, cells and strokes."
+    },
+    {
+      "id": "s2",
+      "action": "click",
+      "selector": "#operations-notebooks-create_notebook_notebooks_post .opblock-summary-control",
+      "hold_ms": 6500,
+      "say": "Pages in a notebook hold cells of three kinds: code, text and ink.",
+      "zoom": "#operations-notebooks-create_notebook_notebooks_post"
+    },
+    {
+      "id": "s3",
+      "action": "click",
+      "selector": "#operations-notebooks-create_notebook_notebooks_post button.try-out__btn",
+      "hold_ms": 4500,
+      "say": "Try it out lets us send a real request.",
+      "zoom": "#operations-notebooks-create_notebook_notebooks_post"
+    },
+    {
+      "id": "s4",
+      "action": "click",
+      "selector": "#operations-notebooks-create_notebook_notebooks_post button.execute",
+      "hold_ms": 4000,
+      "say": "Execute sends it to the running server.",
+      "zoom": "#operations-notebooks-create_notebook_notebooks_post"
+    },
+    {
+      "id": "s5",
+      "action": "scroll",
+      "y": 420,
+      "hold_ms": 6500,
+      "say": "With no sign-in token, the server answers 401. Data routes never run open.",
+      "zoom": "#operations-notebooks-create_notebook_notebooks_post .live-responses-table"
+    }
+  ]
+}
