@@ -112,3 +112,10 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 ## 2026-11-18: Blank demo when clip polish fails
 - shadcn/ui test job: ffmpeg was SIGKILLed 25s into clip polish (not our 5 min timeout; most likely the host's memory limit, peaks near 7.4 of 8 GB were seen during renders). The log promised screenshots, but the renderer only drew a demo window when a processed clip existed, so the demo rendered empty and the job still said "ok".
 - Now: a step without a clip shows its screenshot (slow push-in) in the window; polish retries once with FFMPEG_THREADS=2; if it still fails the job is "partial" with a note.
+
+## 2026-11-18: Recorder robustness from the wide GitHub test
+- Squoosh: the agent wrote text=Large photo, but that name is the image's alt text, so the step failed. A `text=` selector now also matches an exact alt text, label or title. The instructions now tell the agent to use img[alt=...] / [aria-label=...] for image buttons.
+- Pages that never stop animating fail Playwright's "stable" check: after 5s the recorder scrolls the element into view itself and clicks with force.
+- Typing selects the field's existing text first, so "20" replaces "75" instead of giving "2075".
+- Locally the Squoosh flow went from 1/4 to 4/4 steps.
+- Open: on Railway, clip polish for ui.shadcn.com is SIGKILLed about 20s in, twice, even with 2 threads. Locally the same recording polishes in 16s with ~1 GB peak. Cause not found (no process-level memory metrics). The demo falls back to screenshots and the job reports partial.

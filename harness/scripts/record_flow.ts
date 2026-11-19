@@ -129,6 +129,36 @@ class ScreenRecorder {
 }
 
 /** Device-pixel ratio for recording; 2 keeps 1.8x zooms sharp in a 1080p render. */
+/**
+ * The step's element. A `text=` selector also matches an exact alt text, label or title: image buttons
+ * (e.g. Squoosh's sample photos) carry their name there, not as visible text, and the agent often
+ * writes text=<name> for them.
+ */
+export function locate(page: Page, selector: string) {
+  const m = /^text=(?:"([^"]+)"|'([^']+)'|(.+))$/.exec(selector.trim());
+  const loc = page.locator(selector);
+  if (!m) return loc.first();
+  const name = (m[1] ?? m[2] ?? m[3]).trim();
+  return loc
+    .or(page.getByAltText(name, { exact: true }))
+    .or(page.getByLabel(name, { exact: true }))
+    .or(page.getByTitle(name, { exact: true }))
+    .first();
+}
+
+/** How long to wait for Playwright's actionability checks before acting without them. */
+const ACTIONABLE_MS = 5000;
+
+/** Clicks normally; if the element never settles (constant animation), clicks it anyway. */
+async function clickSettled(loc: ReturnType<Page["locator"]>, timeout: number) {
+  try {
+    await loc.click({ timeout: Math.min(timeout, ACTIONABLE_MS) });
+  } catch (e) {
+    if (!/Timeout/i.test((e as Error).message)) throw e;
+    await loc.click({ timeout, force: true });
+  }
+}
+
 export const recordScale = () => Number(process.env.RECORD_SCALE) || 2;
 /** Frame cap for the screencast; the final clip is re-timed to 60fps, holding frames between captures. */
 const MAX_CAPTURE_FPS = 30;
@@ -200,8 +230,16 @@ class Recorder {
   }
 
   async moveToSelector(selector: string, timeout: number) {
-    const loc = this.page.locator(selector).first();
-    await loc.scrollIntoViewIfNeeded({ timeout });
+    const loc = locate(this.page, selector);
+    // Playwright waits for the element to be stable; on pages that animate nonstop (e.g. Squoosh's
+    // intro) that never happens. Give it a few seconds, then scroll it into view directly.
+    try {
+      await loc.scrollIntoViewIfNeeded({ timeout: Math.min(timeout, ACTIONABLE_MS) });
+    } catch {
+      await loc.waitFor({ state: "attached", timeout });
+      await loc.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" }));
+      await sleep(400);
+    }
     const box = await loc.boundingBox({ timeout });
     if (box) {
       await this.moveTo(box.x + box.width / 2, box.y + box.height / 2);
@@ -245,14 +283,16 @@ async function runStep(rec: Recorder, page: Page, step: Step, timeout: number): 
       break;
     case "click": {
       const loc = await rec.moveToSelector(step.selector!, timeout);
-      await loc.click({ timeout });
+      await clickSettled(loc, timeout);
       done = rec.now();
       await page.waitForLoadState("domcontentloaded", { timeout: 4000 }).catch(() => {});
       break;
     }
     case "type": {
       const loc = await rec.moveToSelector(step.selector!, timeout);
-      await loc.click({ timeout });
+      await clickSettled(loc, timeout);
+      // Replace what's in the field, like a person selecting it first (Squoosh's quality box held "75").
+      await loc.selectText({ timeout: 1500 }).catch(() => {});
       // Human speed: 60–90ms per character, jittered.
       for (const ch of step.text ?? "") {
         await page.keyboard.type(ch);
@@ -274,7 +314,7 @@ async function targetBox(page: Page, step: Step): Promise<Box | undefined> {
   const selector = step.zoom ?? (step.action === "click" || step.action === "type" ? step.selector : undefined);
   if (!selector) return undefined;
   try {
-    const b = await page.locator(selector).first().boundingBox({ timeout: 1500 });
+    const b = await locate(page, selector).boundingBox({ timeout: 1500 });
     if (!b || b.width < 1 || b.height < 1) return undefined;
     return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
   } catch {

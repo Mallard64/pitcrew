@@ -30,7 +30,7 @@ Our server will record your demo flow in Chromium at 1280x720, voice your narrat
 
 ## Demo flow rules (video_plan.flow)
 - 4–8 steps; actions: goto {url} | click {selector} | type {selector, text} | scroll {y} | wait. The first step is a goto to the live URL.
-- Only selectors you verified on the live page (Playwright syntax: text=Get started, #id, a[href="/pricing"]). Prefer goto when unsure.
+- Only selectors you verified on the live page (Playwright syntax: text=Get started, #id, a[href="/pricing"]). Prefer goto when unsure. Image buttons and icons often have no visible text: use img[alt="..."] or [aria-label="..."] for them.
 - Never log in, sign up, pay, or enter personal data. Fake demo inputs only.
 - Each say ≤ 25 words; hold_ms 2500–8000 and ≥ (words / 2.5) s + 0.8 s. Optional "zoom": the selector to zoom into (defaults to the clicked/typed element). For a step whose result is a dense panel (a graph, a table, a sidebar, a results list), set "zoom" to that panel's selector so viewers can read it.
 - Each demo scene shows exactly one step: elements [{"type":"clip","step_id":"<step id>","zoom":"target"|"inspect"|"none"}], narration = that step's say.
