@@ -4,21 +4,31 @@ import JobForm from "@/components/JobForm";
 import { getStats } from "@/lib/db";
 import { config } from "@/lib/config";
 
-// Real, unedited Pit Crew output (re-encoded to 720p for the web). Both are public products, used as samples.
+// Real, unedited Pit Crew output from our own test runs (re-encoded to 720p for the web).
+// Public products / our own test project; no user videos are shown without the team's permission.
 const SAMPLES = [
+  { file: "tldraw", name: "tldraw", src: "tldraw.com · live site", note: "62s · midnight look · 7-step live demo" },
+  { file: "excalidraw", name: "Excalidraw", src: "excalidraw.com · live site", note: "71s · paper look, picked by the agent" },
+  { file: "jsoncrack", name: "JSON Crack", src: "jsoncrack.com · live site", note: "57s · terminal look · 60s length option" },
+  { file: "wumpus", name: "Hunt the Wumpus", src: "team footage, no live site", note: "55s · studio look · narrated from uploaded clips" },
+];
+
+const ON_HR = [
   {
-    file: "tldraw",
-    name: "tldraw",
-    url: "tldraw.com",
-    kit: "midnight",
-    note: "62s · problem → solution → 7-step live demo · voiced + captioned",
+    t: "GitHub-only projects run in HarnessRouter's sandbox",
+    d: "No live site? The agent runs your repo and records it inside HarnessRouter's sandbox. Team code never touches our server.",
   },
   {
-    file: "excalidraw",
-    name: "Excalidraw",
-    url: "excalidraw.com",
-    kit: "paper",
-    note: "71s · the agent chose the editorial look for a hand-drawn tool",
+    t: "Pitch Room",
+    d: "Three AI agents draft competing pitches, each on a different model picked from our Harness. A judge agent scores them and picks the best one. You can choose a different draft.",
+  },
+  {
+    t: "Claim checker",
+    d: "The pitch is tested against the real product before it's voiced, and every statistic is checked against its source page.",
+  },
+  {
+    t: "Revisions in the same session",
+    d: "Ask for a change in plain words (\"make it shorter\"). The agent continues the same HarnessRouter session instead of starting over.",
   },
 ];
 
@@ -74,13 +84,17 @@ const HOW = [
 export default async function Home() {
   await connection();
   const s = getStats();
+  const paid = config.paidTraction;
+  const pilot = config.pilotPartner;
+  const freeLimit = config.maxJobsPerUserPerDay;
+  const buildLogUrl = config.buildLogUrl;
   return (
     <div className="space-y-24">
       {/* Hero */}
       <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
         <div className="space-y-6">
           <p className="w-fit rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
-            For Big Hack Game teams · submissions due Nov 19, 11:59 AM PST
+            Built on HarnessRouter for The Big Hack Game
           </p>
           {/* One sentence per line, so the break never lands mid-name ("Pit / Crew"). */}
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-balance text-white sm:text-5xl xl:text-6xl">
@@ -91,24 +105,45 @@ export default async function Home() {
           </h1>
           <p className="max-w-xl text-lg text-slate-400">
             Paste your project&apos;s live link. You get a narrated pitch video with a real recorded
-            demo, submission text and a progress update draft, with every statistic checked against its
-            source.
+            demo and submission text, with every statistic checked against its source. Add a public repo
+            to also get a progress update drafted from your commits.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a href="#make" className="btn px-5 py-3">
               Make my pitch video
             </a>
             <a href="#samples" className="btn-ghost px-5 py-3">
-              Watch a sample
+              Watch examples
             </a>
           </div>
           {s.videos_made > 0 && (
-            <p className="text-sm text-slate-500">
-              <span className="font-semibold text-slate-200">{s.videos_made}</span> video
-              {s.videos_made === 1 ? "" : "s"} made for{" "}
-              <span className="font-semibold text-slate-200">{s.unique_projects}</span> project
-              {s.unique_projects === 1 ? "" : "s"} so far
-            </p>
+            <div className="space-y-1.5 text-sm">
+              <p className="text-slate-400">
+                <span className="font-semibold text-white">{s.videos_made}</span> video
+                {s.videos_made === 1 ? "" : "s"} made
+                {" · "}
+                <span className="font-semibold text-white">{s.builders}</span>
+                {s.builders === 1 ? " builder" : " builders"}
+                {paid && (
+                  <>
+                    {" · "}
+                    <span className="font-semibold text-white">{paid.paid}</span> paid to keep going
+                    after the free limit (${paid.usd} collected)
+                  </>
+                )}
+                {" · "}
+                <a href="/stats" className="underline decoration-white/20 hover:text-white">
+                  live stats
+                </a>
+              </p>
+              {pilot && (
+                <p className="text-slate-500">
+                  <span className="font-medium text-slate-300">Pilot partner (intent, not revenue):</span>{" "}
+                  an upcoming student hackathon (~{pilot.size} participants, {pilot.season}) plans to offer
+                  Pit Crew to all teams. Letter of intent available on request.
+                </p>
+              )}
+            </div>
           )}
         </div>
         <div className="relative">
@@ -148,16 +183,15 @@ export default async function Home() {
       {/* Samples */}
       <section id="samples" className="scroll-mt-24 space-y-8">
         <div className="space-y-2">
-          <p className="eyebrow">Samples</p>
+          <p className="eyebrow">Example gallery</p>
           <h2 className="text-3xl font-bold tracking-tight text-white">
             Real output, straight from a live link
           </h2>
           <p className="max-w-2xl text-slate-400">
-            No editing afterwards. Both came from pasting a URL; the agent wrote the script and
-            picked the look.
+            Our own test runs, unedited. The agent wrote each script and picked each look. Sound on.
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           {SAMPLES.map((v) => (
             <figure key={v.file} className="card space-y-3 p-3 sm:p-3">
               <video
@@ -171,11 +205,13 @@ export default async function Home() {
               <figcaption className="px-2 pb-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-semibold text-white">{v.name}</span>
-                  <span className="text-xs text-slate-500">
-                    {v.url} · {v.kit} look
+                  <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-400">
+                    test run
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-slate-400">{v.note}</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {v.src} · {v.note}
+                </p>
               </figcaption>
             </figure>
           ))}
@@ -249,6 +285,67 @@ export default async function Home() {
             </li>
           ))}
         </ol>
+      </section>
+
+      {/* On HarnessRouter */}
+      <section id="harnessrouter" className="scroll-mt-24 space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">How it works on HarnessRouter</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">
+            The agent work runs on HarnessRouter
+          </h2>
+          {buildLogUrl && (
+            <p className="text-slate-400">
+              <a href={buildLogUrl} className="underline decoration-white/20 hover:text-white">
+                Read our HarnessRouter build log thread
+              </a>
+            </p>
+          )}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {ON_HR.map((h) => (
+            <div key={h.t} className="card">
+              <h3 className="font-semibold text-white">{h.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{h.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="scroll-mt-24 space-y-8">
+        <div className="space-y-2">
+          <p className="eyebrow">Pricing</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white">Free to start</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="card">
+            <h3 className="font-semibold text-white">Free</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              {freeLimit === 1 ? "Your first video." : `Up to ${freeLimit} videos a day per team.`}
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-white">$5 per additional video</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Past the free limit, pay by card. We raise your limit by hand after payment, so it can
+              take a little while.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-white">Teams &amp; hackathon organizers</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Pilot programs available.{" "}
+              <a
+                href="https://github.com/Mallard64/pitcrew/issues"
+                className="underline decoration-white/20 hover:text-white"
+              >
+                Contact us
+              </a>
+              .
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Form */}

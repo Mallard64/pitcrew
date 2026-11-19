@@ -206,6 +206,8 @@ export type Stats = {
   jobs_finished: number;
   jobs_ok: number;
   videos_made: number;
+  /** Distinct anonymous client keys (hashed IPs) with at least one delivered video. */
+  builders: number;
   unique_projects: number;
   success_rate: number;
   median_duration_s: number;
@@ -218,7 +220,7 @@ export type Stats = {
 };
 
 export function getStats(): Stats {
-  const jobs = db().prepare(`SELECT status, live_url, repo_url, duration_ms, contract_json, demo_mode FROM jobs`).all() as Pick<Job, "status" | "live_url" | "repo_url" | "duration_ms" | "contract_json" | "demo_mode">[];
+  const jobs = db().prepare(`SELECT status, live_url, repo_url, duration_ms, contract_json, demo_mode, client_key FROM jobs`).all() as Pick<Job, "status" | "live_url" | "repo_url" | "duration_ms" | "contract_json" | "demo_mode" | "client_key">[];
   const finished = jobs.filter((j) => j.status === "ok" || j.status === "partial" || j.status === "failed");
   const made = finished.filter((j) => j.status !== "failed");
   const fb = db().prepare(`SELECT SUM(rating = 1) AS up, SUM(rating = -1) AS down FROM feedback`).get() as { up: number | null; down: number | null };
@@ -227,6 +229,7 @@ export function getStats(): Stats {
     jobs_finished: finished.length,
     jobs_ok: finished.filter((j) => j.status === "ok").length,
     videos_made: made.length,
+    builders: new Set(made.map((j) => j.client_key)).size,
     unique_projects: new Set(made.map((j) => (j.live_url ? projectKey(j.live_url) : (j.repo_url ?? "")))).size,
     success_rate: finished.length ? made.length / finished.length : 0,
     median_duration_s: Math.round(median(made.map((j) => (j.duration_ms ?? 0) / 1000))),

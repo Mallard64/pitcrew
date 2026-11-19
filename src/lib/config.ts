@@ -33,6 +33,23 @@ export const config = {
   get pitchRoomEnabled() {
     return process.env.PITCH_ROOM_ENABLED === "true";
   },
+  /** Landing-page pilot line: hidden until PILOT_PARTNER_ENABLED=true and both values are set. */
+  get pilotPartner() {
+    const size = int(process.env.PILOT_PARTNER_SIZE, 0);
+    const season = (process.env.PILOT_PARTNER_SEASON ?? "").trim();
+    return process.env.PILOT_PARTNER_ENABLED === "true" && size && season ? { size, season } : null;
+  },
+  /** Paid count and dollars collected aren't in our DB (Stripe holds them), so they're set by hand from the Stripe dashboard. Unset = hidden. */
+  get paidTraction() {
+    const paid = int(process.env.TRACTION_PAID_COUNT, 0);
+    const usd = int(process.env.TRACTION_COLLECTED_USD, 0);
+    return paid && usd ? { paid, usd } : null;
+  },
+  /** Public link to our HarnessRouter build log thread (empty = no link). */
+  get buildLogUrl() {
+    const u = process.env.BUILD_LOG_URL ?? "";
+    return /^https:\/\//.test(u) ? u : "";
+  },
   get adminToken() {
     return process.env.ADMIN_TOKEN ?? "";
   },
