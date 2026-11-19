@@ -113,6 +113,8 @@ export function lengthLine(target: number) {
   return [
     `Target length (chosen by the team): about ${formatSeconds(w.target)}, so the scene durations must total ${w.min}–${w.max}s. This replaces the default 90–120s and the demo step counts in your instructions.`,
     `Rough budget: problem ~${b.problem}s, solution ~${b.solution}s, demo ~${b.demo}s in about ${b.demoSteps} steps (one scene each), next ~${b.next}s if you have a roadmap, end 3s.`,
+    // Agents overshoot short targets (60 s runs came out at 77–81 s): give a hard word count too.
+    `Word budget: at most ${Math.round(((w.min + w.max) / 2) * 2.3)} words of narration in total across all scenes (the voice speaks about 2.6 words per second plus pauses between scenes). Count them before you reply; cut optional sections first.`,
     target >= 120
       ? "For a longer video, show more of the product (more steps, more screens), and use two problem scenes if the story needs it. Never pad with filler."
       : target <= 45

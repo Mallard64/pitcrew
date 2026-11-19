@@ -26,5 +26,20 @@
     "notes": "duration 81.1s is outside 46-74s",
     "error": null,
     "wall_s": 1622
+  },
+  {
+    "slug": "devpad",
+    "id": "GkQnvINC",
+    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/GkQnvINC",
+    "status": "partial",
+    "demo_mode": "sandbox-run",
+    "notice": null,
+    "duration_s": 77.1,
+    "steps": "5/5",
+    "kit": "terminal",
+    "pitch": "8/8",
+    "notes": "duration 77.1s is outside 46-74s",
+    "error": null,
+    "wall_s": 2174
   }
 ]
