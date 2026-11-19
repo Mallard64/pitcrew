@@ -119,3 +119,9 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Typing selects the field's existing text first, so "20" replaces "75" instead of giving "2075".
 - Locally the Squoosh flow went from 1/4 to 4/4 steps.
 - Open: on Railway, clip polish for ui.shadcn.com is SIGKILLed about 20s in, twice, even with 2 threads. Locally the same recording polishes in 16s with ~1 GB peak. Cause not found (no process-level memory metrics). The demo falls back to screenshots and the job reports partial.
+
+## 2026-11-18: Error prevention after the wide test
+- Step repair: when clicks/types fail, the recorder lists what was actually on the page (text=…, img[alt=…], [aria-label=…], input[placeholder=…], on-screen first). The agent gets one follow-up turn with the errors and those candidates. Only the failed steps' selectors can change (say and hold_ms stay), then the flow is recorded once more, and the better take is kept. It only runs within 6 minutes of job start, and the job gets +4 min of budget for it. The integration test covers it end to end with a scripted agent.
+- Clip polish: a third, low-memory attempt (no full-recording re-encode, 1080p clips, one thread: 346 MB peak vs ~960 MB locally) before falling back to screenshots. A caller's -threads now wins over FFMPEG_THREADS.
+- When the host SIGKILLs ffmpeg, the error and server log now include cgroup memory use/limit, the oom_kill count and the top processes, so the shadcn/ui kill can be diagnosed next time.
+- Checked and rejected: the theory that trim+concat buffers frames during sped-up loading. Measured 643 MB vs 605 MB for a single setpts, so no change.

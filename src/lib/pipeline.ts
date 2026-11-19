@@ -16,6 +16,7 @@ import { captionChunks, toSrt, NARRATION_LEAD_S, type Chunk } from "../../harnes
 import type { VideoPlan } from "../../harness/schemas/video_plan";
 import type { RecordResult } from "../../harness/scripts/record_flow";
 import { localVideoPlan } from "./planner/video";
+import { mergeRepairedSteps, repairableFailures, repairPrompt } from "./repair";
 import { seedFor } from "./harness/local";
 import { exploreSite, type SiteDigest } from "./explore";
 import { checkPublicUrl, makeRequestGuard } from "./ssrf";
@@ -43,7 +44,15 @@ export type JobInput = {
 };
 /** What the team sees while the job waits for their script review. */
 export type ReviewDraft = { scenes: { id: string; section: string; narration: string }[]; report: PitchReport; voice: string; look: string };
-export type PipelineHooks = { awaitReview?: (draft: ReviewDraft) => Promise<{ id: string; narration: string }[] | null> };
+export type PipelineHooks = {
+  awaitReview?: (draft: ReviewDraft) => Promise<{ id: string; narration: string }[] | null>;
+  /** Adds working time to the job's timeout (used when failed demo steps are repaired and re-recorded). */
+  extendBudget?: (ms: number) => void;
+};
+
+/** Repair failed steps only if the job is young enough that a second recording still fits comfortably. */
+const REPAIR_IF_BEFORE_MS = 6 * 60 * 1000;
+const REPAIR_EXTRA_MS = 4 * 60 * 1000;
 export type PipelineResult = { contract: Contract; flow: Flow; videoPlan: VideoPlan; sessionId?: string; hrSessionId?: string; planSource: string; files: string[] };
 
 /** Saved next to v1 so revisions don't need to re-crawl the site or GitHub. */
@@ -60,6 +69,7 @@ export async function runPipeline(
   revision?: { request: string; previous: Flow; sessionId?: string },
   hooks: PipelineHooks = {},
 ): Promise<PipelineResult> {
+  const startedAt = Date.now();
   const outDir = path.join(jobDir, `v${version}`);
   await fs.mkdir(outDir, { recursive: true });
   const log = (message: string) => emit({ type: "log", message });
@@ -113,7 +123,7 @@ export async function runPipeline(
     videoPlan.style_kit = input.look;
   }
   applyTeamChoices(videoPlan, input, log);
-  const flow = videoPlan.flow;
+  let flow = videoPlan.flow;
   await fs.writeFile(path.join(outDir, "flow.json"), JSON.stringify(flow, null, 2));
   log(`Plan: ${videoPlan.scenes.length} scenes, ${flow.steps.length} demo steps (${plan.source} planner, seed ${videoPlan.seed})`);
 
@@ -125,8 +135,43 @@ export async function runPipeline(
 
   // 3. Record the demo, then cut one polished clip per step.
   progress("recording", `Recording ${flow.steps.length} demo steps in Chromium`);
-  const rec = await recordFlow(flow, outDir, { allowRequest: guard, log });
+  let rec = await recordFlow(flow, outDir, { allowRequest: guard, log });
   log(`${rec.stepsOk}/${flow.steps.length} steps recorded`);
+
+  // 3a. Repair: failed clicks/types go back to the agent with the elements that really were on the
+  // page; it fixes only those selectors and we record once more, keeping whichever take is better.
+  const failures = repairableFailures(flow, rec.timings);
+  if (failures.length && planner.research && plan.sessionId && plan.source === "harness" && Date.now() - startedAt < REPAIR_IF_BEFORE_MS) {
+    hooks.extendBudget?.(REPAIR_EXTRA_MS);
+    progress("recording", `Fixing ${failures.length} demo step${failures.length === 1 ? "" : "s"} that didn't work on the live site`);
+    try {
+      let fixed: Extract<PlannerEvent, { type: "plan" }> | undefined;
+      for await (const ev of planner.research({ sessionId: plan.sessionId, prompt: repairPrompt(failures), user: input.user })) {
+        if (ev.type === "log") log(ev.message);
+        else fixed = ev;
+      }
+      const merged = fixed ? mergeRepairedSteps(flow, fixed.flow, failures.map((f) => f.step.id)) : { flow, changed: 0 };
+      if (!merged.changed) log("The agent found no better selectors; keeping the first recording");
+      else {
+        log(`Recording again with ${merged.changed} fixed step${merged.changed === 1 ? "" : "s"}`);
+        const retryDir = path.join(outDir, "retake");
+        const rec2 = await recordFlow(merged.flow, retryDir, { allowRequest: guard, log });
+        if (rec2.stepsOk > rec.stepsOk) {
+          for (const f of ["shots", "timings.json", "recording.mp4"]) {
+            await fs.rm(path.join(outDir, f), { recursive: true, force: true });
+            if (existsSync(path.join(retryDir, f))) await fs.rename(path.join(retryDir, f), path.join(outDir, f));
+          }
+          rec = { ...rec2, videoPath: rec2.videoPath ? path.join(outDir, "recording.mp4") : "" };
+          flow = videoPlan.flow = merged.flow;
+          await fs.writeFile(path.join(outDir, "flow.json"), JSON.stringify(flow, null, 2));
+          log(`${rec.stepsOk}/${flow.steps.length} steps recorded after the fix`);
+        } else log(`The retake recorded ${rec2.stepsOk}/${flow.steps.length}; keeping the first recording`);
+        await fs.rm(retryDir, { recursive: true, force: true });
+      }
+    } catch (e) {
+      log(`Step repair skipped: ${(e as Error).message.slice(0, 160)}`);
+    }
+  }
   if (rec.stepsOk === 0) throw new Error("No step of the demo flow worked on this site");
   let clipIds = new Set<string>();
   let polishNote = "";
@@ -141,8 +186,14 @@ export async function runPipeline(
       clipIds = new Set((await polishFootage(outDir, log)).map((c) => c.step_id));
       log("Clip polish worked on the retry");
     } catch (e2) {
-      polishNote = "demo shows screenshots: the recorded clips could not be processed";
-      log(`Clip polish failed again (${(e2 as Error).message.slice(0, 120)}); demo scenes will use screenshots`);
+      log(`Clip polish failed again (${(e2 as Error).message.slice(0, 160)}); trying the low-memory path (1080p clips)`);
+      try {
+        clipIds = new Set((await polishFootage(outDir, log, { lite: true })).map((c) => c.step_id));
+        log("Low-memory clip polish worked");
+      } catch (e3) {
+        polishNote = "demo shows screenshots: the recorded clips could not be processed";
+        log(`Clip polish failed (${(e3 as Error).message.slice(0, 160)}); demo scenes will use screenshots`);
+      }
     } finally {
       if (threads === undefined) delete process.env.FFMPEG_THREADS;
       else process.env.FFMPEG_THREADS = threads;

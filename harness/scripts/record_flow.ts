@@ -31,6 +31,8 @@ export type StepTiming = {
   cursor?: CursorPoint[];
   /** Time a loading indicator was visible after the action (dead time), ms relative to video start. */
   wait?: { start_ms: number; end_ms: number };
+  /** On failure: visible elements a person could click or type into at that moment (for a repair). */
+  candidates?: string[];
 };
 
 export type RecordResult = {
@@ -145,6 +147,37 @@ export function locate(page: Page, selector: string) {
     .or(page.getByTitle(name, { exact: true }))
     .first();
 }
+
+/**
+ * Visible things a person could click or type into, each as a Playwright selector that names it
+ * (text=…, img[alt="…"], [aria-label="…"], input[placeholder="…"]). In-page, so plain JS.
+ */
+const CANDIDATES_JS = `(() => {
+  const out = [];
+  const seen = new Set();
+  const q = (v) => JSON.stringify(v.replace(/\\s+/g, " ").trim().slice(0, 60));
+  const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 4 && r.height > 4 && getComputedStyle(el).visibility !== "hidden"; };
+  const onScreen = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
+  const all = [...document.querySelectorAll('a[href], button, [role=button], [role=tab], [role=menuitem], summary, input:not([type=hidden]), textarea, select, label, img[alt]')];
+  // On-screen first, then the rest of the page (the step may need a scroll).
+  const els = [...all.filter(onScreen), ...all.filter((el) => !onScreen(el))];
+  for (const el of els) {
+    if (out.length >= 40 || !visible(el)) continue;
+    const tag = el.tagName.toLowerCase();
+    const aria = el.getAttribute("aria-label");
+    const text = (el.innerText || "").trim();
+    let sel = "";
+    if (tag === "input" || tag === "textarea") {
+      const ph = el.getAttribute("placeholder");
+      sel = ph ? tag + "[placeholder=" + q(ph) + "]" : aria ? tag + "[aria-label=" + q(aria) + "]" : el.id ? "#" + el.id : tag + "[type=" + q(el.type || "text") + "]";
+    } else if (tag === "img") sel = "img[alt=" + q(el.alt) + "]";
+    else if (text && text.length <= 50) sel = "text=" + q(text);
+    else if (aria) sel = "[aria-label=" + q(aria) + "]";
+    else if (tag === "a" && el.getAttribute("href")) sel = 'a[href=' + q(el.getAttribute("href")) + ']';
+    if (sel && !seen.has(sel)) { seen.add(sel); out.push(sel); }
+  }
+  return out;
+})()`;
 
 /** How long to wait for Playwright's actionability checks before acting without them. */
 const ACTIONABLE_MS = 5000;
@@ -372,6 +405,7 @@ export async function recordFlow(
     const rec = new Recorder(page, t0);
     page.mouse.move(640, 360).catch(() => {});
 
+    const failedOn = new Map<string, string[]>();
     for (const step of flow.steps) {
       const start = rec.now();
       rec.cursor = [];
@@ -385,6 +419,7 @@ export async function recordFlow(
         ok = false;
         error = (e as Error).message.split("\n")[0].slice(0, 300);
         log(`step ${step.id} (${step.action}) failed: ${error}`);
+        failedOn.set(step.id, ((await page.evaluate(CANDIDATES_JS).catch(() => [])) as string[]) ?? []);
       }
       // The hold starts once the page is ready, so dead time never eats into it.
       const afterAction = Date.now();
@@ -403,6 +438,7 @@ export async function recordFlow(
       if (box) t.box = box;
       if (rec.cursor.length) t.cursor = rec.cursor;
       if (wait && wait.end_ms - wait.start_ms >= 300) t.wait = wait;
+      if (failedOn.get(step.id)?.length) t.candidates = failedOn.get(step.id);
       timings.push(t);
       if (ok) log(`step ${step.id} ok${t.wait ? ` (waited ${t.wait.end_ms - t.wait.start_ms}ms for loading)` : ""}`);
     }

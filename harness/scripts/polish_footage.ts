@@ -29,9 +29,10 @@ export type ClipInfo = {
   speedups: Speedup[];
 };
 
-// Clips keep the recording's device-pixel resolution (2560x1440 at the default scale).
-const W = () => Math.round((1280 * recordScale()) / 2) * 2;
-const H = () => Math.round((720 * recordScale()) / 2) * 2;
+// Clips keep the recording's device-pixel resolution (2560x1440 at the default scale); lite mode cuts 1080p.
+let lite = false;
+const W = () => (lite ? 1920 : Math.round((1280 * recordScale()) / 2) * 2);
+const H = () => (lite ? 1080 : Math.round((720 * recordScale()) / 2) * 2);
 const FPS = 60;
 
 /** Splits a step window into normal and sped-up segments (seconds, relative to the window start). */
@@ -51,14 +52,27 @@ export function planSegments(t: StepTiming): { from: number; to: number; factor:
   return segs.filter((s) => s.to - s.from > 0.02);
 }
 
-export async function polishFootage(outDir: string, log: (m: string) => void = () => {}): Promise<ClipInfo[]> {
+/**
+ * opts.lite: the low-memory path for hosts that killed the normal one: no full-recording re-encode
+ * (clips are cut straight from recording.mp4), 1080p clips, one encoder thread.
+ */
+export async function polishFootage(outDir: string, log: (m: string) => void = () => {}, opts: { lite?: boolean } = {}): Promise<ClipInfo[]> {
+  lite = !!opts.lite;
+  try {
+    return await polish(outDir, log);
+  } finally {
+    lite = false;
+  }
+}
+
+async function polish(outDir: string, log: (m: string) => void): Promise<ClipInfo[]> {
   const timings: StepTiming[] = JSON.parse(await fs.readFile(path.join(outDir, "timings.json"), "utf8"));
   const clipsDir = path.join(outDir, "clips");
   await fs.mkdir(clipsDir, { recursive: true });
 
   // Normalise Playwright's variable-frame-rate webm once so per-step seeks are exact.
-  const cfr = path.join(clipsDir, ".rec.mp4");
-  await ffmpeg(["-i", path.join(outDir, "recording.mp4"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-an", cfr]);
+  const cfr = lite ? path.join(outDir, "recording.mp4") : path.join(clipsDir, ".rec.mp4");
+  if (!lite) await ffmpeg(["-i", path.join(outDir, "recording.mp4"), "-vf", `fps=${FPS}`, "-c:v", "libx264", "-preset", "veryfast", "-crf", "14", "-an", cfr]);
   const total = await probeDuration(cfr);
 
   const clips: ClipInfo[] = [];
@@ -78,7 +92,8 @@ export async function polishFootage(outDir: string, log: (m: string) => void = (
     await ffmpeg([
       "-ss", start.toFixed(3), "-t", rawLen.toFixed(3), "-i", cfr,
       "-filter_complex", filters.join(";"), "-map", "[v]",
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-r", String(FPS), "-an", "-movflags", "+faststart", file,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-r", String(FPS), "-an", "-movflags", "+faststart",
+      ...(lite ? ["-threads", "1"] : []), file,
     ]);
     const speedups = segs.filter((s) => s.factor > 1).map((s) => ({ start_s: +s.from.toFixed(3), end_s: +s.to.toFixed(3), factor: s.factor }));
     const info: ClipInfo = {
@@ -93,7 +108,7 @@ export async function polishFootage(outDir: string, log: (m: string) => void = (
     clips.push(info);
     log(`clip ${t.step_id}: ${info.raw_duration_s}s → ${info.duration_s}s${speedups.length ? ` (sped up ${SPEEDUP}x over ${(speedups[0].end_s - speedups[0].start_s).toFixed(1)}s of loading)` : ""}`);
   }
-  await fs.rm(cfr, { force: true });
+  if (!lite) await fs.rm(cfr, { force: true });
   await fs.writeFile(path.join(clipsDir, "manifest.json"), JSON.stringify(clips, null, 2));
   return clips;
 }
