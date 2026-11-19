@@ -12,8 +12,8 @@ Steps to reproduce:
 2. Read the final message.
 
 - **Expected:** a description of the image, or a 4xx naming the unsupported content type.
-- **Actual:** after 24 s, HTTP 200 with *"I can't describe a screenshot because none reached me: there is no image attached to this request, and the workspace has no image files."*
-- Re-run on Nov 19 gave the same result: `status: completed`, *"There's no game screenshot attached"*, and `metadata.ignored_fields: []`, so nothing in the response signals the drop. Repro script: `scripts/hr-image-input-check.ts`.
+- **Actual:** HTTP 200 after 24 s: *"I can't describe a screenshot because none reached me."*
+- Re-run Nov 19: same result, with `metadata.ignored_fields: []`, so nothing signals the drop (repro: `scripts/hr-image-input-check.ts`).
 
 **Cost to us:** our first footage video narrated scenes that weren't in the clip, because the agent had to guess. Finding the cause and the workaround took about 15 minutes, plus re-running the job.
 
@@ -24,7 +24,7 @@ Steps to reproduce:
 - Or reject it with `400 unsupported_content_type` and a hint: "send images as input_file".
 - Either way, list in `metadata.ignored_fields` any content parts that were dropped.
 
-**Who benefits:** anyone porting Responses-style code (where images commonly go as `input_image`) and anyone sending screenshots for QA, UI review or demos. A silent drop is the worst failure for an agent, because it confidently works around the missing input.
+**Who benefits:** anyone porting Responses-style code (where images go as `input_image`) or sending screenshots for QA and UI review. A silent drop is the worst failure for an agent: it confidently works around the missing input.
 
 **Labels:** The Big Hack Game, uhp, multimodal, errors
 
