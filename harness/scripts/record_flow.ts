@@ -10,6 +10,7 @@
  * polish_footage.ts can zoom to the target and speed up dead time.
  */
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { chromium, type BrowserContext, type Page } from "playwright";
 import { ffmpeg } from "./ff";
@@ -55,6 +56,11 @@ export type RecordOptions = {
  */
 class ScreenRecorder {
   private frames: { file: string; t: number }[] = [];
+  private bytes = 0;
+  /** Frame writes run one after another so a replaced frame always ends with its newest content. */
+  private chain: Promise<void> = Promise.resolve();
+  /** True once the byte budget stopped capture; the rest of the recording holds the last frame. */
+  overBudget = false;
   private writes: Promise<void>[] = [];
   private cdp?: Awaited<ReturnType<BrowserContext["newCDPSession"]>>;
   constructor(
@@ -65,14 +71,32 @@ class ScreenRecorder {
   async start(context: BrowserContext, page: Page, size: { width: number; height: number }) {
     const cdp = (this.cdp = await context.newCDPSession(page));
     cdp.on("Page.screencastFrame", ({ data, sessionId }) => {
-      const file = path.join(this.dir, `f${String(this.frames.length).padStart(6, "0")}.jpg`);
-      this.frames.push({ file, t: Date.now() - this.t0 });
-      this.writes.push(fs.writeFile(file, Buffer.from(data, "base64")));
       cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
+      // A page that repaints nonstop (canvas, animation) sends up to 60 full-size frames a second.
+      // Keep at most MAX_CAPTURE_FPS and stop at a byte budget, so one busy site can't fill the disk;
+      // the encoder holds the last kept frame, so a dropped frame only lowers smoothness.
+      const t = Date.now() - this.t0;
+      const last = this.frames.at(-1);
+      const buf = Buffer.from(data, "base64");
+      // Too soon after the last kept frame: replace it, so the newest screen state is never lost.
+      const write = (file: string) => {
+        this.chain = this.chain.catch(() => {}).then(() => fs.writeFile(file, buf));
+        this.writes.push(this.chain);
+      };
+      if (last && t - last.t < 1000 / MAX_CAPTURE_FPS) return write(last.file);
+      if (this.bytes >= MAX_CAPTURE_BYTES) {
+        this.overBudget = true;
+        if (last) write(last.file);
+        return;
+      }
+      this.bytes += buf.length;
+      const file = path.join(this.dir, `f${String(this.frames.length).padStart(6, "0")}.jpg`);
+      this.frames.push({ file, t });
+      write(file);
     });
     await cdp.send("Page.startScreencast", {
       format: "jpeg",
-      quality: 100,
+      quality: 92,
       maxWidth: size.width,
       maxHeight: size.height,
       everyNthFrame: 1,
@@ -106,6 +130,10 @@ class ScreenRecorder {
 
 /** Device-pixel ratio for recording; 2 keeps 1.8x zooms sharp in a 1080p render. */
 export const recordScale = () => Number(process.env.RECORD_SCALE) || 2;
+/** Frame cap for the screencast; the final clip is re-timed to 60fps, holding frames between captures. */
+const MAX_CAPTURE_FPS = 30;
+/** Disk budget for one recording's raw frames (deleted after encoding). */
+const MAX_CAPTURE_BYTES = (Number(process.env.MAX_CAPTURE_MB) || 800) * 1024 * 1024;
 const SETTLE_MS = 700;
 const TYPE_DELAY_MS: [number, number] = [60, 90];
 
@@ -266,9 +294,10 @@ export async function recordFlow(
   const timeout = opts.stepTimeoutMs ?? (envTimeout || 10_000);
   const readyTimeout = opts.readyTimeoutMs ?? (envTimeout || 10_000);
   const shotsDir = path.join(outDir, "shots");
-  const rawDir = path.join(outDir, ".raw-video");
+  // Raw frames are temporary (deleted after encoding), so they go to the container's temp disk,
+  // not the data volume, which holds every finished video and is small on our host.
   await fs.mkdir(shotsDir, { recursive: true });
-  await fs.mkdir(rawDir, { recursive: true });
+  const rawDir = await fs.mkdtemp(path.join(os.tmpdir(), "pitcrew-raw-"));
 
   const browser = await chromium.launch({ headless: true });
   const timings: StepTiming[] = [];
@@ -338,6 +367,7 @@ export async function recordFlow(
       if (ok) log(`step ${step.id} ok${t.wait ? ` (waited ${t.wait.end_ms - t.wait.start_ms}ms for loading)` : ""}`);
     }
 
+    if (screen.overBudget) log("Recording hit its disk budget; the rest of the demo holds its last frame");
     const recorded = await screen.stop(videoPath, rec.now(), pixelSize);
     if (!recorded) videoPath = "";
     await context.close();

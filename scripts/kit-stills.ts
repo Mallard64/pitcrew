@@ -2,6 +2,7 @@
  * Renders the landing-page gallery: public/kits/<kit>.jpg (problem scene) and <kit>-demo.jpg (third demo
  * step) for every style kit, all from one recorded plan so only the look differs.
  *   npx tsx scripts/kit-stills.ts <job_version_dir>     e.g. data/jobs/<id>/v1
+ *   (needs clips/ and shots/: run the job with KEEP_INTERMEDIATES=1, they are deleted after render otherwise)
  */
 import fs from "node:fs";
 import path from "node:path";

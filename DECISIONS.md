@@ -102,3 +102,9 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Length is a form slider, 30s to 3:00 in 15s steps. The middle default (1:15) sends nothing and keeps the original 60–90s behaviour. A set target replaces the 60–90s rule in the agent request (with a per-section budget and 3–12 demo steps), the pacing window (±15%), the pitch check and the render's "partial" note. 0s isn't offered: below 30s there is no room for problem + solution + 3 demo steps.
 - Long videos get more job time: +5s per second over 90s (a 3 min video gets ~17.5 min instead of 10).
 - New clip zoom "inspect": the whole screen stays in view, the panel is spotlit, and a magnified live copy (up to 2.6×, from the 2× recording, so it stays sharp) pops out beside it without covering it. A lone button is grown to a 250×96 area so the close-up shows the UI around it. If no spot fits, it falls back to a deeper camera zoom. The agent uses it 2–3 times per video; the "Magnify the UI" checkbox forces it on every step.
+
+## 2026-11-18: Disk: the Railway volume is 500 MB
+- A Squoosh job failed with ENOSPC: the screencast saved a quality-100 2560×1440 JPEG on every repaint (up to 60/s), and Squoosh repaints nonstop. Measured locally on 21s of Squoosh: 330 MB of raw frames before, 64 MB after.
+- Fixes: capture at most 30 fps (a frame that comes too soon replaces the last one, so the final screen state is never lost), JPEG quality 92, an 800 MB budget (MAX_CAPTURE_MB), and raw frames in the container's temp dir instead of the data volume.
+- After a successful render, clips/, shots/ and audio/ are deleted (revisions only reuse flow.json); KEEP_INTERMEDIATES=1 keeps them for local tooling like kit-stills.
+- Jobs refuse to start under 120 MB free (MIN_FREE_MB) with a plain message instead of failing midway.

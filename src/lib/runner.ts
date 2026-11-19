@@ -39,6 +39,19 @@ export function setPlannerForTests(p: Planner | undefined) {
 
 export const jobDir = (id: string) => path.join(config.dataDir, "jobs", id);
 
+/** A finished job keeps ~30–40 MB (mostly the 1080p60 video); refuse to start without room for one. */
+const MIN_FREE_BYTES = (Number(process.env.MIN_FREE_MB) || 120) * 1024 * 1024;
+function freeBytes(dir: string) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const st = fs.statfsSync(dir);
+    return st.bavail * st.bsize;
+  } catch {
+    return Infinity; // can't tell: don't block the job
+  }
+}
+const STORAGE_FULL = "Pit Crew's video storage is full right now, so this job can't run. Please try again later.";
+
 function emit(jobId: string, kind: JobEvent["kind"], message: string, step: string | null = null) {
   const ev = appendEvent(jobId, kind, message, step);
   state().bus.emit(jobId, ev);
@@ -159,6 +172,7 @@ async function run({ jobId, revision }: Task) {
       emit(jobId, "status", "review");
     });
   try {
+    if (freeBytes(config.dataDir) < MIN_FREE_BYTES) throw new Error(STORAGE_FULL);
     const planner = state().plannerOverride ?? getPlanner();
     const work = runPipeline(
       {
@@ -200,7 +214,8 @@ async function run({ jobId, revision }: Task) {
     if (res.contract.notes) emit(jobId, "log", `Notes: ${res.contract.notes}`);
     emit(jobId, "status", status);
   } catch (e) {
-    const message = (e as Error).message.slice(0, 500);
+    const raw = (e as NodeJS.ErrnoException).code === "ENOSPC" || /ENOSPC/.test((e as Error).message) ? STORAGE_FULL : (e as Error).message;
+    const message = raw.slice(0, 500);
     // A failed revision keeps the previous good version visible.
     const keepPrevious = !!revision && (job.status === "ok" || job.status === "partial");
     updateJob(jobId, keepPrevious ? { status: job.status, error: `Revision failed: ${message}` } : { status: "failed", error: message, duration_ms: Date.now() - started });

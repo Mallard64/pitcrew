@@ -271,8 +271,10 @@ export async function runPipeline(
   }
   contract.steps_ok = rec.stepsOk;
   contract.steps_total = flow.steps.length;
-  // Big intermediates aren't needed once demo.mp4 exists.
-  await fs.rm(path.join(outDir, "recording.mp4"), { force: true });
+  // Big intermediates aren't needed once demo.mp4 exists: revisions re-record and only reuse flow.json,
+  // and the data volume is small, so keep just the files the team downloads.
+  if (existsSync(path.join(outDir, "demo.mp4")) && process.env.KEEP_INTERMEDIATES !== "1")
+    for (const f of ["recording.mp4", "clips", "shots", "audio"]) await fs.rm(path.join(outDir, f), { recursive: true, force: true });
 
   const files = OUTPUT_FILES.filter((f) => existsSync(path.join(outDir, f)));
   return { contract, flow, videoPlan, sessionId: plan.sessionId, hrSessionId: plan.hrSessionId, planSource: plan.source, files };
