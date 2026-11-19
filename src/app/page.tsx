@@ -35,7 +35,7 @@ const KITS = [
 const GETS = [
   {
     t: "A pitch video, 30s to 3 min",
-    d: "Problem → solution → live demo → what's next. 60–90s by default, or the length you pick. Narrated, captioned, 1080p60, with zooms and magnified close-ups of your UI.",
+    d: "Problem → demo → evidence → how it's built → next → the ask. 90–120s by default, or the length you pick. Narrated, captioned, 1080p60, with zooms and magnified close-ups of your UI.",
   },
   {
     t: "Submission text",

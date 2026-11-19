@@ -4,14 +4,18 @@ import { clientKeyFor, takeJobSlot } from "@/lib/ratelimit";
 import { createJob } from "@/lib/db";
 import { enqueue } from "@/lib/runner";
 import { clientIp, fail, json, readBody } from "@/lib/http";
+import { uploadPath } from "@/lib/uploads";
 
 export async function POST(req: Request) {
   const parsed = JobFormSchema.safeParse(await readBody(req));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");
   const form = parsed.data;
 
-  const check = await checkPublicUrl(form.live_url);
-  if (!check.ok) return fail(`Can't use that URL: ${check.reason}. It must be a public website.`);
+  if (form.live_url) {
+    const check = await checkPublicUrl(form.live_url);
+    if (!check.ok) return fail(`Can't use that URL: ${check.reason}. It must be a public website.`);
+  }
+  if (form.footage && !uploadPath(form.footage)) return fail("That footage upload expired. Please upload it again.");
 
   const ipKey = clientKeyFor(clientIp(req));
   const keys = form.contact ? [ipKey, `contact:${form.contact.toLowerCase()}`] : [ipKey];

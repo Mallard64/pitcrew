@@ -27,7 +27,7 @@ describe("checkPitch", () => {
       scene("next", "next", "Next we add Slack digests and a weekly summary for managers."),
       scene("end", "end", ""),
     ]);
-    const r = checkPitch(p, "Acme");
+    const r = checkPitch(p, "Acme", 75); // a 75 s target: this script is sized for it
     expect(r.checks.filter((c) => !c.ok).map((c) => c.id)).toEqual([]);
     expect(r.score).toBe(r.total);
   });

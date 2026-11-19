@@ -35,6 +35,15 @@ export type Job = {
   review_script: number;
   length_s: number | null;
   closeups: number;
+  evidence: string | null;
+  built_with: string | null;
+  ask: string | null;
+  /** Upload id of the team's own demo footage, if any. */
+  footage: string | null;
+  /** Where the demo came from (live, sandbox-run, cli-run, footage, repo-showcase). */
+  demo_mode: string | null;
+  /** A note for the team on the job page (e.g. "upload 30 s of gameplay for a better video"). */
+  notice: string | null;
 };
 export type JobEvent = { id: number; job_id: string; ts: number; kind: "progress" | "log" | "status"; step: string | null; message: string };
 export type Artifact = { job_id: string; version: number; name: string; path: string; bytes: number };
@@ -72,9 +81,16 @@ const MIGRATIONS = [
   `ALTER TABLE jobs ADD COLUMN voice TEXT;
    ALTER TABLE jobs ADD COLUMN look TEXT;
    ALTER TABLE jobs ADD COLUMN review_script INTEGER NOT NULL DEFAULT 0;`,
-  // Target video length (seconds, 30–180; null = the default 60–90s) and magnified UI close-ups.
+  // Target video length (seconds, 30–180; null = the default 90–120s) and magnified UI close-ups.
   `ALTER TABLE jobs ADD COLUMN length_s INTEGER;
    ALTER TABLE jobs ADD COLUMN closeups INTEGER NOT NULL DEFAULT 0;`,
+  // Pitch outline fields, team footage, GitHub-only projects (live_url may be '').
+  `ALTER TABLE jobs ADD COLUMN evidence TEXT;
+   ALTER TABLE jobs ADD COLUMN built_with TEXT;
+   ALTER TABLE jobs ADD COLUMN ask TEXT;
+   ALTER TABLE jobs ADD COLUMN footage TEXT;
+   ALTER TABLE jobs ADD COLUMN demo_mode TEXT;
+   ALTER TABLE jobs ADD COLUMN notice TEXT;`,
 ];
 
 export function openDb(file?: string) {
@@ -104,14 +120,15 @@ export function setDb(d: Database.Database) {
 export function createJob(input: {
   project_name: string; live_url: string; repo_url?: string; blurb?: string; problem?: string; whats_next?: string; contact?: string; client_key: string;
   voice?: string; look?: string; review_script?: boolean; length_s?: number; closeups?: boolean;
+  evidence?: string; built_with?: string; ask?: string; footage?: string;
 }): Job {
   const id = crypto.randomBytes(6).toString("base64url");
   db()
     .prepare(
-      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script, length_s, closeups)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?)`,
+      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script, length_s, closeups, evidence, built_with, ask, footage)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0, input.length_s ?? null, input.closeups ? 1 : 0);
+    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0, input.length_s ?? null, input.closeups ? 1 : 0, input.evidence ?? null, input.built_with ?? null, input.ask ?? null, input.footage ?? null);
   return getJob(id)!;
 }
 
@@ -191,7 +208,7 @@ export type Stats = {
 };
 
 export function getStats(): Stats {
-  const jobs = db().prepare(`SELECT status, live_url, duration_ms FROM jobs`).all() as Pick<Job, "status" | "live_url" | "duration_ms">[];
+  const jobs = db().prepare(`SELECT status, live_url, repo_url, duration_ms FROM jobs`).all() as Pick<Job, "status" | "live_url" | "repo_url" | "duration_ms">[];
   const finished = jobs.filter((j) => j.status === "ok" || j.status === "partial" || j.status === "failed");
   const made = finished.filter((j) => j.status !== "failed");
   const fb = db().prepare(`SELECT SUM(rating = 1) AS up, SUM(rating = -1) AS down FROM feedback`).get() as { up: number | null; down: number | null };
@@ -200,7 +217,7 @@ export function getStats(): Stats {
     jobs_finished: finished.length,
     jobs_ok: finished.filter((j) => j.status === "ok").length,
     videos_made: made.length,
-    unique_projects: new Set(made.map((j) => projectKey(j.live_url))).size,
+    unique_projects: new Set(made.map((j) => (j.live_url ? projectKey(j.live_url) : (j.repo_url ?? "")))).size,
     success_rate: finished.length ? made.length / finished.length : 0,
     median_duration_s: Math.round(median(made.map((j) => (j.duration_ms ?? 0) / 1000))),
     thumbs_up: fb.up ?? 0,
@@ -221,5 +238,6 @@ export function publicJob(j: Job) {
     id: j.id, created_at: j.created_at, project_name: j.project_name, live_url: j.live_url, status: j.status, version: j.version, error: j.error,
     duration_ms: j.duration_ms, render_mode: j.render_mode, contract_json: j.contract_json, plan_source: j.plan_source,
     style_kit: j.style_kit, seed: j.seed, voice: j.voice, review_script: !!j.review_script, length_s: j.length_s, closeups: !!j.closeups,
+    repo_url: j.repo_url, demo_mode: j.demo_mode, notice: j.notice, has_footage: !!j.footage,
   };
 }

@@ -30,6 +30,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/remotion-bundle ./remotion-bundle
+# The sandbox recorder is sent to the HarnessRouter sandbox as text (it never runs here).
+COPY --from=build /app/harness/sandbox ./harness/sandbox
 ENV REMOTION_BUNDLE=/app/remotion-bundle
 RUN mkdir -p /data
 # Persistent storage: attach a Railway volume at /data (Railway rejects the Dockerfile VOLUME keyword).

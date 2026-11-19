@@ -1,20 +1,21 @@
 /**
  * Talking pace per scene. Scene length follows narration (fitSceneDuration), so the pace is the lever
- * that lands a video inside its length window (60–90s by default, or the team's target from 30s to 3 min):
+ * that lands a video inside its length window (90–120s by default, or the team's target from 30s to 3 min):
  * a long script is read faster, a short one a little slower.
  * Sections also vary slightly, like a human presenter: the problem lands calmly, the demo moves.
  */
 
-/** Team-chosen target length, in seconds. No target means the default 60–90s pitch. */
+/** Team-chosen target length, in seconds. No target means the default 90–120s pitch. */
 export const MIN_TARGET_S = 30;
 export const MAX_TARGET_S = 180;
-export const DEFAULT_TARGET_S = 75;
+/** The default 6-part pitch (problem → demo → evidence → built → next → ask) lands at 90–120 s. */
+export const DEFAULT_TARGET_S = 105;
 
 export type LengthWindow = { target: number; min: number; max: number };
 
-/** The window pacing aims for. The default is the original 62–86s; a team target gets ±15% (at least ±6s). */
+/** The window pacing aims for. The default is 92–118 s (inside 90–120); a team target gets ±15% (at least ±6 s). */
 export function lengthWindow(target?: number): LengthWindow {
-  if (!target) return { target: DEFAULT_TARGET_S, min: 62, max: 86 };
+  if (!target) return { target: DEFAULT_TARGET_S, min: 92, max: 118 };
   const t = Math.min(MAX_TARGET_S, Math.max(MIN_TARGET_S, target));
   const slack = Math.max(6, t * 0.15);
   return { target: t, min: Math.round(t - slack), max: Math.round(t + slack) };
@@ -22,7 +23,7 @@ export function lengthWindow(target?: number): LengthWindow {
 
 /** What still counts as on target after voicing (pace is clamped, so allow a little more). */
 export function acceptableRange(target?: number) {
-  if (!target) return { min: 60, max: 90 };
+  if (!target) return { min: 88, max: 125 };
   const w = lengthWindow(target);
   return { min: Math.floor(w.min * 0.92), max: Math.ceil(w.max * 1.06) };
 }

@@ -32,6 +32,17 @@ type Ctx = {
   credit: boolean;
   audioDuration?: number;
   hideCaptions?: boolean;
+  /** Where the demo comes from: labels the demo honestly (never "live" for footage or repo scenes). */
+  demoMode?: string;
+};
+
+/** Demo label per mode; footage and repository scenes are never called "live". */
+export const DEMO_LABEL: Record<string, string> = {
+  live: "Live demo",
+  "sandbox-run": "Run from the repo",
+  "cli-run": "Run from the repo",
+  footage: "Team footage",
+  "repo-showcase": "From the repository",
 };
 
 /** Recording viewport (CSS px). Zoom boxes from record_flow.ts are in these units. */
@@ -59,7 +70,10 @@ const SECTION_LABEL: Record<string, string> = {
   problem: "The problem",
   solution: "The solution",
   demo: "Live demo",
+  evidence: "Evidence",
+  built: "How it's built",
   next: "What's next",
+  ask: "The ask",
 };
 
 /** Headline colour treatment for the kit. */
@@ -179,13 +193,13 @@ function Recording({ url, still, clipFrames, speed }: { url: string; still?: str
           src={url}
           muted
           playbackRate={speed ?? 1}
-          style={{ position: "absolute", width: VIEW_W, height: VIEW_H }}
+          style={{ position: "absolute", width: VIEW_W, height: VIEW_H, objectFit: "contain", background: "#000" }}
         />
       </Sequence>
       {/* Narration can outlast the clip: hold the step's final screenshot instead of going blank. */}
       {still && (
         <Sequence from={clipFrames} layout="none">
-          <Img src={still} style={{ position: "absolute", width: VIEW_W, height: VIEW_H }} />
+          <Img src={still} style={{ position: "absolute", width: VIEW_W, height: VIEW_H, objectFit: "contain", background: "#000" }} />
         </Sequence>
       )}
     </>
@@ -569,7 +583,15 @@ function BrowserWindow({ ctx, children }: { ctx: Ctx; children: React.ReactNode 
                 ...c.url,
               }}
             >
-              {kit.window === "terminal" ? `● ~/${host(ctx.url)}` : host(ctx.url)}
+              {ctx.demoMode === "footage"
+                ? "Team footage"
+                : ctx.demoMode === "repo-showcase"
+                  ? `From the repository · ${host(ctx.url)}`
+                : ctx.demoMode === "sandbox-run"
+                  ? `localhost · ${DEMO_LABEL["sandbox-run"].toLowerCase()}`
+                  : kit.window === "terminal"
+                    ? `● ~/${host(ctx.url)}`
+                    : host(ctx.url)}
             </div>
           </div>
           {c.dots ? <div style={{ width: 47 }} /> : null}
@@ -1032,8 +1054,12 @@ function renderElement(
           {renderElement(el.child, i, ctx, frame, fps)}
         </div>
       );
+    case "diagram":
+      return <Diagram key={i} el={el} kit={kit} frame={frame} delay={delay} />;
+    case "code":
+      return <CodePanel key={i} el={el} kit={kit} frame={frame} delay={delay} />;
     default:
-      // clip is rendered by the demo layout; node / arrow / icon / shape / diagram arrive with C11 + C16.
+      // clip is rendered by the demo layout; node / arrow / icon / shape arrive with C11 + C16.
       return null;
   }
 }
@@ -1161,7 +1187,7 @@ export function Scene({
   index?: number;
 }) {
   const frame = useDesignFrame();
-  const { fps: realFps } = useVideoConfig();
+  const { fps: realFps, durationInFrames: sceneFrames } = useVideoConfig();
   const fps = DESIGN_FPS;
   const audio = baseCtx.media.audio[scene.id];
   const ctx: Ctx = { ...baseCtx, audioDuration: audio?.duration_s };
@@ -1184,6 +1210,31 @@ export function Scene({
       <AbsoluteFill>
         {backdrop}
         <EndCard ctx={ctx} frame={frame} scene={scene} fps={fps} />
+        {voice}
+      </AbsoluteFill>
+    );
+  }
+
+  // Repository screenshots in the demo get the same window as recordings, with a slow push-in.
+  const shot = !clip && scene.section === "demo" ? scene.elements.find((e): e is Extract<Element, { type: "image" }> => e.type === "image" && !!ctx.media.images[e.src]) : undefined;
+  if (shot) {
+    return (
+      <AbsoluteFill style={{ color: kit.fg, fontFamily: kit.font }}>
+        {backdrop}
+        <BrowserWindow ctx={ctx}>
+          <Img
+            src={ctx.media.images[shot.src]}
+            style={{
+              position: "absolute",
+              width: VIEW_W,
+              height: VIEW_H,
+              objectFit: "contain",
+              background: kit.mode === "light" ? "#fff" : "#0b0b0f",
+              transform: `scale(${interpolate(frame, [0, (sceneFrames * DESIGN_FPS) / realFps], [1, 1.06], clamp)})`,
+            }}
+          />
+        </BrowserWindow>
+        <Captions text={scene.narration} ctx={ctx} band />
         {voice}
       </AbsoluteFill>
     );
@@ -1214,7 +1265,7 @@ export function Scene({
     );
   }
 
-  const label = SECTION_LABEL[scene.section];
+  const label = scene.section === "demo" ? DEMO_LABEL[ctx.demoMode ?? "live"] : SECTION_LABEL[scene.section];
   // One thing at a time: each element starts when the previous one has (nearly) finished.
   const schedule: number[] = [];
   let at = label ? 8 : 2;
@@ -1251,5 +1302,160 @@ export function Scene({
       <Captions text={scene.narration} ctx={ctx} band={false} />
       {voice}
     </AbsoluteFill>
+  );
+}
+
+type DiagramEl = Extract<Element, { type: "diagram" }>;
+
+/** Column per dependency depth (longest path from a source); cycles fall back to input order. */
+export function diagramLayers(el: Pick<DiagramEl, "nodes" | "edges">): string[][] {
+  const ids = el.nodes.map((n) => n.id);
+  const depth = new Map(ids.map((id) => [id, 0]));
+  for (let pass = 0; pass < ids.length; pass++) {
+    let changed = false;
+    for (const e of el.edges) {
+      if (!depth.has(e.from) || !depth.has(e.to) || e.from === e.to) continue;
+      const d = depth.get(e.from)! + 1;
+      if (d > depth.get(e.to)! && d < ids.length) {
+        depth.set(e.to, d);
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  const cols: string[][] = [];
+  for (const id of ids) (cols[depth.get(id)!] ??= []).push(id);
+  return cols.filter(Boolean);
+}
+
+/** Architecture diagram: boxes in dependency columns, arrows drawn in after both ends appear. */
+function Diagram({ el, kit, frame, delay }: { el: DiagramEl; kit: Kit; frame: number; delay: number }) {
+  const W = 1140;
+  const H = 470;
+  const BW = 250;
+  const cols = diagramLayers(el);
+  // Boxes shrink when one column holds many nodes, so they never overlap.
+  const most = Math.max(...cols.map((c) => c.length));
+  const BH = Math.min(84, H / most - 14);
+  const pos = new Map<string, { x: number; y: number; col: number }>();
+  cols.forEach((col, c) => {
+    const x = cols.length === 1 ? W / 2 : 20 + BW / 2 + (c * (W - 40 - BW)) / (cols.length - 1);
+    col.forEach((id, r) => pos.set(id, { x, y: ((r + 1) * H) / (col.length + 1), col: c }));
+  });
+  const light = kit.mode === "light";
+  const label = new Map(el.nodes.map((n) => [n.id, n.label]));
+  const appear = (col: number) => delay + col * 12;
+  return (
+    <div style={{ position: "relative", width: W, height: H, ...fadeUp(frame, delay) }}>
+      <svg width={W} height={H} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+        <defs>
+          <marker id="pc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill={accentOn(kit)} />
+          </marker>
+        </defs>
+        {el.edges.map((e, k) => {
+          const a = pos.get(e.from);
+          const b = pos.get(e.to);
+          if (!a || !b) return null;
+          const sameCol = a.col === b.col;
+          const x1 = sameCol ? a.x : a.x + (b.x > a.x ? BW / 2 : -BW / 2);
+          const y1 = sameCol ? a.y + (b.y > a.y ? BH / 2 : -BH / 2) : a.y;
+          const x2 = sameCol ? b.x : b.x + (b.x > a.x ? -BW / 2 : BW / 2);
+          const y2 = sameCol ? b.y + (b.y > a.y ? -BH / 2 : BH / 2) : b.y;
+          const len = Math.hypot(x2 - x1, y2 - y1);
+          const t = interpolate(frame, [appear(Math.max(a.col, b.col)) + 8, appear(Math.max(a.col, b.col)) + 26], [0, 1], clamp);
+          return (
+            <g key={k}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={accentOn(kit)} strokeWidth={3} strokeDasharray={len} strokeDashoffset={len * (1 - t)} markerEnd={t > 0.95 ? "url(#pc-arrow)" : undefined} />
+              {e.label && (
+                <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 10} textAnchor="middle" fontSize={15} fontFamily={kit.font} fill={kit.muted} opacity={t}>
+                  {e.label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      {[...pos.entries()].map(([id, p]) => (
+        <div
+          key={id}
+          style={{
+            position: "absolute",
+            left: p.x - BW / 2,
+            top: p.y - BH / 2,
+            width: BW,
+            height: BH,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: "0 12px",
+            fontFamily: kit.font,
+            fontSize: Math.min((label.get(id) ?? "").length > 20 ? 21 : 25, BH * 0.42),
+            fontWeight: 600,
+            lineHeight: 1.15,
+            color: kit.window === "brutal" ? "#000" : kit.fg,
+            background: kit.window === "brutal" ? "#fff" : light ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.07)",
+            border: kit.window === "brutal" ? "3px solid #000" : `2px solid ${accentOn(kit, 0.7)}`,
+            borderRadius: Math.min(14, kit.radius + 4),
+            boxShadow: kit.window === "brutal" ? "5px 5px 0 #000" : "0 12px 30px rgba(0,0,0,0.25)",
+            ...fadeUp(frame, appear(p.col)),
+          }}
+        >
+          {label.get(id)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type CodeEl = Extract<Element, { type: "code" }>;
+
+/** A few lines of a repo file, with line numbers and the important lines highlighted. */
+function CodePanel({ el, kit, frame, delay }: { el: CodeEl; kit: Kit; frame: number; delay: number }) {
+  const lines = (el.lines ?? []).slice(0, 22);
+  if (!lines.length) return null;
+  const [h0, h1] = el.highlight ?? [0, -1];
+  const on = interpolate(frame, [delay + 24, delay + 40], [0, 1], clamp);
+  return (
+    <div
+      style={{
+        width: 1040,
+        borderRadius: Math.min(14, kit.radius + 4),
+        overflow: "hidden",
+        background: "#0d1117",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
+        fontFamily: "'JetBrains Mono Variable', ui-monospace, monospace",
+        ...fadeUp(frame, delay),
+      }}
+    >
+      <div style={{ padding: "10px 18px", fontSize: 16, color: "#9ba3af", background: "#161b22", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        {el.path}
+      </div>
+      <div style={{ padding: "10px 0" }}>
+        {lines.map((text, k) => {
+          const n = el.from + k;
+          const hot = n >= h0 && n <= h1;
+          return (
+            <div
+              key={k}
+              style={{
+                display: "flex",
+                fontSize: 18,
+                lineHeight: "26px",
+                whiteSpace: "pre",
+                background: hot ? `rgba(255,255,255,${0.08 * on})` : undefined,
+                boxShadow: hot ? `inset 4px 0 0 ${accentOn(kit, on)}` : undefined,
+                color: hot || !el.highlight ? "#e6edf3" : `rgba(230,237,243,${1 - 0.45 * on})`,
+              }}
+            >
+              <span style={{ width: 56, textAlign: "right", paddingRight: 16, color: "#6e7681", flexShrink: 0 }}>{n}</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{text.replace(/\t/g, "  ").slice(0, 92)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

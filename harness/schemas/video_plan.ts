@@ -6,7 +6,13 @@
 import { z } from "zod";
 import { FlowSchema } from "./flow";
 
-export const SectionSchema = z.enum(["problem", "solution", "demo", "next", "end"]);
+/**
+ * The pitch outline: problem → solution → demo → evidence → built (how it's built) → next → ask → end.
+ * Evidence, built, next and ask are omitted when there is nothing true to say.
+ */
+export const SectionSchema = z.enum(["problem", "solution", "demo", "evidence", "built", "next", "ask", "end"]);
+/** Where the demo footage comes from (shown on screen and in the output contract). */
+export const DemoModeSchema = z.enum(["live", "sandbox-run", "cli-run", "footage", "repo-showcase"]);
 export const TextAnimSchema = z.enum(["none", "word-by-word", "slide-up", "typewriter", "highlight-sweep"]);
 
 export const SourceSchema = z.object({
@@ -34,6 +40,15 @@ const BaseElements = [
   z.object({ type: z.literal("clip"), step_id: z.string().min(1), zoom: z.enum(["none", "target", "follow", "inspect"]).default("target"), speed: z.number().positive().optional() }),
   z.object({ type: z.literal("arrow"), from: z.string().min(1), to: z.string().min(1) }),
   z.object({ type: z.literal("node"), id: z.string().min(1), label: z.string().min(1), icon: z.string().optional() }),
+  // A few lines of a repository file. The agent gives path + line range; the server fills `lines` from GitHub.
+  z.object({
+    type: z.literal("code"),
+    path: z.string().min(1).max(200),
+    from: z.number().int().min(1),
+    to: z.number().int().min(1),
+    highlight: z.tuple([z.number().int(), z.number().int()]).optional(),
+    lines: z.array(z.string()).max(40).optional(),
+  }),
   z.object({ type: z.literal("bullets"), items: z.array(z.string().min(1)).min(1).max(5), animation: TextAnimSchema.default("slide-up") }),
   z.object({
     type: z.literal("diagram"),
@@ -76,6 +91,10 @@ export const VideoPlanSchema = z.object({
   fps: z.union([z.literal(30), z.literal(60)]),
   music: z.object({ track: z.string(), duck_db: z.number() }).nullable().optional(),
   credit: z.boolean().default(true),
+  /** Set by the server: where the demo comes from. Absent = live (older plans). */
+  demo_mode: DemoModeSchema.optional(),
+  /** Set by the server for sensitive topics (health, mental health, finance, legal, children). */
+  disclaimer: z.string().max(80).optional(),
   /** Set by the server when the team picked a length (seconds); absent means the default 60–90s. */
   target_s: z.number().int().min(30).max(180).optional(),
   scenes: z.array(SceneSchema).min(1).max(20),
@@ -84,6 +103,7 @@ export const VideoPlanSchema = z.object({
 });
 
 export type Section = z.infer<typeof SectionSchema>;
+export type DemoMode = z.infer<typeof DemoModeSchema>;
 export type Source = z.infer<typeof SourceSchema>;
 export type Scene = z.infer<typeof SceneSchema>;
 export type VideoPlan = z.infer<typeof VideoPlanSchema>;

@@ -2,6 +2,9 @@ import type { Flow } from "../../../harness/schemas/flow";
 import type { VideoPlan } from "../../../harness/schemas/video_plan";
 import type { SiteDigest } from "../explore";
 import type { Commit } from "../buildlog";
+import type { RepoFacts } from "../repo";
+import type { Topic } from "../sensitive";
+import type { DemoMode } from "../../../harness/schemas/video_plan";
 
 export type PlanRequest = {
   projectName: string;
@@ -10,7 +13,22 @@ export type PlanRequest = {
   blurb?: string;
   problem?: string;
   whatsNext?: string;
-  digest: SiteDigest;
+  /** Site digest of the live link; absent for GitHub-only projects. */
+  digest?: SiteDigest;
+  /** Public repo facts (GitHub-only projects, or a repo given next to a live link). */
+  repo?: RepoFacts;
+  /** Where the demo comes from; decides the mode-specific part of the request. */
+  demoMode?: DemoMode;
+  /** Team footage cut into clips (footage mode). */
+  footageClips?: { id: string; duration_s: number }[];
+  /** README images we downloaded (repo-showcase). */
+  repoImages?: { src: string; alt: string; path: string }[];
+  evidence?: string;
+  builtWith?: string;
+  ask?: string;
+  topic?: Topic | null;
+  /** Agent task budget in seconds (sandbox-run needs longer than planning alone). */
+  timeoutSeconds?: number;
   commits?: Commit[];
   readme?: string;
   /** Team-chosen target length in seconds (30–180); undefined = the default 60–90s. */
@@ -33,6 +51,8 @@ export type PlannerEvent =
       hrSessionId?: string;
       /** Web-search queries for statistics about the problem (the server runs them, C19). */
       researchQueries?: string[];
+      /** The demo mode the agent actually used (sandbox-run can fall back to repo-showcase). */
+      demoMode?: DemoMode;
       /** Notes from the agent's judge pass (pitch review follow-up). */
       judgeNotes?: string[];
       source: "harness" | "local";

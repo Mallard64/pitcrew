@@ -9,6 +9,7 @@ import { config } from "./config";
 import { addArtifact, appendEvent, getJob, listJobs, updateJob, type JobEvent } from "./db";
 import { getPlanner, type Planner } from "./harness";
 import { runPipeline, type ReviewDraft } from "./pipeline";
+import { uploadPath } from "./uploads";
 import type { Flow } from "../../harness/schemas/flow";
 
 type Task = { jobId: string; revision?: string };
@@ -188,13 +189,17 @@ async function run({ jobId, revision }: Task) {
         reviewScript: !!job.review_script && !revision,
         lengthS: job.length_s ?? undefined,
         closeups: !!job.closeups,
+        evidence: job.evidence ?? undefined,
+        builtWith: job.built_with ?? undefined,
+        ask: job.ask ?? undefined,
+        footagePath: job.footage ? (uploadPath(job.footage) ?? undefined) : undefined,
       },
       jobDir(jobId),
       version,
       (e) => (e.type === "progress" ? emit(jobId, "progress", e.message, e.step) : emit(jobId, "log", e.message)),
       planner,
       revision && previous ? { request: revision, previous, sessionId: job.session_id ?? undefined } : undefined,
-      { awaitReview, extendBudget },
+      { awaitReview, extendBudget, onMeta: (m) => updateJob(jobId, { demo_mode: m.demo_mode, notice: m.notice }) },
     );
     const timeout = new Promise<never>((_, rej) => {
       fail = rej;
@@ -214,6 +219,8 @@ async function run({ jobId, revision }: Task) {
       hr_session_id: res.hrSessionId ?? job.hr_session_id,
       plan_source: res.planSource,
       style_kit: res.videoPlan.style_kit,
+      demo_mode: res.demoMode,
+      notice: res.notice ?? null,
       seed: res.videoPlan.seed,
       error: status === "failed" ? res.contract.notes || "Rendering failed" : null,
     });

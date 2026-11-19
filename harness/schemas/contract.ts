@@ -7,6 +7,8 @@ export const ContractSchema = z.object({
   steps_ok: z.number().int().nonnegative(),
   steps_total: z.number().int().nonnegative(),
   notes: z.string(),
+  /** Where the demo came from: live, sandbox-run, cli-run, footage or repo-showcase. */
+  demo_mode: z.enum(["live", "sandbox-run", "cli-run", "footage", "repo-showcase"]).optional(),
 });
 
 export type Contract = z.infer<typeof ContractSchema>;

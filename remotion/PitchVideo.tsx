@@ -8,7 +8,7 @@ import { transitionFrames, framesFor, type PitchVideoProps } from "./types";
 
 export function PitchVideo({ plan, media, hideCaptions }: PitchVideoProps) {
   const kit = resolveKit(plan.style_kit, plan.seed, plan.brand.primary);
-  const ctx = { kit, sources: plan.sources, media, url: plan.flow.url, credit: plan.credit, hideCaptions };
+  const ctx = { kit, sources: plan.sources, media, url: plan.flow.url, credit: plan.credit, hideCaptions, demoMode: plan.demo_mode ?? "live" };
   const children: React.ReactNode[] = [];
   plan.scenes.forEach((scene, i) => {
     const hasNext = i < plan.scenes.length - 1;
@@ -34,6 +34,7 @@ export function PitchVideo({ plan, media, hideCaptions }: PitchVideoProps) {
     <AbsoluteFill style={{ background: kit.bg }}>
       <TransitionSeries>{children}</TransitionSeries>
       <Progress kit={kit} />
+      {plan.disclaimer && <Disclaimer text={plan.disclaimer} kit={kit} width={plan.size.width} />}
     </AbsoluteFill>
   );
 }
@@ -53,5 +54,29 @@ function Progress({ kit }: { kit: Kit }) {
         background: kit.window === "brutal" ? "#000" : accentOn(kit),
       }}
     />
+  );
+}
+
+/** Sensitive topics: a small, always-visible line (e.g. "Not a substitute for professional care"). */
+function Disclaimer({ text, kit, width }: { text: string; kit: Kit; width: number }) {
+  const u = width / 1280;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 14 * u,
+        right: 18 * u,
+        padding: `${5 * u}px ${12 * u}px`,
+        borderRadius: 999,
+        fontFamily: kit.font,
+        fontSize: 15 * u,
+        fontWeight: 600,
+        color: kit.mode === "light" ? "#1f2937" : "#f8fafc",
+        background: kit.mode === "light" ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.55)",
+        border: `1px solid ${accentOn(kit, 0.5)}`,
+      }}
+    >
+      {text}
+    </div>
   );
 }

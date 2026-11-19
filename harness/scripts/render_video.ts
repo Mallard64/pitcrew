@@ -87,6 +87,8 @@ export async function mediaFor(outDir: string, base: string): Promise<PitchVideo
   }
   const shots = path.join(outDir, "shots");
   if (fs.existsSync(shots)) for (const f of await fsp.readdir(shots)) media.images[`shots/${f}`] = `${base}/shots/${f}`;
+  const repo = path.join(outDir, "repo");
+  if (fs.existsSync(repo)) for (const f of await fsp.readdir(repo)) media.images[`repo/${f}`] = `${base}/repo/${f}`;
   return media;
 }
 

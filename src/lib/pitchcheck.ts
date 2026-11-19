@@ -1,5 +1,5 @@
 /**
- * Pitch check: does the narration work for a hackathon judge watching 60–90 seconds?
+ * Pitch check: does the narration work for a hackathon judge watching a 90–120 second pitch?
  * 1. checkPitch: deterministic rules (hook, specific problem, product named, real demo, length, plain words).
  * 2. judgePrompt + mergeJudgeRewrite: one follow-up turn in the same agent session where the agent reads
  *    its script as a judge and rewrites only the words. Flow, clips, stats and sources never change here,
@@ -45,7 +45,7 @@ export function estimateSeconds(plan: VideoPlan) {
 /** The length check's bounds: the pacing window widened by what the ±15% voice pace can still absorb. */
 function lengthBounds(target?: number) {
   const w = lengthWindow(target);
-  return { min: Math.floor(w.min * 0.88), max: Math.ceil(w.max * 1.1), label: target ? `about ${formatSeconds(w.target)}` : "60–90 seconds" };
+  return { min: Math.floor(w.min * 0.88), max: Math.ceil(w.max * 1.1), label: target ? `about ${formatSeconds(w.target)}` : "90–120 seconds" };
 }
 
 export function checkPitch(plan: VideoPlan, projectName: string, target = plan.target_s): PitchReport {
@@ -97,7 +97,7 @@ export function checkPitch(plan: VideoPlan, projectName: string, target = plan.t
     },
     {
       id: "demo",
-      label: "Shows a real demo (3+ recorded steps)",
+      label: "Shows a demo (3+ scenes)",
       ok: demo.length >= 3,
       detail: `${demo.length} demo scene${demo.length === 1 ? "" : "s"}`,
     },

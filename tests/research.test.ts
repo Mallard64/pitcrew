@@ -211,16 +211,16 @@ describe("talking pace", async () => {
   const scene = (id: string, section: string, n: number) => ({ id, section, narration: Array(n).fill("word").join(" ") });
   it("keeps the natural pace when the script already fits", () => {
     const scenes = [scene("p", "problem", 30), scene("s", "solution", 35), ...[1, 2, 3, 4, 5, 6].map((i) => scene(`d${i}`, "demo", 18)), scene("e", "end", 0)];
-    expect(choosePace(scenes).base).toBe(1);
+    expect(choosePace(scenes, { min: 62, max: 86 }).base).toBe(1);
   });
   it("speeds up a long script and slows a short one, within limits", () => {
     const long = [scene("p", "problem", 60), scene("s", "solution", 60), ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => scene(`d${i}`, "demo", 25))];
-    const fast = choosePace(long);
+    const fast = choosePace(long, { min: 62, max: 86 });
     expect(fast.base).toBeGreaterThan(1);
     expect(fast.estimate).toBeLessThanOrEqual(estimateLength(long, 1));
     expect(fast.perScene.get("d1")!).toBeGreaterThan(fast.perScene.get("p")!); // demo brisker than problem
     const short = [scene("s", "solution", 20), scene("d1", "demo", 10), scene("e", "end", 0)];
-    expect(choosePace(short).base).toBe(0.88); // clamped: never drags
+    expect(choosePace(short, { min: 62, max: 86 }).base).toBe(0.88); // clamped: never drags
   });
 });
 

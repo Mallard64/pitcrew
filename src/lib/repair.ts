@@ -11,7 +11,11 @@ export function repairableFailures(flow: Flow, timings: StepTiming[]) {
   const byId = new Map(flow.steps.map((s) => [s.id, s]));
   return timings
     .filter((t) => !t.ok && ["click", "type"].includes(byId.get(t.step_id)?.action ?? ""))
-    .map((t) => ({ step: byId.get(t.step_id)!, error: t.error ?? "failed", candidates: t.candidates ?? [] }));
+    .map((t) => ({
+      step: byId.get(t.step_id)!,
+      error: t.error ?? "failed",
+      candidates: t.candidates ?? [],
+    }));
 }
 
 export function repairPrompt(failures: ReturnType<typeof repairableFailures>) {
@@ -33,7 +37,11 @@ export function repairPrompt(failures: ReturnType<typeof repairableFailures>) {
  * Takes repaired versions of the failed steps only (same id, valid step, same say), leaving every
  * other step as it was. Returns the new flow and how many steps changed.
  */
-export function mergeRepairedSteps(flow: Flow, repaired: Flow, failedIds: string[]): { flow: Flow; changed: number } {
+export function mergeRepairedSteps(
+  flow: Flow,
+  repaired: Flow,
+  failedIds: string[],
+): { flow: Flow; changed: number } {
   const fix = new Map(repaired.steps.map((s) => [s.id, s]));
   let changed = 0;
   const steps = flow.steps.map((s): Step => {
@@ -42,7 +50,11 @@ export function mergeRepairedSteps(flow: Flow, repaired: Flow, failedIds: string
     if (!r) return s;
     const next = StepSchema.safeParse({ ...r, id: s.id, say: s.say, hold_ms: s.hold_ms });
     if (!next.success) return s;
-    const same = next.data.action === s.action && next.data.selector === s.selector && next.data.url === s.url && next.data.text === s.text;
+    const same =
+      next.data.action === s.action &&
+      next.data.selector === s.selector &&
+      next.data.url === s.url &&
+      next.data.text === s.text;
     if (same) return s;
     changed++;
     return next.data;

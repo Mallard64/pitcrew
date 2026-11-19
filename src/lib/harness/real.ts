@@ -4,9 +4,12 @@ import crypto from "node:crypto";
  * POST {base}/v1/responses with metadata.harness_id, stream=true; continue with previous_response_id.
  */
 import { FlowSchema } from "../../../harness/schemas/flow";
-import { VideoPlanSchema } from "../../../harness/schemas/video_plan";
+import { DemoModeSchema, VideoPlanSchema, type DemoMode } from "../../../harness/schemas/video_plan";
 import type { PlanRequest, Planner, PlannerEvent } from "./types";
 import { formatSeconds, lengthBudget, lengthWindow } from "../pacing";
+import { repoDigest } from "../repo";
+import { sandboxPrompt } from "../sandbox";
+import { topicRules } from "../sensitive";
 
 export type HarnessConfig = { baseUrl?: string; apiKey: string; harnessId: string; model?: string; fetchImpl?: typeof fetch };
 
@@ -16,35 +19,74 @@ export const DEFAULT_BASE_URL = "https://api.harnessrouter.ai";
 
 export function buildPlanPrompt(req: PlanRequest) {
   const d = req.digest;
-  const digest = {
-    final_url: d.finalUrl,
-    home: { title: d.home.title, description: d.home.description, h1: d.home.h1, sections: d.home.sections.slice(0, 12), links: d.home.links.slice(0, 20), inputs: d.home.inputs, height: d.home.height },
-    pages: d.pages.map((p) => ({ url: p.url, title: p.title, h1: p.h1, description: p.description, sections: p.sections.slice(0, 6) })),
-  };
+  const mode = req.demoMode ?? "live";
   const parts = [
     `Project name: ${req.projectName}`,
-    `Live URL: ${req.liveUrl}`,
+    req.liveUrl ? `Live URL: ${req.liveUrl}` : `No live link. Public GitHub repo: ${req.repoUrl}`,
     req.blurb ? `What it does (from the team): ${req.blurb}` : "",
     req.problem ? `The problem it solves (from the team): ${req.problem}` : "No problem statement from the team: only use one if the site or README states it.",
-    req.whatsNext ? `What's next (from the team): ${req.whatsNext}` : "No roadmap from the team: omit the next section unless the README or issues state one.",
-    `Site digest we collected (verified headings, links and inputs; y = pixel offset from top):\n${JSON.stringify(digest)}`,
-    "You may also open the live URL in your browser to verify selectors (max 8 page loads).",
-    req.lengthS ? lengthLine(req.lengthS) : "",
+    req.evidence ? `Evidence (from the team: users, quotes, numbers, links): ${req.evidence}` : "No evidence from the team: the evidence section may only use the repo's public signals below (with their source), else omit it.",
+    req.builtWith ? `Built with / why (from the team): ${req.builtWith}` : "",
+    req.whatsNext ? `What's next (from the team): ${req.whatsNext}` : "No roadmap from the team: omit the next section unless the README or open issues state one.",
+    req.ask ? `The ask (from the team): ${req.ask}` : `No ask from the team: the ask scene is "Try it at ${req.liveUrl || req.repoUrl}".`,
   ];
+  if (d) {
+    const digest = {
+      final_url: d.finalUrl,
+      home: { title: d.home.title, description: d.home.description, h1: d.home.h1, sections: d.home.sections.slice(0, 12), links: d.home.links.slice(0, 20), inputs: d.home.inputs, height: d.home.height },
+      pages: d.pages.map((p) => ({ url: p.url, title: p.title, h1: p.h1, description: p.description, sections: p.sections.slice(0, 6) })),
+    };
+    parts.push(`Site digest we collected (verified headings, links and inputs; y = pixel offset from top):\n${JSON.stringify(digest)}`);
+    if (mode === "live") parts.push("You may also open the live URL in your browser to verify selectors (max 8 page loads).");
+  }
+  if (req.repo) {
+    parts.push(`Repository facts (read-only, from the GitHub API):\n${JSON.stringify(repoDigest(req.repo))}`);
+    if (req.repo.readme.text) parts.push(`${req.repo.readme.path} (truncated):\n${req.repo.readme.text.slice(0, 5000)}`);
+  } else if (req.readme) parts.push(`README (truncated):\n${req.readme.slice(0, 4000)}`);
+  parts.push(modePrompt(req));
+  if (req.topic) parts.push(topicRules(req.topic));
+  if (req.lengthS) parts.push(lengthLine(req.lengthS));
   if (req.commits?.length) {
     const commits = req.commits.slice(0, 200).map((c) => `${c.date.slice(0, 10)} ${c.sha} ${c.message.split("\n")[0].slice(0, 120)}`);
     parts.push(`Repo: ${req.repoUrl}\nCommits (newest first):\n${commits.join("\n")}`);
-    if (req.readme) parts.push(`README (truncated):\n${req.readme.slice(0, 4000)}`);
-  } else parts.push("No repo given: set build_log_md to null.");
+  } else parts.push("No commits available: set build_log_md to null.");
   return parts.filter(Boolean).join("\n\n");
 }
 
-/** The team's length choice replaces the 60–90s rule; the budget keeps sections in proportion. */
+/** The demo-source part of the request. Footage and repository scenes are never presented as live. */
+export function modePrompt(req: PlanRequest) {
+  const mode = req.demoMode ?? "live";
+  const target = req.liveUrl || req.repoUrl || "";
+  const noRecord = `Set video_plan.flow to {"project_name": ..., "url": "${target}", "viewport": {"width":1280,"height":720}, "steps": [...]} with one goto step per demo scene to "${target}" (id = that scene's clip id or s1, s2…, say = its narration, hold_ms 3000): we do not record it.`;
+  if (mode === "footage") {
+    const clips = (req.footageClips ?? []).map((c) => `${c.id} (${c.duration_s.toFixed(1)} s)`).join(", ");
+    return [
+      `Demo mode: footage. The team uploaded their own footage; we cut its active parts into clips: ${clips}.`,
+      `Each demo scene shows one clip: elements [{"type":"clip","step_id":"<clip id>","zoom":"none"}], in the order that tells the story best. Narrate what a viewer sees in that part of the team's footage, using the README and the team's description to name it; never claim a detail you can't know from them, and never call it live.`,
+      noRecord,
+    ].join("\n");
+  }
+  if (mode === "sandbox-run") return sandboxPrompt(req.repoUrl ?? "");
+  if (mode === "repo-showcase") {
+    const imgs = (req.repoImages ?? []).map((i) => `${i.src} (${i.path}${i.alt ? `, "${i.alt}"` : ""})`).join("; ");
+    const game = req.repo?.kind.startsWith("game-");
+    return [
+      `Demo mode: repo-showcase. Nothing is run: build the demo section from the repository. On screen it is labeled "From the repository", so never say "live" or "here it is running".`,
+      imgs ? `Images we downloaded from the repo (use as {"type":"image","src":"<src>","fit":"contain"}, one per demo scene): ${imgs}.` : "The repo has no README images.",
+      `Add 1–2 code-walkthrough scenes: {"type":"code","path":"<a file from the files list>","from":<first line>,"to":<last line, at most 20 lines later>,"highlight":[<a>,<b>]} with the lines that show the core idea; the server fills in the code. To choose lines, read the file in your sandbox (git clone --depth 1, or fetch raw.githubusercontent.com); never run the project.`,
+      game ? "This is a game repo: never try to build or run the engine project." : "",
+      noRecord,
+    ].filter(Boolean).join("\n");
+  }
+  return "";
+}
+
+/** The team's length choice replaces the default 90–120s; the budget keeps sections in proportion. */
 export function lengthLine(target: number) {
   const w = lengthWindow(target);
   const b = lengthBudget(target);
   return [
-    `Target length (chosen by the team): about ${formatSeconds(w.target)}, so the scene durations must total ${w.min}–${w.max}s. This replaces the 60–90s rule and the demo step counts in your instructions.`,
+    `Target length (chosen by the team): about ${formatSeconds(w.target)}, so the scene durations must total ${w.min}–${w.max}s. This replaces the default 90–120s and the demo step counts in your instructions.`,
     `Rough budget: problem ~${b.problem}s, solution ~${b.solution}s, demo ~${b.demo}s in about ${b.demoSteps} steps (one scene each), next ~${b.next}s if you have a roadmap, end 3s.`,
     target >= 120
       ? "For a longer video, show more of the product (more steps, more screens), and use two problem scenes if the story needs it. Never pad with filler."
@@ -153,11 +195,11 @@ export class HarnessRouterPlanner implements Planner {
         "Idempotency-Key": crypto.randomUUID(),
       },
       body: JSON.stringify({
+        timeout_seconds: 420,
         ...body,
         ...(this.cfg.model ? { model: this.cfg.model } : {}),
         metadata: { harness_id: this.cfg.harnessId },
         stream: true,
-        timeout_seconds: 420,
       }),
     });
     if (!res.ok || !res.body) {
@@ -200,7 +242,9 @@ export class HarnessRouterPlanner implements Planner {
       submission_md?: string | null;
       research_queries?: unknown;
       judge_review?: { notes?: unknown };
+      demo_mode?: unknown;
     };
+    const demoMode = DemoModeSchema.safeParse(parsed.demo_mode).success ? (parsed.demo_mode as DemoMode) : undefined;
     const judgeNotes = Array.isArray(parsed.judge_review?.notes)
       ? parsed.judge_review.notes.filter((n): n is string => typeof n === "string").map((n) => n.slice(0, 200)).slice(0, 4)
       : undefined;
@@ -234,6 +278,7 @@ export class HarnessRouterPlanner implements Planner {
         hrSessionId: hrSession,
         researchQueries,
         judgeNotes,
+        demoMode,
         source: "harness",
       };
       return;
@@ -243,7 +288,7 @@ export class HarnessRouterPlanner implements Planner {
   }
 
   plan(req: PlanRequest) {
-    return this.call({ input: buildPlanPrompt(req), ...(req.user ? { user: req.user } : {}) });
+    return this.call({ input: buildPlanPrompt(req), ...(req.user ? { user: req.user } : {}), ...(req.timeoutSeconds ? { timeout_seconds: req.timeoutSeconds } : {}) });
   }
 
   research(req: { sessionId: string; prompt: string; user?: string }) {

@@ -10,9 +10,9 @@ import type { VideoPlan } from "../harness/schemas/video_plan";
 const form = { project_name: "Acme", live_url: "https://acme.dev" };
 
 describe("target length", () => {
-  it("keeps the default 60–90s window when no target is set", () => {
-    expect(lengthWindow()).toEqual({ target: 75, min: 62, max: 86 });
-    expect(acceptableRange()).toEqual({ min: 60, max: 90 });
+  it("uses the default 90–120s window when no target is set", () => {
+    expect(lengthWindow()).toEqual({ target: 105, min: 92, max: 118 });
+    expect(acceptableRange()).toEqual({ min: 88, max: 125 });
   });
 
   it("scales the window and the demo budget with the target", () => {
@@ -61,11 +61,11 @@ function plan(words: number, target?: number): VideoPlan {
 
 describe("pitch check length", () => {
   it("judges length against the team's target", () => {
-    const p = plan(24); // 12 scenes × (8s + 1s) ≈ 108s
-    expect(checkPitch(p, "Acme").checks.find((c) => c.id === "length")?.ok).toBe(false);
-    const withTarget = checkPitch({ ...p, target_s: 105 }, "Acme").checks.find((c) => c.id === "length");
-    expect(withTarget?.ok).toBe(true);
-    expect(withTarget?.label).toBe("Fits about 1:45");
+    const p = plan(24); // 12 scenes × (8s + 1s) ≈ 108s: inside the default 90–120s
+    expect(checkPitch(p, "Acme").checks.find((c) => c.id === "length")?.ok).toBe(true);
+    const withTarget = checkPitch({ ...p, target_s: 60 }, "Acme").checks.find((c) => c.id === "length");
+    expect(withTarget?.ok).toBe(false);
+    expect(withTarget?.label).toBe("Fits about 1:00");
   });
 });
 

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Plain CommonJS sent to the HarnessRouter sandbox as text; it never runs in this app.
+    "harness/sandbox/**",
   ]),
 ]);
 

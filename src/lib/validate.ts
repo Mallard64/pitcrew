@@ -12,11 +12,13 @@ const optionalText = (max: number) =>
 
 export const JobFormSchema = z.object({
   project_name: z.string().trim().min(1, "Project name is required").max(80),
+  // Optional when a public GitHub repo is given (GitHub-only projects); "" means no live link.
   live_url: z
     .string()
     .trim()
-    .transform((v) => (/^https?:\/\//i.test(v) ? v : `https://${v}`))
-    .pipe(z.string().url("Enter a valid URL").refine((v) => /^https?:\/\//i.test(v), "Only http(s) URLs")),
+    .optional()
+    .transform((v) => (!v ? "" : /^https?:\/\//i.test(v) ? v : `https://${v}`))
+    .refine((v) => !v || (/^https?:\/\//i.test(v) && z.string().url().safeParse(v).success), "Enter a valid URL"),
   repo_url: z
     .string()
     .trim()
@@ -31,7 +33,7 @@ export const JobFormSchema = z.object({
   look: z.string().optional().transform((v) => (v && LOOK_IDS.includes(v) ? v : undefined)),
   // Checkbox: "on" from a form post, true from JSON.
   review_script: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
-  // Target length in seconds, snapped to 15s steps; empty or "auto" keeps the default 60–90s.
+  // Target length in seconds, snapped to 15s steps; empty or "auto" keeps the default 90–120s.
   length_s: z
     .union([z.number(), z.string()])
     .optional()
@@ -39,7 +41,12 @@ export const JobFormSchema = z.object({
     .refine((v) => v === undefined || (Number.isFinite(v) && v >= MIN_TARGET_S && v <= MAX_TARGET_S), `Length must be between ${MIN_TARGET_S} seconds and ${MAX_TARGET_S / 60} minutes`)
     .transform((v) => (v === undefined ? undefined : Math.round(v / 15) * 15)),
   closeups: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
-});
+  evidence: optionalText(600),
+  built_with: optionalText(300),
+  ask: optionalText(200),
+  /** Id returned by POST /api/uploads for the team's own demo footage. */
+  footage: z.string().regex(/^[A-Za-z0-9_-]{8,40}$/).optional(),
+}).refine((f) => !!f.live_url || !!f.repo_url, { message: "Add a live link or a public GitHub repo", path: ["live_url"] });
 export type JobForm = z.infer<typeof JobFormSchema>;
 
 export const ReviseSchema = z.object({

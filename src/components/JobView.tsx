@@ -25,6 +25,10 @@ type JobInfo = {
   review_script?: boolean;
   length_s?: number | null;
   closeups?: boolean;
+  repo_url?: string | null;
+  demo_mode?: string | null;
+  notice?: string | null;
+  has_footage?: boolean;
 };
 type Check = { id: string; label: string; ok: boolean; detail: string };
 type Report = { score: number; total: number; checks: Check[]; judge?: { notes: string[]; rewritten: boolean } };
@@ -41,7 +45,22 @@ const STAGES = [
 /** Typical end-to-end time today (see BUILD_LOG); shown as a rough guide, never a promise. */
 const TYPICAL_MIN = 10;
 const KIT_LABEL: Record<string, string> = { midnight: "Midnight", paper: "Paper", terminal: "Terminal", poster: "Poster", aurora: "Aurora", clean: "Clean", studio: "Studio", blueprint: "Blueprint" };
-const SECTION_LABEL: Record<string, string> = { problem: "Problem", solution: "Solution", demo: "Demo", next: "What's next" };
+const SECTION_LABEL: Record<string, string> = {
+  problem: "1 · Problem",
+  solution: "2 · Solution",
+  demo: "2 · Demo",
+  evidence: "3 · Evidence",
+  built: "4 · How it's built",
+  next: "5 · Next steps",
+  ask: "6 · The ask",
+};
+const MODE_LABEL: Record<string, string> = {
+  live: "Live demo: recorded from your site",
+  "sandbox-run": "Run from the repo in a HarnessRouter sandbox",
+  "cli-run": "CLI run in a HarnessRouter sandbox",
+  footage: "Demo from your uploaded footage",
+  "repo-showcase": "From the repository: screenshots, code and diagram (nothing run)",
+};
 /** One-tap revision requests; the agent reads them like typed ones. */
 const QUICK_REVISIONS = ["Make it shorter", "More energetic", "Open with a stronger hook", "Simpler words", "Spend more time on the demo"];
 const mmss = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}`;
@@ -157,8 +176,18 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{job.project_name}</h1>
-        <a href={job.live_url} target="_blank" rel="noreferrer" className="w-fit text-sm text-slate-400 underline-offset-2 hover:underline">{job.live_url}</a>
+        <a href={job.live_url || job.repo_url || "#"} target="_blank" rel="noreferrer" className="w-fit text-sm text-slate-400 underline-offset-2 hover:underline">{job.live_url || job.repo_url}</a>
+        {job.demo_mode && (
+          <span className="mt-1 w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-slate-300" data-testid="demo-mode">
+            {MODE_LABEL[job.demo_mode] ?? job.demo_mode}
+          </span>
+        )}
       </div>
+      {job.notice && (
+        <p className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="note">
+          {job.notice}
+        </p>
+      )}
 
       {job.status === "review" && review && <ReviewPanel jobId={job.id} review={review} now={now} />}
 
@@ -344,7 +373,7 @@ function ReviewPanel({ jobId, review, now }: { jobId: string; review: Review; no
           <p className="font-mono text-sm text-slate-400">continues on its own in {mmss(left)}</p>
         </div>
         <p className="text-sm text-slate-400">
-          The demo is recorded. Edit any line, then continue. {voice ? `${voice.label} will read it` : "It will be voiced"} in the {KIT_LABEL[review.look] ?? review.look} look. Numbers in the problem need a checked source, so new ones are removed.
+          Here is the pitch outline. Edit any section&apos;s line, then continue. {voice ? `${voice.label} will read it` : "It will be voiced"} in the {KIT_LABEL[review.look] ?? review.look} look. Numbers in the problem need a checked source, so new ones are removed.
         </p>
         <ol className="space-y-3">
           {review.scenes.map((s) => (
