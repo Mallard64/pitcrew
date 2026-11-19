@@ -69,3 +69,8 @@ Path B: Pit Crew didn't make this video by itself, so the video says "Rendered w
 
 ## GitHub-only eval (Nov 18 night)
 See eval/results.md and eval/github-only/.
+
+## Build log addendum + Blocked #5 check (Nov 19)
+- `launch/build-log/ADDENDUM.md`: endpoints used, 12 real production runs, timeline. Tokens/cost per job are "not recorded" except the Pitch Room step (HarnessRouter reports tokens, not USD).
+- **Blocked #5 (full PUT / casing) still valid.** No harness-update helper (e.g. a `harness_config.py` "ensure") is vendored in our repo; GitHub code search of HarnessRouter/harnessrouter finds no `harness_config`, the HarnessRouter/skills repo has no harness-config file, and protocol 2026-10-19 lists `PATCH` only for memory records, not harnesses. Code search can miss files, so this is "not found", not "doesn't exist".
+- Optional one-line clarification for the post: "Update: we looked for an official helper that updates a Harness (in the protocol docs and the skills repo) and didn't find one; if it exists, a link from the Harness API docs would solve most of this."
