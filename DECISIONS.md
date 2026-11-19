@@ -175,3 +175,4 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Our real Build log posts are in `launch/build-log/`.
 
 - 2026-11-19 Pitch Room drafts rewrite only the narration of the already-planned scenes (same ids, shared notes, no per-agent exploration) so recording/rendering stay unchanged and cost stays ~40k tokens; models come from GET /v1/harnesses/{id}/models via fixed cheap/strong preference lists because that endpoint returns no prices.
+- 2026-11-19: Pitch Room drafts use three different cheap models (one per provider) so the judge compares different voices, not three samples of one model; tokens roughly doubled in a real check, still text only.

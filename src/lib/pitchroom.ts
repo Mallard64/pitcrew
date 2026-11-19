@@ -12,9 +12,18 @@ export const ANGLES = ["customer story", "data-first", "demo-first"] as const;
 export type Angle = (typeof ANGLES)[number];
 export type Usage = Record<string, number>;
 /** One agent task that returns its final text (UHP /v1/responses, no previous_response_id). */
-export type TaskFn = (input: string, opts: { model?: string; timeoutSeconds: number }) => Promise<{ text: string; usage?: Usage }>;
+export type TaskFn = (
+  input: string,
+  opts: { model?: string; timeoutSeconds: number },
+) => Promise<{ text: string; usage?: Usage }>;
 
-export type RoomScene = { id: string; section: string; narration: string; duration_s: number; shows?: string };
+export type RoomScene = {
+  id: string;
+  section: string;
+  narration: string;
+  duration_s: number;
+  shows?: string;
+};
 export type RoomDraft = {
   angle: Angle;
   model: string;
@@ -40,27 +49,46 @@ export type PitchRoomResult = {
 };
 
 const MAX_WORDS = 300;
-const CHEAP = ["claude-haiku-5.5", "claude-haiku-4.5", "gpt-5.4-mini", "gemini-3.8-flash", "gemini-3.7-flash"];
+/** Cheap models, one list per provider: each draft gets a different provider so the room has three voices. */
+const CHEAP_BY_PROVIDER = [
+  ["claude-haiku-5.5", "claude-haiku-4.5"],
+  ["gpt-5.4-mini"],
+  ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"],
+  ["deepseek-v4.1-flash", "qwen3.8-flash"],
+];
 const STRONG = ["claude-fable-5-2", "claude-opus-5.5", "gpt-6.2-sol", "claude-sonnet-5.5"];
 
 /**
- * GET /v1/harnesses/{id}/models lists ids without prices, so "cheapest" and "strongest" are fixed preference
- * lists filtered by what this Harness allows (env overrides win). Undefined = the Harness default model.
+ * GET /v1/harnesses/{id}/models lists ids without prices, so "cheap" and "strong" are fixed preference
+ * lists filtered by what this Harness allows. Drafts get up to three different cheap models (one per provider;
+ * repeats only if fewer are allowed). PITCH_ROOM_DRAFT_MODELS (comma list) / PITCH_ROOM_JUDGE_MODEL override.
+ * An undefined model means the Harness default.
  */
-export function pickModels(available: string[], env: Record<string, string | undefined> = process.env) {
+export function pickModels(
+  available: string[],
+  env: Record<string, string | undefined> = process.env,
+) {
   const has = (m: string) => available.includes(m);
-  return {
-    draft: env.PITCH_ROOM_DRAFT_MODEL || CHEAP.find(has),
-    judge: env.PITCH_ROOM_JUDGE_MODEL || STRONG.find(has),
-  };
+  const override = (env.PITCH_ROOM_DRAFT_MODELS || env.PITCH_ROOM_DRAFT_MODEL || "")
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  const picked = override.length
+    ? override
+    : CHEAP_BY_PROVIDER.map((list) => list.find(has)).filter((m): m is string => !!m);
+  const drafts = ANGLES.map((_, i) => picked[i] ?? picked[picked.length - 1]);
+  return { drafts, judge: env.PITCH_ROOM_JUDGE_MODEL || STRONG.find(has) };
 }
 
 const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
 
 const ANGLE_HOW: Record<Angle, string> = {
-  "customer story": "Tell it as one user's story: who hits the problem, what they try, how this product changes their day.",
-  "data-first": "Lead with the most concrete facts in the notes (numbers, sources, what was built) and keep every line precise. Never add a number that isn't in the notes.",
-  "demo-first": "Get to the product fast: one short problem line, then let the demo scenes carry the pitch with vivid, specific narration of what's on screen.",
+  "customer story":
+    "Tell it as one user's story: who hits the problem, what they try, how this product changes their day.",
+  "data-first":
+    "Lead with the most concrete facts in the notes (numbers, sources, what was built) and keep every line precise. Never add a number that isn't in the notes.",
+  "demo-first":
+    "Get to the product fast: one short problem line, then let the demo scenes carry the pitch with vivid, specific narration of what's on screen.",
 };
 
 export function draftPrompt(angle: Angle, notes: string, scenes: RoomScene[]) {
@@ -78,8 +106,11 @@ export function parseDraft(text: string, sceneIds: string[]): { id: string; narr
   const raw = extractJson(text) as { scenes?: unknown };
   const parsed = z.array(z.object({ id: z.string(), narration: z.string() })).parse(raw.scenes);
   const byId = new Map(parsed.map((s) => [s.id, s.narration.trim().slice(0, 400)]));
-  const scenes = sceneIds.filter((id) => byId.get(id)).map((id) => ({ id, narration: byId.get(id)! }));
-  if (scenes.length < Math.ceil(sceneIds.length / 2)) throw new Error("draft covered too few scenes");
+  const scenes = sceneIds
+    .filter((id) => byId.get(id))
+    .map((id) => ({ id, narration: byId.get(id)! }));
+  if (scenes.length < Math.ceil(sceneIds.length / 2))
+    throw new Error("draft covered too few scenes");
   return scenes;
 }
 
@@ -92,7 +123,10 @@ export function unverifiedClaims(narration: string, grounding: string): string[]
 export function judgePrompt(sections: string[], drafts: RoomDraft[], scenes: RoomScene[]) {
   const list = drafts.map((d, i) => ({
     draft: i + 1,
-    scenes: d.scenes.map((s) => ({ section: scenes.find((x) => x.id === s.id)?.section, narration: s.narration })),
+    scenes: d.scenes.map((s) => ({
+      section: scenes.find((x) => x.id === s.id)?.section,
+      narration: s.narration,
+    })),
   }));
   return [
     `PITCH ROOM JUDGE TASK (text only). Ignore your usual video_plan output format and do not use any tools.`,
@@ -126,7 +160,12 @@ export function parseJudge(text: string, count: number): JudgeReply {
  * Applies the judge's scores and our claim cap, then picks the winner (highest total; the judge's
  * own pick breaks ties). Returns -1 when no draft is usable.
  */
-export function scoreDrafts(drafts: RoomDraft[], judge: JudgeReply, okIdx: number[], grounding: string) {
+export function scoreDrafts(
+  drafts: RoomDraft[],
+  judge: JudgeReply,
+  okIdx: number[],
+  grounding: string,
+) {
   for (const [k, i] of okIdx.entries()) {
     const d = drafts[i];
     d.unverified = unverifiedClaims(d.scenes.map((s) => s.narration).join(" "), grounding);
@@ -147,13 +186,19 @@ export function scoreDrafts(drafts: RoomDraft[], judge: JudgeReply, okIdx: numbe
 }
 
 function addUsage(total: Usage, u?: Usage) {
-  for (const [k, v] of Object.entries(u ?? {})) if (typeof v === "number") total[k] = (total[k] ?? 0) + v;
+  for (const [k, v] of Object.entries(u ?? {}))
+    if (typeof v === "number") total[k] = (total[k] ?? 0) + v;
 }
 
-const isRateLimit = (e: unknown) => /\b429\b|too many requests|rate.?limit/i.test((e as Error).message);
+const isRateLimit = (e: unknown) =>
+  /\b429\b|too many requests|rate.?limit/i.test((e as Error).message);
 
 /** One retry after 30 s on a 429 (the provider usually clears quickly). */
-async function withRetry<T>(fn: () => Promise<T>, wait: (ms: number) => Promise<void>, retryMs: number): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  wait: (ms: number) => Promise<void>,
+  retryMs: number,
+): Promise<T> {
   try {
     return await fn();
   } catch (e) {
@@ -166,7 +211,7 @@ async function withRetry<T>(fn: () => Promise<T>, wait: (ms: number) => Promise<
 /** Runs the room. Returns null when every draft (or the judge) failed: the caller keeps the normal script. */
 export async function runPitchRoom(o: {
   task: TaskFn;
-  models: { draft?: string; judge?: string };
+  models: { drafts?: (string | undefined)[]; judge?: string };
   scenes: RoomScene[];
   notes: string;
   log: (m: string) => void;
@@ -180,22 +225,37 @@ export async function runPitchRoom(o: {
   const started = Date.now();
   const usage: Usage = {};
   const ids = o.scenes.map((s) => s.id);
-  const draftModel = o.models.draft ?? "harness default";
+  const draftModelOf = (i: number) => o.models.drafts?.[i] ?? "harness default";
   const judgeModel = o.models.judge ?? "harness default";
 
   const drafts: RoomDraft[] = await Promise.all(
     ANGLES.map(async (angle, i): Promise<RoomDraft> => {
       await wait(i * stagger);
       try {
-        const r = await withRetry(() => o.task(draftPrompt(angle, o.notes, o.scenes), { model: o.models.draft, timeoutSeconds: 180 }), wait, retryMs);
+        const r = await withRetry(
+          () =>
+            o.task(draftPrompt(angle, o.notes, o.scenes), {
+              model: o.models.drafts?.[i],
+              timeoutSeconds: 180,
+            }),
+          wait,
+          retryMs,
+        );
         addUsage(usage, r.usage);
         const scenes = parseDraft(r.text, ids);
         const w = words(scenes.map((s) => s.narration).join(" "));
         o.log(`Pitch Room: the ${angle} draft is in (${w} words)`);
-        return { angle, model: draftModel, ok: true, scenes, words: w };
+        return { angle, model: draftModelOf(i), ok: true, scenes, words: w };
       } catch (e) {
         o.log(`Pitch Room: the ${angle} draft failed (${(e as Error).message.slice(0, 120)})`);
-        return { angle, model: draftModel, ok: false, error: (e as Error).message.slice(0, 200), scenes: [], words: 0 };
+        return {
+          angle,
+          model: draftModelOf(i),
+          ok: false,
+          error: (e as Error).message.slice(0, 200),
+          scenes: [],
+          words: 0,
+        };
       }
     }),
   );
@@ -208,16 +268,33 @@ export async function runPitchRoom(o: {
   const sections = [...new Set(o.scenes.map((s) => s.section))];
   let judge: JudgeReply;
   try {
-    const r = await withRetry(() => o.task(judgePrompt(sections, okIdx.map((i) => drafts[i]), o.scenes), { model: o.models.judge, timeoutSeconds: 180 }), wait, retryMs);
+    const r = await withRetry(
+      () =>
+        o.task(
+          judgePrompt(
+            sections,
+            okIdx.map((i) => drafts[i]),
+            o.scenes,
+          ),
+          { model: o.models.judge, timeoutSeconds: 180 },
+        ),
+      wait,
+      retryMs,
+    );
     addUsage(usage, r.usage);
     judge = parseJudge(r.text, okIdx.length);
   } catch (e) {
-    o.log(`Pitch Room: the judge failed (${(e as Error).message.slice(0, 120)}); continuing with the normal script`);
+    o.log(
+      `Pitch Room: the judge failed (${(e as Error).message.slice(0, 120)}); continuing with the normal script`,
+    );
     return null;
   }
   const grounding = [o.notes, ...o.scenes.map((s) => s.narration)].join("\n");
   const winner = scoreDrafts(drafts, judge, okIdx, grounding);
   if (winner < 0) return null;
-  o.log(`Pitch Room: the judge picked the ${drafts[winner].angle} draft (${drafts[winner].total}/10)`);
+  o.log(
+    `Pitch Room: the judge picked the ${drafts[winner].angle} draft (${drafts[winner].total}/10)`,
+  );
+  const draftModel = [...new Set(drafts.map((d) => d.model))].join(", ");
   return { drafts, winner, draftModel, judgeModel, ms: Date.now() - started, usage };
 }

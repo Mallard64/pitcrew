@@ -73,7 +73,7 @@ One job without the web app: `npx tsx scripts/run-local.ts https://example.com "
 | `TTS_PROVIDER`, `TTS_API_KEY`, `TTS_VOICE` | `openai`, `elevenlabs`, `piper` or `none` (silent, captions only) |
 | `ADMIN_TOKEN` | Protects `/admin` |
 | `MAX_JOBS_PER_HOUR`, `MAX_JOBS_PER_USER_PER_DAY`, `MAX_JOBS_PER_DAY`, `MAX_CONCURRENT_JOBS` | Rate limits and budget cap |
-| `PITCH_ROOM_ENABLED`, `PITCH_ROOM_DRAFT_MODEL`, `PITCH_ROOM_JUDGE_MODEL` | Pitch Room on/off (default off); optional model overrides (default: cheapest/strongest allowed by the Harness) |
+| `PITCH_ROOM_ENABLED`, `PITCH_ROOM_DRAFT_MODELS`, `PITCH_ROOM_JUDGE_MODEL` | Pitch Room on/off (default off); optional overrides (default: three different cheap models, one per provider, and the strongest judge the Harness allows) |
 | `DATA_DIR` | SQLite + job files (`/data` in Docker) |
 
 ## Tests
