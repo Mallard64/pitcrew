@@ -41,6 +41,7 @@ export const JobFormSchema = z.object({
     .refine((v) => v === undefined || (Number.isFinite(v) && v >= MIN_TARGET_S && v <= MAX_TARGET_S), `Length must be between ${MIN_TARGET_S} seconds and ${MAX_TARGET_S / 60} minutes`)
     .transform((v) => (v === undefined ? undefined : Math.round(v / 15) * 15)),
   closeups: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
+  pitch_room: z.union([z.boolean(), z.string()]).optional().transform((v) => v === true || v === "on" || v === "true"),
   evidence: optionalText(600),
   built_with: optionalText(300),
   ask: optionalText(200),

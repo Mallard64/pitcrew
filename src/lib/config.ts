@@ -24,6 +24,10 @@ export const config = {
   get jobTimeoutMs() {
     return int(process.env.JOB_TIMEOUT_MS, 10 * 60 * 1000);
   },
+  /** Pitch Room (3 drafts + judge) is off until verified in production. */
+  get pitchRoomEnabled() {
+    return process.env.PITCH_ROOM_ENABLED === "true";
+  },
   get adminToken() {
     return process.env.ADMIN_TOKEN ?? "";
   },

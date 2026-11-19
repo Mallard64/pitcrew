@@ -189,6 +189,7 @@ async function run({ jobId, revision }: Task) {
         reviewScript: !!job.review_script && !revision,
         lengthS: job.length_s ?? undefined,
         closeups: !!job.closeups,
+        pitchRoom: !!job.pitch_room && config.pitchRoomEnabled && !revision,
         evidence: job.evidence ?? undefined,
         builtWith: job.built_with ?? undefined,
         ask: job.ask ?? undefined,
@@ -199,7 +200,12 @@ async function run({ jobId, revision }: Task) {
       (e) => (e.type === "progress" ? emit(jobId, "progress", e.message, e.step) : emit(jobId, "log", e.message)),
       planner,
       revision && previous ? { request: revision, previous, sessionId: job.session_id ?? undefined } : undefined,
-      { awaitReview, extendBudget, onMeta: (m) => updateJob(jobId, { demo_mode: m.demo_mode, notice: m.notice }) },
+      {
+        awaitReview,
+        extendBudget,
+        onMeta: (m) => updateJob(jobId, { demo_mode: m.demo_mode, notice: m.notice }),
+        onPitchRoom: (r) => updateJob(jobId, { pitch_room_result: JSON.stringify(r) }),
+      },
     );
     const timeout = new Promise<never>((_, rej) => {
       fail = rej;

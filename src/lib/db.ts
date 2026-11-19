@@ -1,3 +1,4 @@
+import type { PitchRoomResult } from "./pitchroom";
 /** SQLite storage (better-sqlite3, WAL). One file at ${DATA_DIR}/pitcrew.db, migrated on open. */
 import Database from "better-sqlite3";
 import fs from "node:fs";
@@ -44,6 +45,8 @@ export type Job = {
   demo_mode: string | null;
   /** A note for the team on the job page (e.g. "upload 30 s of gameplay for a better video"). */
   notice: string | null;
+  pitch_room: number;
+  pitch_room_result: string | null;
 };
 export type JobEvent = { id: number; job_id: string; ts: number; kind: "progress" | "log" | "status"; step: string | null; message: string };
 export type Artifact = { job_id: string; version: number; name: string; path: string; bytes: number };
@@ -91,6 +94,9 @@ const MIGRATIONS = [
    ALTER TABLE jobs ADD COLUMN footage TEXT;
    ALTER TABLE jobs ADD COLUMN demo_mode TEXT;
    ALTER TABLE jobs ADD COLUMN notice TEXT;`,
+  // Pitch Room: the team asked for it; the drafts, judge scores and winner (JSON).
+  `ALTER TABLE jobs ADD COLUMN pitch_room INTEGER NOT NULL DEFAULT 0;
+   ALTER TABLE jobs ADD COLUMN pitch_room_result TEXT;`,
 ];
 
 export function openDb(file?: string) {
@@ -120,15 +126,15 @@ export function setDb(d: Database.Database) {
 export function createJob(input: {
   project_name: string; live_url: string; repo_url?: string; blurb?: string; problem?: string; whats_next?: string; contact?: string; client_key: string;
   voice?: string; look?: string; review_script?: boolean; length_s?: number; closeups?: boolean;
-  evidence?: string; built_with?: string; ask?: string; footage?: string;
+  evidence?: string; built_with?: string; ask?: string; footage?: string; pitch_room?: boolean;
 }): Job {
   const id = crypto.randomBytes(6).toString("base64url");
   db()
     .prepare(
-      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script, length_s, closeups, evidence, built_with, ask, footage)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO jobs (id, created_at, project_name, live_url, repo_url, blurb, problem, whats_next, contact, client_key, status, voice, look, review_script, length_s, closeups, evidence, built_with, ask, footage, pitch_room)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0, input.length_s ?? null, input.closeups ? 1 : 0, input.evidence ?? null, input.built_with ?? null, input.ask ?? null, input.footage ?? null);
+    .run(id, Date.now(), input.project_name, input.live_url, input.repo_url ?? null, input.blurb ?? null, input.problem ?? null, input.whats_next ?? null, input.contact ?? null, input.client_key, input.voice ?? null, input.look ?? null, input.review_script ? 1 : 0, input.length_s ?? null, input.closeups ? 1 : 0, input.evidence ?? null, input.built_with ?? null, input.ask ?? null, input.footage ?? null, input.pitch_room ? 1 : 0);
   return getJob(id)!;
 }
 
@@ -257,5 +263,15 @@ export function publicJob(j: Job) {
     duration_ms: j.duration_ms, render_mode: j.render_mode, contract_json: j.contract_json, plan_source: j.plan_source,
     style_kit: j.style_kit, seed: j.seed, voice: j.voice, review_script: !!j.review_script, length_s: j.length_s, closeups: !!j.closeups,
     repo_url: j.repo_url, demo_mode: j.demo_mode, notice: j.notice, has_footage: !!j.footage,
+    pitch_room: !!j.pitch_room, pitch_room_result: parsePitchRoom(j.pitch_room_result),
   };
+}
+
+function parsePitchRoom(raw: string | null) {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PitchRoomResult;
+  } catch {
+    return null;
+  }
 }

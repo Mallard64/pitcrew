@@ -158,7 +158,7 @@ export async function verifyResearch(
 }
 
 /** Numbers a sentence states (digits only), e.g. "42%", "1,200". */
-const NUMBER_IN_TEXT = /\d[\d,]*(?:\.\d+)?/g;
+export const NUMBER_IN_TEXT = /\d[\d,]*(?:\.\d+)?/g;
 
 /**
  * In problem scenes, removes sentences and text elements that state a number we can't back:

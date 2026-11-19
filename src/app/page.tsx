@@ -2,6 +2,7 @@ import Image from "next/image";
 import { connection } from "next/server";
 import JobForm from "@/components/JobForm";
 import { getStats } from "@/lib/db";
+import { config } from "@/lib/config";
 
 // Real, unedited Pit Crew output (re-encoded to 720p for the web). Both are public products, used as samples.
 const SAMPLES = [
@@ -275,7 +276,7 @@ export default async function Home() {
             </li>
           </ul>
         </div>
-        <JobForm />
+        <JobForm pitchRoom={config.pitchRoomEnabled} />
       </section>
     </div>
   );

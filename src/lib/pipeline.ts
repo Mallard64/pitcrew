@@ -30,6 +30,7 @@ import { fetchRepoFacts, type Commit } from "./buildlog";
 import { scrubUnbackedNumbers, sourcesMarkdown, verifyResearch } from "./research/verify";
 import { braveSearch, findCandidates, researchPrompt } from "./research/search";
 import { choosePace, lengthWindow } from "./pacing";
+import { pickModels, runPitchRoom, type PitchRoomResult } from "./pitchroom";
 import { checkPitch, judgePrompt, mergeJudgeRewrite, pitchCheckMarkdown, type PitchReport } from "./pitchcheck";
 import { resolveVoice, VOICES, LOOK_IDS } from "./voices";
 import { resolveKit } from "../../remotion/kits/default";
@@ -51,15 +52,19 @@ export type JobInput = {
   evidence?: string; builtWith?: string; ask?: string;
   /** Local path of the team's uploaded footage (footage mode). */
   footagePath?: string;
+  /** Pitch Room: three agents draft the narration, a judge picks the best (the team can pick another). */
+  pitchRoom?: boolean;
 };
 /** What the team sees while the job waits for their script review. */
-export type ReviewDraft = { scenes: { id: string; section: string; narration: string }[]; report: PitchReport; voice: string; look: string };
+export type ReviewDraft = { scenes: { id: string; section: string; narration: string }[]; report: PitchReport; voice: string; look: string; pitchRoom?: PitchRoomResult };
 export type PipelineHooks = {
   awaitReview?: (draft: ReviewDraft) => Promise<{ id: string; narration: string }[] | null>;
   /** Adds working time to the job's timeout (used when failed demo steps are repaired and re-recorded). */
   extendBudget?: (ms: number) => void;
   /** Shows the demo mode (and a note for the team) on the job page while the job runs. */
   onMeta?: (m: { demo_mode: DemoMode; notice: string | null }) => void;
+  /** Pitch Room drafts, scores and winner (and later the team's pick), for the job page. */
+  onPitchRoom?: (r: PitchRoomResult) => void;
 };
 
 /** sandbox-run installs and starts the repo before planning: give the job more time. */
@@ -398,17 +403,53 @@ export async function runPipeline(
   // Sensitive topics: the plan must not claim to treat/diagnose/replace professionals or promise outcomes.
   if (ctx.topic) await enforceSensitive(videoPlan, ctx.topic, planner, plan, input, log);
 
+  // 4a. Pitch Room: three cheap drafts of the same scenes, one strong judge; only the winner is rendered.
+  let room: PitchRoomResult | null = null;
+  if (input.pitchRoom && planner.task && plan.source === "harness") {
+    progress("narrating", "Pitch Room: three agents are drafting, a judge will score them");
+    try {
+      const models = pickModels(planner.listModels ? await planner.listModels().catch(() => []) : []);
+      room = await runPitchRoom({
+        task: (i, o) => planner.task!(i, o),
+        models,
+        scenes: videoPlan.scenes
+          .filter((sc) => sc.section !== "end")
+          .map((sc) => ({ id: sc.id, section: sc.section, narration: sc.narration, duration_s: sc.duration_s })),
+        notes: pitchRoomNotes(input, videoPlan, plan.summary),
+        log,
+      });
+    } catch (e) {
+      log(`Pitch Room skipped: ${(e as Error).message.slice(0, 160)}`);
+    }
+    if (room) {
+      applyNarration(videoPlan, room.drafts[room.winner].scenes);
+      for (const d of sanitizePlan(videoPlan, clipIds, outDir)) log(d);
+      if (ctx.topic) scrubSensitive(videoPlan, ctx.topic);
+      hooks.onPitchRoom?.(room);
+    }
+  }
+
   // 4b. Human in the loop: the team reads (and can edit) the narration before it's voiced.
+  // With Pitch Room the job always pauses, so the team can pick a different draft.
   const kitId = resolveKit(videoPlan.style_kit, videoPlan.seed, videoPlan.brand.primary).id;
   const voiceKey = resolveVoice(input.voice, kitId);
-  if (input.reviewScript && hooks.awaitReview) {
-    progress("narrating", "Waiting for your script review");
+  if ((input.reviewScript || room) && hooks.awaitReview) {
+    progress("narrating", room ? "Pitch Room done: pick a draft or approve the winner" : "Waiting for your script review");
     const edits = await hooks.awaitReview({
       scenes: videoPlan.scenes.filter((sc) => sc.section !== "end").map((sc) => ({ id: sc.id, section: sc.section, narration: sc.narration })),
       report: { ...checkPitch(videoPlan, input.projectName), judge: report.judge },
       voice: voiceKey,
       look: kitId,
+      ...(room ? { pitchRoom: room } : {}),
     });
+    if (room && edits?.length) {
+      const picked = room.drafts.findIndex((d) => d.ok && d.scenes.every((s) => edits.some((e) => e.id === s.id && e.narration.trim() === s.narration)));
+      if (picked >= 0 && picked !== room.winner) {
+        room.chosen = picked;
+        log(`You picked the ${room.drafts[picked].angle} draft instead of the judge's pick`);
+        hooks.onPitchRoom?.(room);
+      }
+    }
     if (edits?.length) {
       let changed = 0;
       for (const e of edits) {
@@ -536,6 +577,26 @@ export async function runPipeline(
  * statistics without a verified source (verifyResearch must run first), and problem-scene sentences
  * stating numbers no kept stat backs. Returns log lines for what was dropped.
  */
+/** Notes shared by every Pitch Room writer: the team's fields, the plan's summary, its on-screen text and verified sources. */
+function pitchRoomNotes(input: JobInput, plan: VideoPlan, summary?: string) {
+  const team = { name: input.projectName, link: input.liveUrl || input.repoUrl, blurb: input.blurb, problem: input.problem, evidence: input.evidence, built_with: input.builtWith, whats_next: input.whatsNext, ask: input.ask };
+  const onScreen = plan.scenes.flatMap((sc) =>
+    sc.elements.map((el) =>
+      el.type === "text" || el.type === "kinetic_headline" ? el.text : el.type === "bullets" ? el.items.join("; ") : el.type === "stat" ? `${el.value}${el.unit ?? ""} ${el.label ?? ""}` : "",
+    ),
+  );
+  const sources = plan.sources.filter((s) => s.kind === "team-provided" || s.verified).map((s) => ({ stat: s.stat, claim: s.claim_text, source: s.source_name, quote: s.quote }));
+  return JSON.stringify({ team, summary, on_screen: onScreen.filter(Boolean).slice(0, 30), sources });
+}
+
+/** Replaces scene narration with a Pitch Room draft (same scene ids; nothing else changes). */
+function applyNarration(plan: VideoPlan, scenes: { id: string; narration: string }[]) {
+  for (const d of scenes) {
+    const sc = plan.scenes.find((x) => x.id === d.id);
+    if (sc && sc.section !== "end") sc.narration = d.narration;
+  }
+}
+
 export function sanitizePlan(plan: VideoPlan, clipIds: Set<string>, outDir: string): string[] {
   const notes: string[] = [];
   const sourceOk = (id: string) => plan.sources.some((s) => s.id === id && (s.kind === "team-provided" || s.verified));

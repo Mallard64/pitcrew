@@ -1,3 +1,4 @@
+import { config } from "@/lib/config";
 import { JobFormSchema } from "@/lib/validate";
 import { checkPublicUrl } from "@/lib/ssrf";
 import { clientKeyFor, takeJobSlot } from "@/lib/ratelimit";
@@ -22,7 +23,8 @@ export async function POST(req: Request) {
   const slot = takeJobSlot(keys);
   if (!slot.ok) return fail(slot.message, 429);
 
-  const job = createJob({ ...form, client_key: ipKey });
+  // Pitch Room is ignored unless the server enables it (PITCH_ROOM_ENABLED=true).
+  const job = createJob({ ...form, pitch_room: form.pitch_room && config.pitchRoomEnabled, client_key: ipKey });
   enqueue({ jobId: job.id });
   return json({ id: job.id }, 201);
 }

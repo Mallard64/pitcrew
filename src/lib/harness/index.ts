@@ -53,6 +53,14 @@ class FallbackPlanner implements Planner {
     if (!this.primary.research) throw new Error("planner has no research step");
     return this.primary.research(req);
   }
+  // Pitch Room: no fallback here either; the room itself falls back to the normal script.
+  task(input: string, opts: { model?: string; timeoutSeconds: number }) {
+    if (!this.primary.task) throw new Error("planner has no task step");
+    return this.primary.task(input, opts);
+  }
+  listModels() {
+    return this.primary.listModels ? this.primary.listModels() : Promise.resolve([]);
+  }
 }
 
 export function getPlanner(env: Record<string, string | undefined> = process.env): Planner {

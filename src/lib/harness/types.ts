@@ -70,4 +70,8 @@ export interface Planner {
   revise(req: PlanRequest & { sessionId?: string; previous: Flow; request: string }): AsyncIterable<PlannerEvent>;
   /** Follow-up in the same agent session with server-found research candidates. Optional. */
   research?(req: { sessionId: string; prompt: string; user?: string }): AsyncIterable<PlannerEvent>;
+  /** Plain text task on the same Harness (Pitch Room). Optional: only the real planner has it. */
+  task?(input: string, opts: { model?: string; timeoutSeconds: number }): Promise<{ text: string; usage?: Record<string, number> }>;
+  /** Model ids the Harness allows. Optional. */
+  listModels?(): Promise<string[]>;
 }

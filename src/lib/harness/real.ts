@@ -315,6 +315,50 @@ export class HarnessRouterPlanner implements Planner {
     yield { type: "plan", flow, summary: parsed.summary, buildLog: parsed.build_log_md ?? undefined, sessionId: final.id, hrSessionId: hrSession, source: "harness" };
   }
 
+  /** Plain text task (Pitch Room): no previous session, optional model override, returns the final text + usage. */
+  async task(input: string, opts: { model?: string; timeoutSeconds: number }): Promise<{ text: string; usage?: Record<string, number> }> {
+    const f = this.cfg.fetchImpl ?? fetch;
+    const base = (this.cfg.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "").replace(/\/v1$/, "");
+    const res = await f(`${base}/v1/responses`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${this.cfg.apiKey}`, "Content-Type": "application/json", "UHP-Version": UHP_VERSION, "Idempotency-Key": crypto.randomUUID() },
+      body: JSON.stringify({
+        input,
+        timeout_seconds: opts.timeoutSeconds,
+        ...(opts.model ? { model: opts.model } : this.cfg.model ? { model: this.cfg.model } : {}),
+        metadata: { harness_id: this.cfg.harnessId },
+        stream: false,
+      }),
+    });
+    const t = await res.text();
+    if (!res.ok) {
+      let msg = `HarnessRouter HTTP ${res.status}`;
+      try {
+        msg += `: ${JSON.parse(t).error?.message ?? ""}`;
+      } catch {
+        msg += `: ${t.slice(0, 200)}`;
+      }
+      throw new Error(msg);
+    }
+    const r = JSON.parse(t) as UhpResponse & { usage?: Record<string, unknown> };
+    if (r.status !== "completed") throw new Error(`HarnessRouter task ${r.status}: ${r.error?.message ?? ""}`);
+    const usage: Record<string, number> = {};
+    for (const [k, v] of Object.entries(r.usage ?? {})) if (typeof v === "number") usage[k] = v;
+    return { text: messageText(r), usage };
+  }
+
+  /** Model ids this Harness allows (GET /v1/harnesses/{id}/models). */
+  async listModels(): Promise<string[]> {
+    const f = this.cfg.fetchImpl ?? fetch;
+    const base = (this.cfg.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "").replace(/\/v1$/, "");
+    const res = await f(`${base}/v1/harnesses/${this.cfg.harnessId}/models`, {
+      headers: { Authorization: `Bearer ${this.cfg.apiKey}`, "UHP-Version": UHP_VERSION, Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`HarnessRouter models HTTP ${res.status}`);
+    const b = (await res.json()) as { models?: { id: string; available?: boolean }[] };
+    return (b.models ?? []).filter((m) => m.available !== false).map((m) => m.id);
+  }
+
   plan(req: PlanRequest) {
     return this.call({ input: withAttachments(buildPlanPrompt(req), req.footageFrames), ...(req.user ? { user: req.user } : {}), ...(req.timeoutSeconds ? { timeout_seconds: req.timeoutSeconds } : {}) });
   }

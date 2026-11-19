@@ -12,7 +12,7 @@ function lengthHint(s: number) {
   return "Long: more demo and fuller sections (up to 12 demo steps). It takes a few minutes longer to make.";
 }
 
-export default function JobForm() {
+export default function JobForm({ pitchRoom = false }: { pitchRoom?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -58,6 +58,7 @@ export default function JobForm() {
     const body: Record<string, unknown> = Object.fromEntries(fd.entries());
     body.review_script = fd.get("review_script") === "on";
     body.closeups = fd.get("closeups") === "on";
+    if (pitchRoom) body.pitch_room = fd.get("pitch_room") === "on";
     if (!body.live_url && !body.repo_url) {
       setError("Add a live link or a public GitHub repo");
       setBusy(false);
@@ -232,6 +233,15 @@ export default function JobForm() {
             <span className="block text-xs text-slate-500">The job pauses after the demo is recorded so you can edit every line. It continues on its own after 10 minutes.</span>
           </span>
         </label>
+        {pitchRoom && (
+          <label className="flex items-start gap-2.5 text-sm text-slate-300">
+            <input type="checkbox" name="pitch_room" className="mt-1 accent-indigo-500" />
+            <span>
+              Pitch Room
+              <span className="block text-xs text-slate-500">Three AI agents each draft the pitch from a different angle and a judge agent scores them. You see the scores and can pick a different draft before it&apos;s voiced.</span>
+            </span>
+          </label>
+        )}
       </fieldset>
       {error && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p>}
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -29,10 +29,14 @@ type JobInfo = {
   demo_mode?: string | null;
   notice?: string | null;
   has_footage?: boolean;
+  pitch_room?: boolean;
+  pitch_room_result?: PitchRoom | null;
 };
+type RoomDraft = { angle: string; model: string; ok: boolean; error?: string; scenes: { id: string; narration: string }[]; total?: number; reason?: string; unverified?: string[] };
+type PitchRoom = { drafts: RoomDraft[]; winner: number; chosen?: number; draftModel: string; judgeModel: string };
 type Check = { id: string; label: string; ok: boolean; detail: string };
 type Report = { score: number; total: number; checks: Check[]; judge?: { notes: string[]; rewritten: boolean } };
-type Review = { scenes: { id: string; section: string; narration: string }[]; report: Report; voice: string; look: string; deadline: number };
+type Review = { scenes: { id: string; section: string; narration: string }[]; report: Report; voice: string; look: string; deadline: number; pitchRoom?: PitchRoom };
 
 const STAGES = [
   ["opening", "Opening your site"],
@@ -243,6 +247,7 @@ export default function JobView({ initial }: { initial: { job: JobInfo; artifact
               </p>
             )}
             {job.error && <p className="text-sm text-amber-300">{job.error}</p>}
+            {job.pitch_room_result && <PitchRoomCards room={job.pitch_room_result} />}
             {report && <PitchCard report={report} />}
           </div>
           <aside className="space-y-4">
@@ -365,7 +370,18 @@ function ReviewPanel({ jobId, review, now }: { jobId: string; review: Review; no
       setBusy(false);
     }
   }
+  async function useDraft(d: RoomDraft) {
+    setBusy(true);
+    setErr("");
+    const r = await fetch(`/api/jobs/${jobId}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenes: d.scenes }) });
+    if (!r.ok) {
+      setErr((await r.json().catch(() => ({}))).error ?? "Could not continue");
+      setBusy(false);
+    }
+  }
   return (
+    <div className="space-y-6">
+    {review.pitchRoom && <PitchRoomCards room={review.pitchRoom} onUse={busy ? undefined : useDraft} />}
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <div className="card space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -393,6 +409,45 @@ function ReviewPanel({ jobId, review, now }: { jobId: string; review: Review; no
       </div>
       <PitchCard report={review.report} hint={false} />
     </div>
+    </div>
+  );
+}
+
+/** Pitch Room: three drafts, the judge's score and one-line reason; the winner is highlighted. */
+function PitchRoomCards({ room, onUse }: { room: PitchRoom; onUse?: (d: RoomDraft) => void }) {
+  const picked = room.chosen ?? room.winner;
+  return (
+    <section className="space-y-2" aria-label="Pitch Room">
+      <h2 className="font-semibold text-white">Pitch Room</h2>
+      <p className="text-xs text-slate-500">Three agents drafted the pitch from different angles; a judge agent ({room.judgeModel}) scored each section of the outline. {onUse ? "Use any draft below, or edit the script underneath." : room.chosen !== undefined ? "You picked a different draft than the judge." : "The judge's pick was rendered."}</p>
+      <div className="grid gap-3 md:grid-cols-3">
+        {room.drafts.map((d, i) => (
+          <div key={d.angle} className={`card space-y-2 ${i === picked ? "border-indigo-400 bg-indigo-500/10" : ""}`}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{d.angle}</span>
+              <span className="font-mono text-sm text-white">{d.ok ? `${d.total ?? "–"}/10` : "failed"}</span>
+            </div>
+            {i === room.winner && <span className="inline-block rounded-full bg-indigo-500 px-2 py-0.5 text-xs font-semibold text-white">Judge&apos;s pick</span>}
+            {room.chosen === i && <span className="ml-1 inline-block rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-white">Your pick</span>}
+            {d.ok ? (
+              <>
+                <p className="text-sm text-slate-200">&ldquo;{d.scenes[0]?.narration}&rdquo;</p>
+                {d.reason && <p className="text-xs text-slate-400">Judge: {d.reason}</p>}
+                {d.unverified?.length ? <p className="text-xs text-amber-300">Capped at 5: unverified {d.unverified.join(", ")}</p> : null}
+              </>
+            ) : (
+              <p className="text-xs text-slate-500">This draft didn&apos;t come back.</p>
+            )}
+            <p className="text-xs text-slate-600">{d.model}</p>
+            {onUse && d.ok && (
+              <button type="button" onClick={() => onUse(d)} className={i === picked ? "btn w-full" : "w-full rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5"}>
+                Use this one
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
