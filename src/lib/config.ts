@@ -38,6 +38,11 @@ export const config = {
     if (process.env.PILOT_PARTNER_ENABLED !== "true") return "";
     return (process.env.ORGANIZER_LINE ?? "").trim() || "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team.";
   },
+  /** Optional https link for the organizer line (e.g. the event page). */
+  get organizerUrl() {
+    const u = (process.env.ORGANIZER_URL ?? "").trim();
+    return /^https:\/\/[^\s"<>]+$/.test(u) ? u : "";
+  },
   /**
    * Payments aren't in our DB (Stripe holds them), so these are set by hand from the Stripe dashboard. Unset = hidden.
    * TRACTION_COLLECTED_USD / TRACTION_PAID_COUNT are money actually received and the people who paid it.

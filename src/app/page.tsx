@@ -86,6 +86,7 @@ export default async function Home() {
   const s = getStats();
   const paid = config.paidTraction;
   const organizerLine = config.organizerLine;
+  const organizerUrl = config.organizerUrl;
   const freeLimit = config.maxJobsPerUserPerDay;
   const buildLogUrl = config.buildLogUrl;
   return (
@@ -147,7 +148,17 @@ export default async function Home() {
                   live stats
                 </a>
               </p>
-              {organizerLine && <p className="text-slate-300">{organizerLine}</p>}
+              {organizerLine && (
+                <p className="text-slate-300">
+                  {organizerUrl ? (
+                    <a href={organizerUrl} className="underline decoration-white/20 hover:text-white">
+                      {organizerLine}
+                    </a>
+                  ) : (
+                    organizerLine
+                  )}
+                </p>
+              )}
             </div>
           )}
         </div>
