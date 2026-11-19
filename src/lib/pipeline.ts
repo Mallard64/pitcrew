@@ -483,11 +483,30 @@ export async function runPipeline(
   let contract: Contract;
   try {
     contract = await renderVideo(outDir, log);
-  } catch (e) {
+  } catch (e0) {
+    // A render killed by the host (memory) usually succeeds with fewer parallel frames: retry once.
+    let e = e0;
+    let retried: Contract | undefined;
+    if (/SIGKILL|killed/i.test((e0 as Error).message)) {
+      log("The render ran out of memory; rendering again with fewer frames in parallel");
+      const prev = process.env.RENDER_CONCURRENCY;
+      process.env.RENDER_CONCURRENCY = "1";
+      try {
+        retried = await renderVideo(outDir, log);
+      } catch (e1) {
+        e = e1;
+      } finally {
+        if (prev === undefined) delete process.env.RENDER_CONCURRENCY;
+        else process.env.RENDER_CONCURRENCY = prev;
+      }
+    }
+    if (retried) contract = retried;
     // The ffmpeg editor needs a screen recording; footage and repo videos only render with Remotion.
-    if (!rec.videoPath) throw e;
-    log(`Remotion render failed (${(e as Error).message.split("\n")[0].slice(0, 160)}); using the fallback editor`);
-    contract = await legacyAssemble(input, flow, rec, outDir, log, tts);
+    else if (!rec.videoPath) throw e;
+    else {
+      log(`Remotion render failed (${(e as Error).message.split("\n")[0].slice(0, 160)}); using the fallback editor`);
+      contract = await legacyAssemble(input, flow, rec, outDir, log, tts);
+    }
   }
   const recorded = mode === "live" || mode === "sandbox-run";
   if (recorded && rec.stepsOk < flow.steps.length) {

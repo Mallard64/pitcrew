@@ -1,25 +1,36 @@
 # STATUS
 
-- **Phase:** Spec v2 (pitch video, Remotion, verified stats) written into the docs; not built yet. v1 app (walkthrough video) works in mock mode. Phase 0 live checks are blocked on permission for the live HarnessRouter call; deploy is blocked on Railway.
-- **Plan A or B:** B (hybrid), provisional until the sandbox probe runs.
-- **Deadline:** Nov 19, 2026, 11:59 AM PST · Feature freeze: Nov 18, 11:59 PM PST · Agent hard stop: Nov 19, 10:30 AM PST
+- **Deadline:** Nov 19, 2026, 11:59 AM PST. Live at https://pitcrew-production-83e5860b.up.railway.app (Railway, manual "Deploy latest commit").
+- **Phase:** feature-complete for submission; tonight's work: pitch outline, GitHub-only projects, team footage, sensitive-topic guardrails.
 
 ## Works now (verified)
-- Full app runs locally, including the production standalone server: form → SSE progress → video → downloads → revise → feedback → /stats → /admin.
-- 53 tests pass (`npm test`), plus lint, typecheck and build.
-- Baseline eval (offline planner, no TTS) on 6 public sites: 2/6 pass all automated checks; the other 4 are app-style sites whose videos come out 24–35s (below 45s). See `eval/results.md`.
+- **Live-URL jobs:** the real agent on HarnessRouter plans, the demo is recorded in Chromium, voiced (ElevenLabs, 10 voices) and rendered with Remotion at 1080p60. In the wide test, 7 of 8 production jobs came back ok (Excalidraw, Hoppscotch, Carbon, Mermaid, Squoosh after the step repair, JSON Crack); shadcn/ui came back partial with a screenshot demo.
+- **Pitch outline:** problem → solution → demo → evidence → how it's built → next → ask. Empty sections are omitted. The default length is 90–120 s, with presets 60 s / 2 min / 3 min.
+- **GitHub-only projects:** the live URL is optional when a public repo is given. The demo mode is chosen automatically and shown on the job page:
+  - `sandbox-run`: the repo runs inside the HarnessRouter sandbox (Phase 0 verified clone/install/start/record/download).
+  - `repo-showcase`: README images, code panels, architecture diagram.
+  - `footage`: an uploaded MP4/MOV.
+  - Games never build the engine.
+- **Footage:** the agent sees 3 keyframes per clip (input_file) and narrates what's on screen.
+- **Sensitive topics:** detection, an on-screen disclaimer, a validator (one agent rewrite, then scrub). Unit-tested with a synthetic mental-health plan.
+- **Reliability:**
+  - Step repair from the page's real elements, then re-record.
+  - Low-memory polish path.
+  - A screenshot fallback instead of a blank demo.
+  - Disk guard and pruning.
+  - One retry when the model provider rate-limits.
+- **Checks:** 105 tests pass; lint and build are clean.
 
-## Blockers (see HUMAN_TODO.md)
-1. HarnessRouter API key + Harness ID → run `scripts/hr-smoke.ts` (+ `--probe`), then switch `HARNESS_MODE=real`.
-2. TTS key.
-3. Railway account + GitHub repo for deploy.
+## Doesn't work / limits
+- **cli-run** (terminal recording) is not built; CLI repos get repo-showcase. The game-binary xvfb recording is not built.
+- **Storage:** the Railway volume is only 434 MB. Each finished job keeps ~10–35 MB, so plan to grow it or prune old jobs regularly. Test-job files were deleted on Nov 18 to free space (job rows remain).
+- **Provider rate limits:** the model provider behind TokenRouter returned 429 during one eval run. The job falls back to the offline planner (weaker video) after one retry.
+- **Clip polish on ui.shadcn.com** was SIGKILLed twice on Railway (cause unknown); the job degrades to screenshots and reports partial.
+- **Real users:** no real-user feedback yet. /stats only counts our own test runs.
 
-## Next by build order
-- Codex: C17 (footage polish + zoom boxes) → C3 (Remotion) → C11 → C15 → C14a → C12a → C18 → C19 → C16 → C13 → C12b/C14b.
-- Claude Code: Phase 0 live checks + `harnessrouter.json` → apply director instructions → Plan B two-turn loop → research wiring → concierge tonight.
+## What I (the human) need to do
+- Submit: upload the demo video as YouTube unlisted or Loom, and paste the link into the project page's "Demo video" field.
+- Optional: grow the Railway volume (Settings → Volume) if real traffic comes in.
 
-## Next for the agent once unblocked (v1 items still open)
-1. Run the smoke + probe and record Plan A/B in DECISIONS.md.
-2. Run `scripts/eval.ts` with `HARNESS_MODE=real` on ≥10 real Big Hack Game projects; fix the top 3 failure causes.
-3. Verify revise ("make it shorter" → shorter) in real mode.
-4. Deploy check: `/api/health`, one end-to-end job on the public URL, budget cap message.
+## GitHub-only eval (Nov 18 night)
+See eval/results.md and eval/github-only/.

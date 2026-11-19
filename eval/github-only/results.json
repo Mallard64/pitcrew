@@ -1,58 +1,15 @@
 [
   {
     "slug": "wumpus",
-    "id": "wtlRH16x",
-    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/wtlRH16x",
-    "status": "ok",
+    "id": "s6XsiloO",
+    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/s6XsiloO",
+    "status": "failed",
     "demo_mode": "footage",
     "notice": null,
-    "duration_s": 57.7,
-    "steps": "2/2",
-    "kit": "studio",
-    "pitch": "7/8",
-    "notes": "",
-    "error": null,
-    "wall_s": 434
-  },
-  {
-    "slug": "omnistem",
-    "id": "PrqgfguM",
-    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/PrqgfguM",
-    "status": "ok",
-    "demo_mode": "repo-showcase",
-    "notice": null,
-    "duration_s": 49.4,
-    "steps": "4/4",
-    "kit": "default",
-    "pitch": "4/8",
-    "notes": "",
-    "error": null,
-    "wall_s": 661
-  },
-  {
-    "slug": "devpad",
-    "id": "vmwOaWyD",
-    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/vmwOaWyD",
-    "status": "failed",
-    "demo_mode": null,
-    "notice": null,
     "steps": "undefined/undefined",
     "kit": null,
     "pitch": null,
-    "error": "Pit Crew's video storage is full right now, so this job can't run. Please try again later.",
-    "wall_s": 662
-  },
-  {
-    "slug": "regression-excalidraw",
-    "id": "Xv0xrEFy",
-    "url": "https://pitcrew-production-83e5860b.up.railway.app/jobs/Xv0xrEFy",
-    "status": "failed",
-    "demo_mode": null,
-    "notice": null,
-    "steps": "undefined/undefined",
-    "kit": null,
-    "pitch": null,
-    "error": "Pit Crew's video storage is full right now, so this job can't run. Please try again later.",
-    "wall_s": 663
+    "error": "FFmpeg quit with code 1 (signal SIGKILL) while piping frame 1513. Stderr: ffmpeg version n7.1 Copyright (c) 2000-2024 the FFmpeg developers\n  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)\n  configuration: --prefix=remotion --extra-cflags='-Iremotion/include -Iremotion/include/opus -Iremotion/include/lame -Iremotion/include/vpx' --extra-ldflags=-Lremotion/lib --enable-small --enable-shared --enable-libdav1d --enable-libaom --enable-libzimg --enable-libfdk-aac --disable-static --disable-ffplay ",
+    "wall_s": 885
   }
 ]

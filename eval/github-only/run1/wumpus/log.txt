@@ -1,0 +1,38 @@
+running
+Reading https://github.com/Mallard64/Wumpus
+Read the repo: Unity 2022.3.32f1, C#, 210 files
+Read 26 commits from https://github.com/Mallard64/Wumpus
+Cutting your footage into demo clips
+Footage clip f1: 0.0–8.0 s
+Footage clip f2: 8.0–10.4 s
+Demo source: your uploaded footage
+Writing the pitch and directing the video
+Agent started on HarnessRouter
+Plan: 7 scenes (harness planner, seed 1973)
+Research: searching for "percentage of gamers who quit a game after dying repeatedly frustration survey", "survey why players stop playing a game unfair difficulty frustration percent", "percentage of adults who play trivia or quiz games survey"
+Research: 12 candidate statistics from 4 pages
+Agent started on HarnessRouter
+Research: the agent proposed 0 statistic(s)
+Pitch check: 7/8 (to fix: demo)
+Reviewing the pitch the way a judge would
+Agent started on HarnessRouter
+video plan failed validation (1 issues); asking the agent to fix it
+Agent started on HarnessRouter
+Judge pass applied: pitch check 7/8
+Writing the narration and captions
+Voice pace 1× (estimated length 52.3s)
+Voicing with Sarah (confident, reassuring, american)
+Rendering the video
+bundling renderer
+rendering 0%
+rendering 10%
+rendering 20%
+rendering 30%
+rendering 40%
+rendering 50%
+rendering 60%
+rendering 70%
+rendering 80%
+rendering 90%
+rendering 100%
+ok
