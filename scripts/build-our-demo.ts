@@ -26,10 +26,11 @@ type Cut = { id: string; src: string; from: number; to: number };
 
 /** GitHub-only projects: show the original pitch video (from its demo section) after a short look at its job page. */
 const PAGE_INTRO_S = 2.5;
-export const PITCH: Record<string, { file: string; seek: number }> = {
-  c_omnistem: { file: "eval/github-only/omnistem/demo.mp4", seek: 24 },
-  c_devpad: { file: "eval/github-only/devpad/demo.mp4", seek: 17.5 },
-  c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1 },
+export const PITCH: Record<string, { file: string; seek: number; crop?: string }> = {
+  c_omnistem: { file: "eval/github-only/omnistem/demo.mp4", seek: 24, crop: "crop=1500:844:210:78," },
+  c_devpad: { file: "eval/github-only/devpad/demo.mp4", seek: 17.5, crop: "crop=1500:844:210:78," },
+  // Footage videos already sit in their own "Team footage" window: crop to its content so windows don't nest.
+  c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1, crop: "crop=1500:844:210:78," },
 };
 
 async function main() {
@@ -261,7 +262,7 @@ async function main() {
         "-ss", c.from.toFixed(2), "-t", PAGE_INTRO_S.toFixed(2), "-i", c.src,
         "-ss", pitch.seek.toFixed(2), "-t", (sc.duration_s - PAGE_INTRO_S).toFixed(2), "-i", pitch.file,
         "-filter_complex",
-        "[0:v]scale=1920:1080,fps=60,setsar=1,format=yuv420p[a];[1:v]scale=1920:1080,fps=60,setsar=1,format=yuv420p[b];[a][b]concat=n=2:v=1:a=0[v]",
+        `[0:v]scale=1920:1080,fps=60,setsar=1,format=yuv420p[a];[1:v]${pitch.crop ?? ""}scale=1920:1080,fps=60,setsar=1,format=yuv420p[b];[a][b]concat=n=2:v=1:a=0[v]`,
         "-map", "[v]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-an", file,
       ]);
     } else {

@@ -96,16 +96,21 @@ const OUTPUT_SCALE = Number(process.env.RENDER_SCALE) || 1.5;
 /** 60fps output makes zooms, springs and cursor moves smooth. RENDER_FPS=30 halves render time. */
 const outputFps = (): 30 | 60 => (process.env.RENDER_FPS === "30" ? 30 : 60);
 
-export async function renderVideo(outDir: string, log: (m: string) => void = () => {}): Promise<Contract & { seed: number; style_kit: string }> {
+/** opts.hideCaptions renders without burned-in captions; opts.output names the file (default demo.mp4). */
+export async function renderVideo(
+  outDir: string,
+  log: (m: string) => void = () => {},
+  opts: { hideCaptions?: boolean; output?: string } = {},
+): Promise<Contract & { seed: number; style_kit: string }> {
   const plan: VideoPlan = VideoPlanSchema.parse(JSON.parse(await fsp.readFile(path.join(outDir, "video_plan.json"), "utf8")));
   plan.fps = outputFps();
   const server = await serveDir(outDir);
   try {
-    const inputProps = { plan, media: await mediaFor(outDir, server.base) } satisfies PitchVideoProps;
+    const inputProps = { plan, media: await mediaFor(outDir, server.base), ...(opts.hideCaptions ? { hideCaptions: true } : {}) } satisfies PitchVideoProps;
     log("bundling renderer");
     const serveUrl = await getBundle();
     const composition = await selectComposition({ serveUrl, id: "PitchVideo", inputProps });
-    const demo = path.join(outDir, "demo.mp4");
+    const demo = path.join(outDir, opts.output ?? "demo.mp4");
     let last = -1;
     await renderMedia({
       composition,

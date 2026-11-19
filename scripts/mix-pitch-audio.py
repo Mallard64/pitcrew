@@ -1,6 +1,10 @@
 """Lays each pitch video's own audio under its on-screen playback in our demo (in sync with the picture),
 starting after our narration ends, so there is no silent stretch. Writes launch/our-demo.mp4 in place."""
-import json, subprocess as sp, shutil, os
+import json, subprocess as sp, shutil, os, sys
+
+# usage: python3 scripts/mix-pitch-audio.py [rendered.mp4] [output.mp4]
+RENDERED = sys.argv[1] if len(sys.argv) > 1 else "launch/build/demo.mp4"
+OUTPUT = sys.argv[2] if len(sys.argv) > 2 else "launch/our-demo.mp4"
 
 F = "launch/footage"
 plan = json.load(open("launch/build/video_plan.json"))
@@ -33,7 +37,6 @@ for sc in plan["scenes"]:
     t += sc["duration_s"]
 labels = "".join(f"[a{k}]" for k in range(1, len(filters) + 1))
 fc = ";".join(filters) + f";[0:a]{labels}amix=inputs={len(filters) + 1}:normalize=0:duration=first[aout]"
-shutil.copy("launch/build/demo.mp4", "launch/build/demo-voice-only.mp4")
-sp.run(["ffmpeg", "-v", "error", "-y", "-i", "launch/build/demo-voice-only.mp4", *inputs, "-filter_complex", fc,
-        "-map", "0:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "launch/our-demo.mp4"], check=True)
-print("wrote launch/our-demo.mp4")
+sp.run(["ffmpeg", "-v", "error", "-y", "-i", RENDERED, *inputs, "-filter_complex", fc,
+        "-map", "0:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", OUTPUT], check=True)
+print(f"wrote {OUTPUT}")
