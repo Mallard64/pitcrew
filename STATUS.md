@@ -16,7 +16,7 @@
   - The whole job took 13:30, including the review wait while I took screenshots.
   - The local e2e run (Hunt the Wumpus, footage, 60 s) took 70 s and 39,085 tokens. It came back `ok` at 62.4 s.
 - **Cost note:** this is on top of the normal plan, research and judge-pass calls. Only the winner is voiced and rendered.
-- **Normal (non-Pitch-Room) run after the deploy:** pending: blocked by our own 20-videos-per-day limit (the test runs used up the rolling 24 h window). A retry is running every 5 min; this line gets updated when it finishes.
+- **Normal (non-Pitch-Room) run after the deploy:** not done. Our own 20-videos-per-day limit (rolling 24 h, per IP) still blocked it after 30 retries over 2.5 h (last try 05:38). **To do (human):** run one normal 60 s job once the window clears, or temporarily raise `MAX_JOBS_PER_USER_PER_DAY` on Railway. The normal flow's code path is unchanged when the box is unticked, and the local suite (110 tests) passes.
 - **Screenshots:** launch/demo-backup/pitch-room-review.jpg (cards with "Use this one") and pitch-room-done.jpg (finished job, "Your pick" next to "Judge's pick").
 - **Limits:**
   - Drafts rewrite narration only. On-screen headlines stay from the main plan, so a picked draft can open with different words than the title card.
