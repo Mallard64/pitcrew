@@ -21,7 +21,8 @@ export async function POST(req: Request) {
   const ipKey = clientKeyFor(clientIp(req));
   const keys = form.contact ? [ipKey, `contact:${form.contact.toLowerCase()}`] : [ipKey];
   const slot = takeJobSlot(keys);
-  if (!slot.ok) return fail(slot.message, 429);
+  // Past the per-team daily limit, offer the Stripe Payment Link (if configured).
+  if (!slot.ok) return fail(slot.message, 429, slot.reason === "user" && config.stripePaymentLink ? { pay_url: config.stripePaymentLink } : {});
 
   // Pitch Room is ignored unless the server enables it (PITCH_ROOM_ENABLED=true).
   const job = createJob({ ...form, pitch_room: form.pitch_room && config.pitchRoomEnabled, client_key: ipKey });

@@ -1,5 +1,5 @@
 export const json = (data: unknown, status = 200) => Response.json(data, { status });
-export const fail = (message: string, status = 400) => json({ error: message }, status);
+export const fail = (message: string, status = 400, extra: Record<string, unknown> = {}) => json({ error: message, ...extra }, status);
 
 export function clientIp(req: Request) {
   return req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "local";

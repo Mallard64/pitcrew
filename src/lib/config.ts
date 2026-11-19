@@ -15,6 +15,11 @@ export const config = {
   get maxJobsPerUserPerDay() {
     return int(process.env.MAX_JOBS_PER_USER_PER_DAY, 5);
   },
+  /** Stripe Payment Link shown when a team hits its daily limit (only buy.stripe.com links; empty = none). */
+  get stripePaymentLink() {
+    const u = process.env.STRIPE_PAYMENT_LINK ?? "";
+    return /^https:\/\/buy\.stripe\.com\/[A-Za-z0-9]+$/.test(u) ? u : "";
+  },
   get maxJobsPerDay() {
     return int(process.env.MAX_JOBS_PER_DAY, 200);
   },

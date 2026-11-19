@@ -22,3 +22,5 @@ const prompt = `Pre-flight check for a Pit Crew pitch video. Use your terminal o
   console.log(`\nHTTP ${res.status} · status: ${j.status} · ${Math.round((Date.now() - t0) / 1000)} s · ${new Date().toISOString().slice(0, 10)}\n`);
   console.log(text);
 })();
+
+export {};

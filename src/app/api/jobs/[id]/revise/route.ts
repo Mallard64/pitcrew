@@ -1,5 +1,6 @@
 import { getJob, updateJob } from "@/lib/db";
 import { ReviseSchema } from "@/lib/validate";
+import { config } from "@/lib/config";
 import { clientKeyFor, takeJobSlot } from "@/lib/ratelimit";
 import { enqueue } from "@/lib/runner";
 import { clientIp, fail, json, readBody } from "@/lib/http";
@@ -12,7 +13,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const parsed = ReviseSchema.safeParse(await readBody(req));
   if (!parsed.success) return fail("Describe the change in a few words");
   const slot = takeJobSlot([clientKeyFor(clientIp(req))]);
-  if (!slot.ok) return fail(slot.message, 429);
+  // Past the per-team daily limit, offer the Stripe Payment Link (if configured).
+  if (!slot.ok) return fail(slot.message, 429, slot.reason === "user" && config.stripePaymentLink ? { pay_url: config.stripePaymentLink } : {});
   // The team may switch narrator with a revision; the new voice sticks for later versions.
   if (parsed.data.voice && parsed.data.voice !== job.voice) updateJob(id, { voice: parsed.data.voice });
   if (!enqueue({ jobId: id, revision: parsed.data.request })) return fail("A new version is already being made", 409);
