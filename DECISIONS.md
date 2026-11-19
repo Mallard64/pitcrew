@@ -108,3 +108,7 @@ Format: `YYYY-MM-DD HH:MM PT, decision, why, alternatives considered`
 - Fixes: capture at most 30 fps (a frame that comes too soon replaces the last one, so the final screen state is never lost), JPEG quality 92, an 800 MB budget (MAX_CAPTURE_MB), and raw frames in the container's temp dir instead of the data volume.
 - After a successful render, clips/, shots/ and audio/ are deleted (revisions only reuse flow.json); KEEP_INTERMEDIATES=1 keeps them for local tooling like kit-stills.
 - Jobs refuse to start under 120 MB free (MIN_FREE_MB) with a plain message instead of failing midway.
+
+## 2026-11-18: Blank demo when clip polish fails
+- shadcn/ui test job: ffmpeg was SIGKILLed 25s into clip polish (not our 5 min timeout; most likely the host's memory limit, peaks near 7.4 of 8 GB were seen during renders). The log promised screenshots, but the renderer only drew a demo window when a processed clip existed, so the demo rendered empty and the job still said "ok".
+- Now: a step without a clip shows its screenshot (slow push-in) in the window; polish retries once with FFMPEG_THREADS=2; if it still fails the job is "partial" with a note.

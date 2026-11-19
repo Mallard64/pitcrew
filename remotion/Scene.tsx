@@ -264,9 +264,23 @@ function ClipContent({ el, ctx }: { el: Extract<Element, { type: "clip" }>; ctx:
   const durationInFrames = (realDuration * DESIGN_FPS) / realFps;
   const { kit } = ctx;
   const m = ctx.media.clips[el.step_id];
-  if (!m) return null;
-  const clipFrames = Math.max(1, Math.floor(m.duration_s * realFps) - 1);
   const still = ctx.media.images[`shots/${el.step_id}.png`];
+  if (!m) {
+    // No processed clip (polish failed): show the step's screenshot with a slow push-in, never a blank window.
+    if (!still) return null;
+    return (
+      <Img
+        src={still}
+        style={{
+          position: "absolute",
+          width: VIEW_W,
+          height: VIEW_H,
+          transform: `scale(${interpolate(frame, [0, durationInFrames], [1, 1.06], clamp)})`,
+        }}
+      />
+    );
+  }
+  const clipFrames = Math.max(1, Math.floor(m.duration_s * realFps) - 1);
   const rec = <Recording url={m.url} still={still} clipFrames={clipFrames} speed={el.speed} />;
   const pulse = 0.75 + 0.25 * Math.sin(frame / 7);
   const panel = m.box ? panelBox(m.box) : null;
@@ -1161,7 +1175,8 @@ export function Scene({
   const backdrop = <Backdrop kit={kit} drift={index * 137} />;
   const clip = scene.elements.find(
     (e): e is Extract<Element, { type: "clip" }> =>
-      e.type === "clip" && !!ctx.media.clips[e.step_id],
+      // A step with no processed clip still shows in the window via its screenshot.
+      e.type === "clip" && (!!ctx.media.clips[e.step_id] || !!ctx.media.images[`shots/${e.step_id}.png`]),
   );
 
   if (scene.section === "end") {

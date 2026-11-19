@@ -129,10 +129,24 @@ export async function runPipeline(
   log(`${rec.stepsOk}/${flow.steps.length} steps recorded`);
   if (rec.stepsOk === 0) throw new Error("No step of the demo flow worked on this site");
   let clipIds = new Set<string>();
+  let polishNote = "";
   try {
     clipIds = new Set((await polishFootage(outDir, log)).map((c) => c.step_id));
   } catch (e) {
-    log(`Clip polish failed (${(e as Error).message.slice(0, 120)}); demo scenes will use screenshots`);
+    // Usually the host killed ffmpeg (memory). One retry with fewer encoder threads uses less of it.
+    log(`Clip polish failed (${(e as Error).message.slice(0, 120)}); retrying with fewer threads`);
+    const threads = process.env.FFMPEG_THREADS;
+    process.env.FFMPEG_THREADS = "2";
+    try {
+      clipIds = new Set((await polishFootage(outDir, log)).map((c) => c.step_id));
+      log("Clip polish worked on the retry");
+    } catch (e2) {
+      polishNote = "demo shows screenshots: the recorded clips could not be processed";
+      log(`Clip polish failed again (${(e2 as Error).message.slice(0, 120)}); demo scenes will use screenshots`);
+    } finally {
+      if (threads === undefined) delete process.env.FFMPEG_THREADS;
+      else process.env.FFMPEG_THREADS = threads;
+    }
   }
 
   // Merge research: only the problem scene(s) and sources may change; the recorded flow stays as is.
@@ -267,6 +281,10 @@ export async function runPipeline(
   if (rec.stepsOk < flow.steps.length) {
     const failed = rec.timings.filter((x) => !x.ok).map((x) => `${x.step_id}: ${x.error ?? "failed"}`);
     contract.notes = [contract.notes, `failed steps: ${failed.join("; ")}`].filter(Boolean).join("; ");
+    if (contract.status === "ok") contract.status = "partial";
+  }
+  if (polishNote) {
+    contract.notes = [contract.notes, polishNote].filter(Boolean).join("; ");
     if (contract.status === "ok") contract.status = "partial";
   }
   contract.steps_ok = rec.stepsOk;
