@@ -13,6 +13,7 @@ Steps to reproduce:
 
 - **Expected:** a description of the image, or a 4xx naming the unsupported content type.
 - **Actual:** after 24 s, HTTP 200 with *"I can't describe a screenshot because none reached me: there is no image attached to this request, and the workspace has no image files."*
+- Re-run on Nov 19 gave the same result: `status: completed`, *"There's no game screenshot attached"*, and `metadata.ignored_fields: []`, so nothing in the response signals the drop. Repro script: `scripts/hr-image-input-check.ts`.
 
 **Cost to us:** our first footage video narrated scenes that weren't in the clip, because the agent had to guess. Finding the cause and the workaround took about 15 minutes, plus re-running the job.
 
