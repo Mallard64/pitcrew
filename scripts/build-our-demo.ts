@@ -29,6 +29,8 @@ const PAGE_INTRO_S = 2.5;
 export const PITCH: Record<string, { file: string; seek: number; crop?: string; maxPlay?: number }> = {
   c_omnistem: { file: "eval/github-only/omnistem/demo.mp4", seek: 24, crop: "crop=1500:844:210:78," },
   c_devpad: { file: "eval/github-only/devpad/demo.mp4", seek: 17.5, crop: "crop=1500:844:210:78," },
+  // The Excalidraw pitch made in the recorded run, from its demo section.
+  c_done: { file: "launch/footage/run/pitch.mp4", seek: 25.6, crop: "crop=1500:844:210:78," },
   // Footage videos already sit in their own "Team footage" window: crop to its content so windows don't nest.
   c_wumpus: { file: "eval/github-only/wumpus/demo.mp4", seek: 14.1, crop: "crop=1500:844:210:78,", maxPlay: 7.6 },
 };
@@ -51,7 +53,7 @@ async function main() {
 
   // Real moments from the recordings (seconds from the start of each recording).
   const cuts: Cut[] = [
-    { id: "c_form", src: runSrc, from: run.form - 0.5, to: run.submit + 2.5 },
+    { id: "c_form", src: runSrc, from: run.form - 2.0, to: run.submit + 2.5 },
     { id: "c_progress", src: runSrc, from: run.job_page + 1, to: run.review - 0.5 },
     { id: "c_review", src: runSrc, from: run.review + 1, to: run.approve + 2 },
     { id: "c_done", src: runSrc, from: run.done - 0.5, to: run.end - 0.3 },
@@ -237,9 +239,12 @@ async function main() {
   for (const sc of scenes) sc.duration_s = fitSceneDuration(sc, len.get(sc.id));
   // The finished videos get time to play; the others follow the narration.
   const extra: Record<string, number> = {
-    demo_c_done: 10,
-    demo_c_omnistem: 4,
-    demo_c_devpad: 4,
+    demo_c_form: 4,
+    demo_c_progress: 3,
+    demo_c_review: 3,
+    demo_c_done: 14,
+    demo_c_omnistem: 8,
+    demo_c_devpad: 8,
     demo_c_wumpus: 0,
   };
   for (const sc of scenes)
@@ -338,6 +343,10 @@ async function main() {
     t += sc.duration_s;
   }
   fs.writeFileSync(path.join(OUT, "captions.srt"), toSrt(srt));
+  if (process.env.SKIP_RENDER === "1") {
+    console.log(JSON.stringify({ planned_s: plan.scenes.reduce((n, sc) => n + sc.duration_s, 0) }));
+    return;
+  }
   const contract = await renderVideo(OUT, console.log);
   fs.copyFileSync(path.join(OUT, "demo.mp4"), path.resolve("launch/our-demo.mp4"));
   fs.copyFileSync(path.join(OUT, "captions.srt"), path.resolve("launch/our-demo.srt"));

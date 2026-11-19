@@ -13,7 +13,7 @@ LEAD = 0.3
 ev = lambda d: json.load(open(f"{F}/{d}/events.json"))
 run = ev("run")
 src = {
-    "demo_c_done": (f"{F}/run/pitch.mp4", run["play"] - (run["done"] - 0.5), 0.0),
+    "demo_c_done": (f"{F}/run/pitch.mp4", 2.5, 25.6),
     # GitHub-only scenes: 2.5 s of job page, then the original pitch video from its demo section.
     "demo_c_omnistem": ("eval/github-only/omnistem/demo.mp4", 2.5, 24.0),
     "demo_c_devpad": ("eval/github-only/devpad/demo.mp4", 2.5, 17.5),
