@@ -15,6 +15,8 @@
 | Network | public web OK; `git clone` 1 s; `npm ci` 61 s |
 | Max runtime | undocumented; `timeout_seconds: 1500` was accepted |
 
+Re-checked live on Nov 19 (`scripts/hr-sandbox-limits-check.ts`, 23 s): same results, `ffmpeg: not on PATH`.
+
 We made two architecture decisions blind and wrote two probe scripts (one cost about 390k input tokens).
 
 **Cost to us:** two probe scripts plus a design change. Our first plan assumed ffmpeg would be in the sandbox.

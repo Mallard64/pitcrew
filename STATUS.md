@@ -18,6 +18,7 @@
 - **Cost note:** this is on top of the normal plan, research and judge-pass calls. Only the winner is voiced and rendered.
 - **Normal (non-Pitch-Room) run after the deploy:** works. Job Qr8JKBWh (JSON Crack, 60 s, Pitch Room off): `ok`, 57.2 s video, 4/4 steps, harness plan, 5:18 total. Run after temporarily raising `MAX_JOBS_PER_USER_PER_DAY` 20 → 30 on Railway, set back to 20 afterwards.
 - **Three different draft models (Nov 19):** each angle now gets a cheap model from a different provider (`claude-haiku-5.5`, `gpt-5.4-mini`, `gemini-3.8-flash`); judge stays `claude-fable-5-2`. Real check on sample JSON Crack scenes: 3/3 drafts parsed, judge picked customer story (7 / 5.8 / 6.8), 81.5 s, 75,278 tokens (about twice the single-model run; inputs are counted per model). Override with `PITCH_ROOM_DRAFT_MODELS` (comma list).
+- **Three-model production run:** job aaJHdird (JSON Crack, 60 s): customer story / `claude-haiku-5.5` 8.3 (judge's pick), data-first / `gpt-5.4-mini` 6.5, demo-first / `gemini-3.8-flash` 6.3; Pitch Room 83.3 s, 64,590 tokens (59,642 in / 4,948 out). Final `ok`, 54.3 s video, 4/4 steps. Screenshot: `launch/demo-backup/pitch-room-three-models.jpg`. Limit raised to 30 for the run and set back to 20.
 - **Screenshots:** launch/demo-backup/pitch-room-review.jpg (cards with "Use this one") and pitch-room-done.jpg (finished job, "Your pick" next to "Judge's pick").
 - **Limits:**
   - Drafts rewrite narration only. On-screen headlines stay from the main plan, so a picked draft can open with different words than the title card.
