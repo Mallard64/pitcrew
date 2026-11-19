@@ -836,7 +836,7 @@ function entranceFrames(el: Element, kit: Kit): number {
 }
 
 function Headline({
-  text,
+  text: rawText,
   kit,
   frame,
   delay,
@@ -846,6 +846,8 @@ function Headline({
   frame: number;
   delay: number;
 }) {
+  // Links break after "/" (zero-width space), not in the middle of a name.
+  const text = rawText.replace(/\/(?=\S)/g, "/\u200B");
   const words = text.split(/\s+/);
   const size = (words.length > 9 ? 0.85 : 1) * kit.titleSize;
   const style: React.CSSProperties = {

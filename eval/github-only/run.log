@@ -10,3 +10,6 @@
 2026-11-19T05:17:12.941Z wumpus s6XsiloO: failed (footage)
 2026-11-19T05:17:14.094Z RESULT {"slug":"wumpus","id":"s6XsiloO","url":"https://pitcrew-production-83e5860b.up.railway.app/jobs/s6XsiloO","status":"failed","demo_mode":"footage","notice":null,"steps":"undefined/undefined","kit":null,"pitch":null,"error":"FFmpeg quit with code 1 (signal SIGKILL) while piping frame 1513. Stderr: ffmpeg version n7.1 Copyright (c) 2000-2024 the FFmpeg developers\n  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)\n  configuration: --prefix=remotion --extra-cflags='-Iremotion/include -Iremotion/include/opus -Iremotion/include/lame -Iremotion/include/vpx' --extra-ldflags=-Lremotion/lib --enable-small --enable-shared --enable-libdav1d --enable-libaom --enable-libzimg --enable-libfdk-aac --disable-static --disable-ffplay ","wall_s":885}
 2026-11-19T05:17:14.175Z omnistem ja8Jx0dG: running (sandbox-run)
+2026-11-19T05:29:29.264Z omnistem ja8Jx0dG: partial (sandbox-run)
+2026-11-19T05:29:31.764Z RESULT {"slug":"omnistem","id":"ja8Jx0dG","url":"https://pitcrew-production-83e5860b.up.railway.app/jobs/ja8Jx0dG","status":"partial","demo_mode":"sandbox-run","notice":null,"duration_s":81.1,"steps":"4/4","kit":"poster","pitch":"8/8","notes":"duration 81.1s is outside 46-74s","error":null,"wall_s":1622}
+2026-11-19T05:29:31.846Z devpad GkQnvINC: running (sandbox-run)
