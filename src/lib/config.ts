@@ -41,6 +41,10 @@ export const config = {
       "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team."
     );
   },
+  /** Part of the organizer line that ORGANIZER_URL links (e.g. one event's name). Empty = link the whole line. */
+  get organizerLinkText() {
+    return (process.env.ORGANIZER_LINK_TEXT ?? "").trim();
+  },
   /** Optional https link for the organizer line (e.g. the event page). */
   get organizerUrl() {
     const u = (process.env.ORGANIZER_URL ?? "").trim();

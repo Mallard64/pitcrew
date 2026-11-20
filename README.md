@@ -75,6 +75,7 @@ One job without the web app: `npx tsx scripts/run-local.ts https://example.com "
 | `MAX_JOBS_PER_HOUR`, `MAX_JOBS_PER_USER_PER_DAY`, `MAX_JOBS_PER_DAY`, `MAX_CONCURRENT_JOBS` | Rate limits and budget cap |
 | `STRIPE_PAYMENT_LINK` | Optional Stripe Payment Link (`https://buy.stripe.com/…`) shown when a team hits its daily limit; limits are raised by hand after payment |
 | `PILOT_PARTNER_ENABLED`, `ORGANIZER_LINE`, `ORGANIZER_URL` | Landing-page organizer line; shown only when enabled. `ORGANIZER_LINE` overrides the default (unnamed) text; `ORGANIZER_URL` (https) links it |
+| `ORGANIZER_LINK_TEXT` | Part of `ORGANIZER_LINE` that `ORGANIZER_URL` links, so a line naming two events links only the one with a page. Empty = link the whole line |
 | `TRACTION_PAID_COUNT`, `TRACTION_COLLECTED_USD`, `TRACTION_ORGANIZER_USD`, `TRACTION_ORGANIZER_RECEIVED` | Payment numbers for the traction strip, copied by hand from Stripe (not in our DB). Hidden unless collected is set; a paid count of 0 or unset shows the amount without a customer count. The organizer amount shows as "committed" until `TRACTION_ORGANIZER_RECEIVED=true` |
 | `TRACTION_ORGANIZERS` | How many of the paying customers are hackathon organizers. Default 1 once `TRACTION_ORGANIZER_RECEIVED=true`; 2+ shows "including N hackathon organizers" |
 | `TRACTION_BUILDERS` | Builder count shown on the landing page as reported by the team (e.g. `5+`). Unset = DB count of distinct hashed IPs, which undercounts teammates on one network |

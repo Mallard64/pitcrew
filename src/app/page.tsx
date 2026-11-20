@@ -111,6 +111,9 @@ export default async function Home() {
       : "our first hackathon organizer";
   const organizerLine = config.organizerLine;
   const organizerUrl = config.organizerUrl;
+  // Link only ORGANIZER_LINK_TEXT inside the line when it's set and present; otherwise the whole line.
+  const linkText = config.organizerLinkText;
+  const linkAt = linkText ? organizerLine.indexOf(linkText) : -1;
   const freeLimit = config.maxJobsPerUserPerDay;
   const buildLogUrl = config.buildLogUrl;
   const builders = config.buildersReported || String(s.builders);
@@ -182,12 +185,16 @@ export default async function Home() {
               {organizerLine && (
                 <p className="text-slate-300">
                   {organizerUrl ? (
-                    <a
-                      href={organizerUrl}
-                      className="underline decoration-white/20 hover:text-white"
-                    >
-                      {organizerLine}
-                    </a>
+                    <>
+                      {linkAt > 0 && organizerLine.slice(0, linkAt)}
+                      <a
+                        href={organizerUrl}
+                        className="underline decoration-white/20 hover:text-white"
+                      >
+                        {linkAt >= 0 ? linkText : organizerLine}
+                      </a>
+                      {linkAt >= 0 && organizerLine.slice(linkAt + linkText.length)}
+                    </>
                   ) : (
                     organizerLine
                   )}

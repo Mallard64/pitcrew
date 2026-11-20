@@ -159,3 +159,9 @@ See eval/results.md and eval/github-only/.
 - Felix reported $365 collected in customer payments (paying-customer count not confirmed). Not reconciled against Stripe from here.
 - Landing page now shows "$365 collected, including our first hackathon organizer" with no customer count: `TRACTION_COLLECTED_USD=365`, `TRACTION_PAID_COUNT=0` (0/unset = count hidden; code change in this commit).
 - Update: Felix reported 5 paying customers (3 builders, 2 hackathon organizers). Live strip: "$365 collected · 5 paying customers, including 2 hackathon organizers" via `TRACTION_PAID_COUNT=5`, new `TRACTION_ORGANIZERS=2`. Not reconciled against Stripe from here.
+
+### Second organizer named + cost per video (Nov 20)
+- Felix named the second organizer: ShipIt 2027. Organizer line now: "Startup Sprint 2026 (online, Dec 1–8) and ShipIt 2027 are our first organizer customers." Only the Startup Sprint part links to its event page (new `ORGANIZER_LINK_TEXT`); no ShipIt link recorded.
+- Cost per video, from HarnessRouter's own `spend_usd` (68 sessions on our Harness ID, grouped into runs by time): about $0.016 per video run on average, median about $0.012, range $0–$0.085. Excludes the 2 connectivity-test runs and failed-only runs.
+  - This undercounts: several sessions report tokens but $0 spend (mostly Pitch Room cheap-model drafts), and it covers HarnessRouter agent spend only, not TTS (ElevenLabs/OpenAI) or Railway compute.
+  - Still not shown on the site, because the full per-video cost can't be computed from these records.
