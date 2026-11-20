@@ -158,3 +158,4 @@ See eval/results.md and eval/github-only/.
 ### Payments total updated (Nov 20)
 - Felix reported $365 collected in customer payments (paying-customer count not confirmed). Not reconciled against Stripe from here.
 - Landing page now shows "$365 collected, including our first hackathon organizer" with no customer count: `TRACTION_COLLECTED_USD=365`, `TRACTION_PAID_COUNT=0` (0/unset = count hidden; code change in this commit).
+- Update: Felix reported 5 paying customers (3 builders, 2 hackathon organizers). Live strip: "$365 collected · 5 paying customers, including 2 hackathon organizers" via `TRACTION_PAID_COUNT=5`, new `TRACTION_ORGANIZERS=2`. Not reconciled against Stripe from here.

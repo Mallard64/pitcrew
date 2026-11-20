@@ -57,8 +57,10 @@ export const config = {
     const usd = int(process.env.TRACTION_COLLECTED_USD, 0);
     const organizerUsd = int(process.env.TRACTION_ORGANIZER_USD, 0);
     const organizerReceived = process.env.TRACTION_ORGANIZER_RECEIVED === "true";
+    // How many of the paying customers are hackathon organizers (default 1 once organizer money is received).
+    const organizers = int(process.env.TRACTION_ORGANIZERS, organizerReceived ? 1 : 0);
     // TRACTION_PAID_COUNT unset or 0 = count not confirmed: show the amount without a customer count.
-    return usd ? { paid, usd, organizerUsd, organizerReceived } : null;
+    return usd ? { paid, usd, organizerUsd, organizerReceived, organizers } : null;
   },
   /**
    * Builder count as reported by the team (e.g. "5+"). The DB counts distinct hashed IPs, which undercounts

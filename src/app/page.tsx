@@ -105,6 +105,10 @@ export default async function Home() {
   await connection();
   const s = getStats();
   const paid = config.paidTraction;
+  const organizersText =
+    paid && paid.organizers > 1
+      ? `${paid.organizers} hackathon organizers`
+      : "our first hackathon organizer";
   const organizerLine = config.organizerLine;
   const organizerUrl = config.organizerUrl;
   const freeLimit = config.maxJobsPerUserPerDay;
@@ -155,11 +159,11 @@ export default async function Home() {
                         {" · "}
                         <span className="font-semibold text-white">{paid.paid}</span>
                         {paid.organizerReceived
-                          ? ` paying customer${paid.paid === 1 ? "" : "s"}, including our first hackathon organizer`
+                          ? ` paying customer${paid.paid === 1 ? "" : "s"}, including ${organizersText}`
                           : ` paying user${paid.paid === 1 ? "" : "s"}`}
                       </>
                     ) : (
-                      paid.organizerReceived && ", including our first hackathon organizer"
+                      paid.organizerReceived && `, including ${organizersText}`
                     )}
                     {!paid.organizerReceived && paid.organizerUsd > 0 && (
                       <>
