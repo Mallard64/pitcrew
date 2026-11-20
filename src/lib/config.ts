@@ -36,7 +36,10 @@ export const config = {
   /** Landing-page organizer line: shown only when PILOT_PARTNER_ENABLED=true. ORGANIZER_LINE overrides the default text. */
   get organizerLine() {
     if (process.env.PILOT_PARTNER_ENABLED !== "true") return "";
-    return (process.env.ORGANIZER_LINE ?? "").trim() || "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team.";
+    return (
+      (process.env.ORGANIZER_LINE ?? "").trim() ||
+      "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team."
+    );
   },
   /** Optional https link for the organizer line (e.g. the event page). */
   get organizerUrl() {
@@ -55,6 +58,14 @@ export const config = {
     const organizerUsd = int(process.env.TRACTION_ORGANIZER_USD, 0);
     const organizerReceived = process.env.TRACTION_ORGANIZER_RECEIVED === "true";
     return paid && usd ? { paid, usd, organizerUsd, organizerReceived } : null;
+  },
+  /**
+   * Builder count as reported by the team (e.g. "5+"). The DB counts distinct hashed IPs, which undercounts
+   * teammates sharing one network. Only digits with an optional "+"; unset = use the DB count.
+   */
+  get buildersReported() {
+    const v = (process.env.TRACTION_BUILDERS ?? "").trim();
+    return /^\d+\+?$/.test(v) ? v : "";
   },
   /** Public link to our HarnessRouter build log thread (empty = no link). */
   get buildLogUrl() {

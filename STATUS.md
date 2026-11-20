@@ -108,3 +108,49 @@ See eval/results.md and eval/github-only/.
   3. Set `BUILD_LOG_URL` to the HarnessRouter build log thread; no thread URL is recorded in the repo, so the link is hidden.
   4. Watch a gallery video once on the live site.
   5. Each Railway variable change redeploys and kills running jobs.
+
+## Traction + organizer update (Nov 19, commit 1bd2465, live)
+- **Live:** https://pitcrew-production-83e5860b.up.railway.app.
+  - Deployed together with 4 new Railway variables: `PILOT_PARTNER_ENABLED=true`, `TRACTION_PAID_COUNT=3`, `TRACTION_COLLECTED_USD=15`, `TRACTION_ORGANIZER_USD=100`.
+  - `TRACTION_ORGANIZER_RECEIVED` is not set (defaults to false).
+- **Traction strip as rendered:** "23 videos made · 3 builders · $15 collected · 3 paying users · $100 committed by a hackathon organizer · live stats".
+  - **23 videos made, 3 builders:** computed live from the production `jobs` table.
+  - **$15, 3 paying users, $100 committed:** reported by Felix, not in our DB. The fallback wording was used because no payment record we can read shows the $100 received:
+    - our DB stores no payments;
+    - the Stripe dashboard wasn't signed in on the automation browser, and I didn't sign in.
+  - **To switch to "$115 collected · 4 paying customers, including our first hackathon organizer":** once the $100 shows in Stripe, set `TRACTION_ORGANIZER_RECEIVED=true`, `TRACTION_COLLECTED_USD=115` and `TRACTION_PAID_COUNT=4`.
+- **Organizer line (live):** "Our first organizer customer: an upcoming student hackathon is giving Pit Crew to every team."
+  - It replaces the old pilot line; `PILOT_PARTNER_SIZE` and `PILOT_PARTNER_SEASON` are gone.
+  - Set `ORGANIZER_LINE` to the named "Startup Sprint 2027 …" text (event page: "Startup Sprint 2027", online, Dec 1–8, 2026, hosted by Iris Z; checked Nov 19 and it doesn't mention Pit Crew yet) once they approve. The event isn't named anywhere until then.
+- **For organizers block (live, under pricing):** "Give every team at your hackathon a pitch video. Organizer plans from $100 per event." with a Contact us link to GitHub issues.
+- **Checks:** typecheck, lint and build pass. I checked the live page through its HTML and a browser screenshot.
+- **Railway:** variable changes redeploy and kill running jobs. Set all the switch-over values in one go.
+
+## Traction / organizer / limit update (Nov 19, commit 608a85e, live)
+- **Railway variables changed (one deploy):**
+  - `MAX_JOBS_PER_USER_PER_DAY` 20 → 5
+  - `TRACTION_COLLECTED_USD` 15 → 115
+  - `TRACTION_PAID_COUNT` 3 → 4
+  - new `TRACTION_ORGANIZER_RECEIVED=true`
+  - new `ORGANIZER_LINE`
+  - new `ORGANIZER_URL=https://hackathonhost.com/events/startup-sprint-2027`
+- **Live traction strip:** "23 videos made · 3 builders · $115 collected · 4 paying customers, including our first hackathon organizer · live stats".
+- **Live organizer line (linked to the event page):** "Startup Sprint 2026 (online, Dec 1–8) is our first organizer customer."
+- **Live pricing:** "Up to 5 videos a day per team."
+- **Sources and caveats:**
+  - **23 videos, 3 builders:** production DB.
+  - **$115 / 4 paying customers:** reported by Felix, chosen over the recommended "hide until Stripe is shown". It is not reconciled with our records:
+    - our DB stores no payments, and Stripe wasn't readable here;
+    - the pay button appears only after one IP hits the daily limit (20/day from 10:33 AM, when the link went live, until this change);
+    - the DB has 3 builders including our own test IPs, so it can't account for 3 individual payers.
+  - **Limit history:** the repo records 20/day today. I didn't write that it was lower when people paid, because nothing shows that. 5/day is true from this deploy on.
+  - **Organizer name:** the line uses "Startup Sprint 2026" as Felix specified. The linked event page title is "Startup Sprint 2027" (dates Dec 1–8, 2026) and, as of this check, it doesn't mention Pit Crew.
+- **Builders, one number everywhere:** 3 (distinct IPs with a delivered video). The project page on the hackathon site says "5+ builders"; Felix should change it to 3. I can't edit that page.
+- **Project page "merges":** Felix should change the Pitch Room sentence to say the judge agent scores the drafts and picks the best one. I can't edit that page.
+
+### Builder count + event name confirmed (Nov 19)
+- **Builders: 5+.** Felix confirmed there are 5+ builders. The DB's 3 counts distinct hashed IPs, which undercounts teammates on a shared network.
+  - New optional `TRACTION_BUILDERS` (digits with an optional "+") shows the team-reported count on the landing page. Unset = DB count.
+  - Set to `5+` on Railway, so the site now matches the project page ("5+"). /stats still shows the raw DB metrics.
+  - This supersedes the "say 3" note above. The project page needs no change.
+- **Event name:** Felix confirmed "Startup Sprint 2026" is correct. The "2027" in the event page title/URL is the host's naming; our line stays as is.

@@ -89,6 +89,7 @@ export default async function Home() {
   const organizerUrl = config.organizerUrl;
   const freeLimit = config.maxJobsPerUserPerDay;
   const buildLogUrl = config.buildLogUrl;
+  const builders = config.buildersReported || String(s.builders);
   return (
     <div className="space-y-24">
       {/* Hero */}
@@ -123,8 +124,8 @@ export default async function Home() {
                 <span className="font-semibold text-white">{s.videos_made}</span> video
                 {s.videos_made === 1 ? "" : "s"} made
                 {" · "}
-                <span className="font-semibold text-white">{s.builders}</span>
-                {s.builders === 1 ? " builder" : " builders"}
+                <span className="font-semibold text-white">{builders}</span>
+                {builders === "1" ? " builder" : " builders"}
                 {paid && (
                   <>
                     {" · "}
