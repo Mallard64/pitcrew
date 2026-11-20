@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { LOOKS, VOICES, VOICE_KEYS } from "@/lib/voices";
@@ -13,7 +14,14 @@ function lengthHint(s: number) {
   return "Long: more demo and fuller sections (up to 12 demo steps). It takes a few minutes longer to make.";
 }
 
-export default function JobForm({ pitchRoom = false }: { pitchRoom?: boolean }) {
+export default function JobForm({
+  pitchRoom = false,
+  fastTestJobId = "",
+}: {
+  pitchRoom?: boolean;
+  /** Finished job to open instantly for demos (no new run). Empty = no button. */
+  fastTestJobId?: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -427,9 +435,20 @@ export default function JobForm({ pitchRoom = false }: { pitchRoom?: boolean }) 
         <p className="text-xs text-slate-500">
           We only visit public pages. We never log in or submit forms on your site.
         </p>
-        <button className="btn w-full sm:w-auto" disabled={busy}>
-          {busy ? "Starting…" : "Make my pitch video"}
-        </button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          {fastTestJobId && (
+            <Link
+              href={`/jobs/${encodeURIComponent(fastTestJobId)}`}
+              className="btn-ghost text-center"
+              title="Opens a finished example kit instantly. No new video is made."
+            >
+              Fast test
+            </Link>
+          )}
+          <button className="btn w-full sm:w-auto" disabled={busy}>
+            {busy ? "Starting…" : "Make my pitch video"}
+          </button>
+        </div>
       </div>
     </form>
   );

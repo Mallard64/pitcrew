@@ -77,6 +77,7 @@ One job without the web app: `npx tsx scripts/run-local.ts https://example.com "
 | `PILOT_PARTNER_ENABLED`, `ORGANIZER_LINE`, `ORGANIZER_URL` | Landing-page organizer line; shown only when enabled. `ORGANIZER_LINE` overrides the default (unnamed) text; `ORGANIZER_URL` (https) links it |
 | `TRACTION_PAID_COUNT`, `TRACTION_COLLECTED_USD`, `TRACTION_ORGANIZER_USD`, `TRACTION_ORGANIZER_RECEIVED` | Payment numbers for the traction strip, copied by hand from Stripe (not in our DB). Hidden unless paid count and collected are set. The organizer amount shows as "committed" until `TRACTION_ORGANIZER_RECEIVED=true` |
 | `TRACTION_BUILDERS` | Builder count shown on the landing page as reported by the team (e.g. `5+`). Unset = DB count of distinct hashed IPs, which undercounts teammates on one network |
+| `FAST_TEST_JOB_ID` | Finished job the form's "Fast test" button opens instantly for demos (no new run). Default `1zB8JuKN`; `off` hides the button |
 | `BUILD_LOG_URL` | Public link to our HarnessRouter build log thread (hidden if unset) |
 | `PITCH_ROOM_ENABLED`, `PITCH_ROOM_DRAFT_MODELS`, `PITCH_ROOM_JUDGE_MODEL` | Pitch Room on/off (default off); optional overrides (default: three different cheap models, one per provider, and the strongest judge the Harness allows) |
 | `DATA_DIR` | SQLite + job files (`/data` in Docker) |

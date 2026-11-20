@@ -67,6 +67,11 @@ export const config = {
     const v = (process.env.TRACTION_BUILDERS ?? "").trim();
     return /^\d+\+?$/.test(v) ? v : "";
   },
+  /** Finished job the form's "Fast test" button opens (a preloaded example, no new run). FAST_TEST_JOB_ID="off" hides it. */
+  get fastTestJobId() {
+    const v = (process.env.FAST_TEST_JOB_ID ?? "1zB8JuKN").trim();
+    return /^[A-Za-z0-9_-]{4,40}$/.test(v) && v !== "off" ? v : "";
+  },
   /** Public link to our HarnessRouter build log thread (empty = no link). */
   get buildLogUrl() {
     const u = process.env.BUILD_LOG_URL ?? "";

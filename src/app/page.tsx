@@ -7,10 +7,30 @@ import { config } from "@/lib/config";
 // Real, unedited Pit Crew output from our own test runs (re-encoded to 720p for the web).
 // Public products / our own test project; no user videos are shown without the team's permission.
 const SAMPLES = [
-  { file: "tldraw", name: "tldraw", src: "tldraw.com · live site", note: "62s · midnight look · 7-step live demo" },
-  { file: "excalidraw", name: "Excalidraw", src: "excalidraw.com · live site", note: "71s · paper look, picked by the agent" },
-  { file: "jsoncrack", name: "JSON Crack", src: "jsoncrack.com · live site", note: "57s · terminal look · 60s length option" },
-  { file: "wumpus", name: "Hunt the Wumpus", src: "team footage, no live site", note: "55s · studio look · narrated from uploaded clips" },
+  {
+    file: "tldraw",
+    name: "tldraw",
+    src: "tldraw.com · live site",
+    note: "62s · midnight look · 7-step live demo",
+  },
+  {
+    file: "excalidraw",
+    name: "Excalidraw",
+    src: "excalidraw.com · live site",
+    note: "71s · paper look, picked by the agent",
+  },
+  {
+    file: "jsoncrack",
+    name: "JSON Crack",
+    src: "jsoncrack.com · live site",
+    note: "57s · terminal look · 60s length option",
+  },
+  {
+    file: "wumpus",
+    name: "Hunt the Wumpus",
+    src: "team footage, no live site",
+    note: "55s · studio look · narrated from uploaded clips",
+  },
 ];
 
 const ON_HR = [
@@ -28,7 +48,7 @@ const ON_HR = [
   },
   {
     t: "Revisions in the same session",
-    d: "Ask for a change in plain words (\"make it shorter\"). The agent continues the same HarnessRouter session instead of starting over.",
+    d: 'Ask for a change in plain words ("make it shorter"). The agent continues the same HarnessRouter session instead of starting over.',
   },
 ];
 
@@ -107,8 +127,8 @@ export default async function Home() {
           </h1>
           <p className="max-w-xl text-lg text-slate-400">
             Paste your project&apos;s live link. You get a narrated pitch video with a real recorded
-            demo and submission text, with every statistic checked against its source. Add a public repo
-            to also get a progress update drafted from your commits.
+            demo and submission text, with every statistic checked against its source. Add a public
+            repo to also get a progress update drafted from your commits.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a href="#make" className="btn px-5 py-3">
@@ -138,8 +158,8 @@ export default async function Home() {
                     {!paid.organizerReceived && paid.organizerUsd > 0 && (
                       <>
                         {" · "}
-                        <span className="font-semibold text-white">${paid.organizerUsd}</span> committed by a
-                        hackathon organizer
+                        <span className="font-semibold text-white">${paid.organizerUsd}</span>{" "}
+                        committed by a hackathon organizer
                       </>
                     )}
                   </>
@@ -152,7 +172,10 @@ export default async function Home() {
               {organizerLine && (
                 <p className="text-slate-300">
                   {organizerUrl ? (
-                    <a href={organizerUrl} className="underline decoration-white/20 hover:text-white">
+                    <a
+                      href={organizerUrl}
+                      className="underline decoration-white/20 hover:text-white"
+                    >
                       {organizerLine}
                     </a>
                   ) : (
@@ -243,8 +266,9 @@ export default async function Home() {
             Eight looks. The agent picks the one that fits your product, or you do.
           </h2>
           <p className="max-w-2xl text-slate-400">
-            Each look changes the typeface, motion, colours, transitions, browser window, captions and
-            ending, all built around your brand colour. Pick one in the form, or leave it to the agent.
+            Each look changes the typeface, motion, colours, transitions, browser window, captions
+            and ending, all built around your brand colour. Pick one in the form, or leave it to the
+            agent.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -277,7 +301,8 @@ export default async function Home() {
           ))}
         </div>
         <p className="text-xs text-slate-500">
-          Hover a look to see its demo scene. All eight stills are rendered from the same tldraw plan.
+          Hover a look to see its demo scene. All eight stills are rendered from the same tldraw
+          plan.
         </p>
       </section>
 
@@ -370,7 +395,10 @@ export default async function Home() {
               Give every team at your hackathon a pitch video. Organizer plans from $100 per event.
             </p>
           </div>
-          <a href="https://github.com/Mallard64/pitcrew/issues" className="btn-ghost w-fit px-4 py-2 text-sm">
+          <a
+            href="https://github.com/Mallard64/pitcrew/issues"
+            className="btn-ghost w-fit px-4 py-2 text-sm"
+          >
             Contact us
           </a>
         </div>
@@ -401,7 +429,7 @@ export default async function Home() {
             </li>
           </ul>
         </div>
-        <JobForm pitchRoom={config.pitchRoomEnabled} />
+        <JobForm pitchRoom={config.pitchRoomEnabled} fastTestJobId={config.fastTestJobId} />
       </section>
     </div>
   );
