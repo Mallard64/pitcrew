@@ -439,7 +439,7 @@ export default function JobForm({
           {fastTestJobId && (
             <Link
               href={`/jobs/${encodeURIComponent(fastTestJobId)}`}
-              className="btn-ghost text-center"
+              className="btn-ghost whitespace-nowrap text-center"
               title="Opens a finished example kit instantly. No new video is made."
             >
               Fast test
