@@ -154,3 +154,7 @@ See eval/results.md and eval/github-only/.
   - Set to `5+` on Railway, so the site now matches the project page ("5+"). /stats still shows the raw DB metrics.
   - This supersedes the "say 3" note above. The project page needs no change.
 - **Event name:** Felix confirmed "Startup Sprint 2026" is correct. The "2027" in the event page title/URL is the host's naming; our line stays as is.
+
+### Payments total updated (Nov 20)
+- Felix reported $365 collected in customer payments (paying-customer count not confirmed). Not reconciled against Stripe from here.
+- Landing page now shows "$365 collected, including our first hackathon organizer" with no customer count: `TRACTION_COLLECTED_USD=365`, `TRACTION_PAID_COUNT=0` (0/unset = count hidden; code change in this commit).

@@ -150,11 +150,17 @@ export default async function Home() {
                   <>
                     {" · "}
                     <span className="font-semibold text-white">${paid.usd}</span> collected
-                    {" · "}
-                    <span className="font-semibold text-white">{paid.paid}</span>
-                    {paid.organizerReceived
-                      ? ` paying customer${paid.paid === 1 ? "" : "s"}, including our first hackathon organizer`
-                      : ` paying user${paid.paid === 1 ? "" : "s"}`}
+                    {paid.paid > 0 ? (
+                      <>
+                        {" · "}
+                        <span className="font-semibold text-white">{paid.paid}</span>
+                        {paid.organizerReceived
+                          ? ` paying customer${paid.paid === 1 ? "" : "s"}, including our first hackathon organizer`
+                          : ` paying user${paid.paid === 1 ? "" : "s"}`}
+                      </>
+                    ) : (
+                      paid.organizerReceived && ", including our first hackathon organizer"
+                    )}
                     {!paid.organizerReceived && paid.organizerUsd > 0 && (
                       <>
                         {" · "}

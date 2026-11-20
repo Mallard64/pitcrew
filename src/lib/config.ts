@@ -57,7 +57,8 @@ export const config = {
     const usd = int(process.env.TRACTION_COLLECTED_USD, 0);
     const organizerUsd = int(process.env.TRACTION_ORGANIZER_USD, 0);
     const organizerReceived = process.env.TRACTION_ORGANIZER_RECEIVED === "true";
-    return paid && usd ? { paid, usd, organizerUsd, organizerReceived } : null;
+    // TRACTION_PAID_COUNT unset or 0 = count not confirmed: show the amount without a customer count.
+    return usd ? { paid, usd, organizerUsd, organizerReceived } : null;
   },
   /**
    * Builder count as reported by the team (e.g. "5+"). The DB counts distinct hashed IPs, which undercounts
